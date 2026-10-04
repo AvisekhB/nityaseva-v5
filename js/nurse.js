@@ -11,7 +11,32 @@ async function init() {
   document.getElementById('user-display').textContent = currentProfile.full_name || 'Nurse ' + currentProfile.email;
   document.getElementById('btn-logout').addEventListener('click', signOut);
 
+  setupBmiCalculator();
+
   await loadNurseWorkOrders();
+}
+
+function setupBmiCalculator() {
+  const weightInput = document.getElementById('asm-weight');
+  const heightInput = document.getElementById('asm-height');
+  const bmiOutput = document.getElementById('asm-bmi');
+
+  function recalcBmi() {
+    const weight = parseFloat(weightInput.value);
+    const heightCm = parseFloat(heightInput.value);
+    if (weight > 0 && heightCm > 0) {
+      const heightM = heightCm / 100;
+      const bmi = weight / (heightM * heightM);
+      bmiOutput.value = bmi.toFixed(1);
+    } else {
+      bmiOutput.value = '';
+    }
+  }
+
+  if (weightInput && heightInput && bmiOutput) {
+    weightInput.addEventListener('input', recalcBmi);
+    heightInput.addEventListener('input', recalcBmi);
+  }
 }
 
 async function loadNurseWorkOrders() {
@@ -120,26 +145,67 @@ document.getElementById('btn-verify-start').addEventListener('click', async () =
   }
 });
 
-// 2. Submit 20-Point Assessment
+// 2. Submit 20-Point Assessment (full spec-compliant payload)
 document.getElementById('assessment-form').addEventListener('submit', async (e) => {
   e.preventDefault();
 
   try {
+    const bpSys = document.getElementById('asm-bp-sys').value;
+    const bpDia = document.getElementById('asm-bp-dia').value;
+
     const payload = {
       senior_id: activeWO.senior_id,
       visit_id: activeWO.work_order_id,
-      bp: document.getElementById('asm-bp').value.trim(),
+
+      // 1. Blood Pressure
+      bp_systolic: Number(bpSys),
+      bp_diastolic: Number(bpDia),
+      bp: bpSys + '/' + bpDia,
+
+      // 2-4
       heart_rate: Number(document.getElementById('asm-hr').value),
       spo2: Number(document.getElementById('asm-spo2').value),
       respiratory_rate: Number(document.getElementById('asm-rr').value),
+
+      // 5. Temperature
       temperature: Number(document.getElementById('asm-temp').value),
-      blood_sugar: Number(document.getElementById('asm-sugar').value || 0),
-      weight: Number(document.getElementById('asm-weight').value || 0),
+      temperature_unit: document.getElementById('asm-temp-unit').value,
+
+      // 6-7. Glucose
+      glucose_fasting: document.getElementById('asm-glucose-fasting').value ? Number(document.getElementById('asm-glucose-fasting').value) : '',
+      glucose_random: document.getElementById('asm-glucose-random').value ? Number(document.getElementById('asm-glucose-random').value) : '',
+      glucose_timing: document.getElementById('asm-glucose-timing').value.trim(),
+
+      // 8-10. Weight/Height/BMI
+      weight: document.getElementById('asm-weight').value ? Number(document.getElementById('asm-weight').value) : '',
+      height: document.getElementById('asm-height').value ? Number(document.getElementById('asm-height').value) : '',
+      bmi: document.getElementById('asm-bmi').value || '',
+
+      // 11-12
+      waist_circumference: document.getElementById('asm-waist').value ? Number(document.getElementById('asm-waist').value) : '',
       pain_level: Number(document.getElementById('asm-pain').value || 0),
+      pain_location: document.getElementById('asm-pain-location').value.trim(),
+
+      // 13-15
+      level_of_consciousness: document.getElementById('asm-loc').value,
       fall_risk: document.getElementById('asm-fall').value,
-      mobility: document.getElementById('asm-mobility').value,
-      hydration: document.getElementById('asm-hydration').value,
+      mobility_status: document.getElementById('asm-mobility').value,
+
+      // 16-17
+      respiratory_symptoms: document.getElementById('asm-resp-symptoms').value,
+      respiratory_notes: document.getElementById('asm-resp-notes').value.trim(),
+      edema_severity: document.getElementById('asm-edema').value,
+      edema_notes: document.getElementById('asm-edema-notes').value.trim(),
+
+      // 18-19
+      hydration_status: document.getElementById('asm-hydration').value,
       medication_adherence: document.getElementById('asm-meds').value,
+      medication_notes: document.getElementById('asm-meds-notes').value.trim(),
+
+      // 20
+      cognitive_observation: document.getElementById('asm-cognitive').value,
+
+      // Additional
       nurse_notes: document.getElementById('asm-notes').value.trim()
     };
 
