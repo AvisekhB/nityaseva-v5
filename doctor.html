@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Doctor Portal — Nityaseva</title>
   <link rel="stylesheet" href="css/style.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <header>
@@ -17,6 +16,48 @@
   </header>
 
   <main>
+    <!-- Direct Doctor Consultation Work Orders -->
+    <div class="card">
+      <h2>My Assigned Doctor Consultations (Work Orders)</h2>
+      <table id="doctor-wo-table">
+        <thead>
+          <tr>
+            <th>WO ID</th>
+            <th>Senior Patient</th>
+            <th>Scheduled Time</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="5">Loading consultations...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Doctor Work Order Execution Workspace -->
+    <div id="doctor-wo-workspace" class="card hidden">
+      <h2>Consultation: <span id="doc-active-wo-id"></span></h2>
+      <p style="font-size: 13px; color: #718096;">Senior: <strong id="doc-active-senior"></strong></p>
+
+      <div id="doc-start-step">
+        <p style="font-size: 13px;">Enter the <strong>Start Code</strong> to begin this consultation:</p>
+        <div class="form-group" style="max-width: 260px;">
+          <input type="text" id="doc-input-start-code" placeholder="Enter Start Code" style="font-size: 16px; letter-spacing: 2px; text-transform: uppercase;">
+        </div>
+        <button id="doc-btn-verify-start">Start Consultation</button>
+      </div>
+
+      <div id="doc-end-step" class="hidden" style="margin-top: 16px;">
+        <p style="font-size: 13px;">After consultation and feedback are complete, enter the <strong>End Code</strong>:</p>
+        <div class="form-group" style="max-width: 260px;">
+          <input type="text" id="doc-input-end-code" placeholder="Enter End Code" style="font-size: 16px; letter-spacing: 2px; text-transform: uppercase;">
+        </div>
+        <button id="doc-btn-verify-end">Complete Consultation</button>
+      </div>
+    </div>
+
+    <!-- Clinical Escalations & Reviews (from Nurses) -->
     <div class="card">
       <h2>Pending Clinical Escalations & Reviews</h2>
       <table id="doctor-queue-table">
@@ -35,6 +76,7 @@
       </table>
     </div>
 
+    <!-- Clinical Feedback Panel -->
     <div id="feedback-panel" class="card hidden">
       <h2>Clinical Assessment & Recommendations: <span id="current-senior-title"></span></h2>
       <form id="doctor-feedback-form">
