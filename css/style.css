@@ -213,3 +213,254 @@ table th {
   background-color: #c6f6d5;
   color: #22543d;
 }
+
+/* ============================================================
+   NEW ADDITIONS BELOW — Searchable Dropdown, Table Toolbars,
+   Sub-Tabs, and Service-Type Specific Badge Colors
+   ============================================================ */
+
+/* Service Type Badges (NurseVisit vs DoctorConsult) */
+.badge-nurse-visit {
+  background-color: #bee3f8;
+  color: #2b6cb0;
+  border: 1px solid #90cdf4;
+}
+
+.badge-doctor-consult {
+  background-color: #e9d8fd;
+  color: #6b46c1;
+  border: 1px solid #d6bcfa;
+}
+
+/* Lifecycle Status Badges */
+.badge-scheduled { background-color: #feebc8; color: #c05621; }
+.badge-in-progress { background-color: #fefcbf; color: #744210; }
+.badge-complete { background-color: #c6f6d5; color: #22543d; }
+.badge-cancelled { background-color: #fed7d7; color: #9b2c2c; }
+
+/* Searchable Dropdown Component */
+.searchable-dropdown {
+  position: relative;
+}
+
+.searchable-dropdown input {
+  width: 100%;
+}
+
+.suggestions-list {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  display: none;
+}
+
+.suggestions-list.open {
+  display: block;
+}
+
+.suggestion-item {
+  padding: 9px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  border-bottom: 1px solid #f1f1f1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover,
+.suggestion-item.highlighted {
+  background-color: #f0fff4;
+}
+
+.suggestion-item .tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  margin-left: 8px;
+}
+
+.suggestion-empty {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #a0aec0;
+  text-align: center;
+}
+
+/* Table Toolbar — Search + Sort Controls */
+.table-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.table-toolbar .search-box {
+  flex: 1;
+  min-width: 180px;
+  max-width: 280px;
+}
+
+.table-toolbar input {
+  padding: 7px 10px;
+  font-size: 13px;
+  margin: 0;
+}
+
+.table-toolbar .sort-controls {
+  display: flex;
+  gap: 6px;
+}
+
+.sort-btn {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #edf2f7;
+  color: #2d3748;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.sort-btn:hover {
+  background: #e2e8f0;
+}
+
+.sort-btn.active {
+  background: #1e5238;
+  color: #ffffff;
+  border-color: #1e5238;
+}
+
+/* Sub-Tabs (Status Filter Pills — Schedule / In Progress / Complete / Cancelled) */
+.sub-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.sub-tab {
+  background: transparent;
+  color: #4a5568;
+  border: 1px solid #cbd5e0;
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sub-tab:hover {
+  background: #f7fafc;
+}
+
+.sub-tab.active {
+  background: #1e5238;
+  color: #ffffff;
+  border-color: #1e5238;
+}
+
+/* Section Divider (used in multi-part forms like nurse assessment) */
+.section-divider {
+  margin-top: 18px;
+  padding-top: 10px;
+  border-top: 1px dashed #cbd5e0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e5238;
+}
+
+/* Step Cards (nurse/doctor visit workflow) */
+.step-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: #fafafa;
+}
+
+.step-card.active {
+  border-left: 5px solid #1e5238;
+  background: #ffffff;
+}
+
+.step-card.done {
+  border-left: 5px solid #38a169;
+  opacity: 0.85;
+}
+
+.step-header {
+  font-weight: 700;
+  color: #1e5238;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.consult-box {
+  background: #ebf8ff;
+  border: 1px solid #bee3f8;
+  padding: 12px;
+  border-radius: 6px;
+  margin: 12px 0;
+}
+
+/* Admin Navigation Tabs (top-level dashboard sections) */
+.admin-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px auto;
+  max-width: 1200px;
+  padding: 0 16px;
+}
+
+.nav-tab {
+  background: #e2e8f0;
+  color: #2d3748;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  border: none;
+}
+
+.nav-tab.active {
+  background: #1e5238;
+  color: white;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
