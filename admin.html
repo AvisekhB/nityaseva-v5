@@ -15,33 +15,23 @@
     </div>
   </header>
 
+  <!-- Top Navigation Tabs -->
   <div class="admin-nav">
-    <button class="nav-tab active" data-tab="tab-operations">📋 Work Orders & Dispatch</button>
-    <button class="nav-tab" data-tab="tab-seniors">👴 Seniors & Families</button>
-    <button class="nav-tab" data-tab="tab-directory">👩‍⚕️ Staff & Doctors</button>
-    <button class="nav-tab" data-tab="tab-subscriptions">💳 Subscriptions & Entitlements</button>
-    <button class="nav-tab" data-tab="tab-appointments">📅 Doctor Appointments</button>
+    <button class="nav-tab active" data-tab="tab-operations">📋 Operational Work Orders</button>
+    <button class="nav-tab" data-tab="tab-seniors">👴 All Registered Seniors</button>
+    <button class="nav-tab" data-tab="tab-families">👨‍👩‍👧 Family Links</button>
+    <button class="nav-tab" data-tab="tab-staff">👩‍⚕️ Healthcare Staff</button>
+    <button class="nav-tab" data-tab="tab-doctors">🩺 Doctors Directory</button>
+    <button class="nav-tab" data-tab="tab-subscriptions">💳 Active Subscriptions</button>
+    <button class="nav-tab" data-tab="tab-entitlements">📊 Monthly Entitlements</button>
+    <button class="nav-tab" data-tab="tab-reports">📑 Diagnostic Reports & Sharing</button>
     <button class="nav-tab" data-tab="tab-clinical">🩺 Doctor Reviews</button>
     <button class="nav-tab" data-tab="tab-audit">🔒 Audit Trail</button>
   </div>
 
   <main>
-    <!-- TAB 1: OPERATIONS -->
+    <!-- TAB 1: WORK ORDERS WITH SLICER BUTTONS -->
     <div id="tab-operations" class="tab-content active">
-      <div class="card">
-        <h2>Create Senior Record</h2>
-        <form id="create-senior-form">
-          <div class="grid">
-            <div class="form-group"><label>Full Name</label><input type="text" id="snr-name" required></div>
-            <div class="form-group"><label>Date of Birth</label><input type="date" id="snr-dob"></div>
-            <div class="form-group"><label>Phone</label><input type="tel" id="snr-phone"></div>
-            <div class="form-group"><label>Email</label><input type="email" id="snr-email" required></div>
-          </div>
-          <div class="form-group"><label>Residential Address</label><input type="text" id="snr-address"></div>
-          <button type="submit">Add Senior</button>
-        </form>
-      </div>
-
       <div class="card">
         <h2>Generate Work Order (Nurse Visit / Doctor Consult)</h2>
         <form id="create-wo-form">
@@ -61,7 +51,6 @@
               <label>Scheduled Date & Time</label>
               <input type="datetime-local" id="wo-scheduled-at" required>
             </div>
-            <!-- CHANGE #1: Searchable Staff/Doctor Dropdown -->
             <div class="form-group">
               <label>Assigned Staff ID (Search Nurse/Doctor)</label>
               <div class="searchable-dropdown">
@@ -78,25 +67,58 @@
 
       <div class="card">
         <h2>Operational Work Orders</h2>
-        <!-- CHANGE #2: Search + Sort Toolbar -->
+
+        <!-- SLICER BUTTONS ON TOP -->
+        <div class="sub-nav">
+          <button class="sub-tab active" data-slicer="ALL">All</button>
+          <button class="sub-tab" data-slicer="SCHEDULED">SCHEDULED</button>
+          <button class="sub-tab" data-slicer="IN_PROGRESS">In Progress</button>
+          <button class="sub-tab" data-slicer="COMPLETE">Complete</button>
+          <button class="sub-tab" data-slicer="CANCELLED">Cancelled</button>
+        </div>
+
         <div class="table-toolbar">
-          <div class="search-box"><input type="text" id="search-wo" placeholder="Search by ID, Senior, Type..."></div>
+          <div class="search-box">
+            <input type="text" id="search-wo" placeholder="Search by ID, Senior, Staff...">
+          </div>
           <div class="sort-controls">
             <button class="sort-btn" id="sort-wo-asc">Sort ▲</button>
             <button class="sort-btn" id="sort-wo-desc">Sort ▼</button>
           </div>
         </div>
+
         <table id="admin-wo-table">
           <thead>
-            <tr><th>ID</th><th>Senior</th><th>Type</th><th>Scheduled Time</th><th>Status</th><th>Override</th></tr>
+            <tr>
+              <th>ID</th>
+              <th>Senior</th>
+              <th>Type</th>
+              <th>Scheduled Time</th>
+              <th>Status</th>
+              <th>Override</th>
+            </tr>
           </thead>
           <tbody><tr><td colspan="6">Loading work orders...</td></tr></tbody>
         </table>
       </div>
     </div>
 
-    <!-- TAB 2: SENIORS & FAMILIES -->
+    <!-- TAB 2: REGISTERED SENIORS -->
     <div id="tab-seniors" class="tab-content">
+      <div class="card">
+        <h2>Create Senior Record</h2>
+        <form id="create-senior-form">
+          <div class="grid">
+            <div class="form-group"><label>Full Name</label><input type="text" id="snr-name" required></div>
+            <div class="form-group"><label>Date of Birth</label><input type="date" id="snr-dob"></div>
+            <div class="form-group"><label>Phone</label><input type="tel" id="snr-phone"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="snr-email" required></div>
+          </div>
+          <div class="form-group"><label>Residential Address</label><input type="text" id="snr-address"></div>
+          <button type="submit">Add Senior</button>
+        </form>
+      </div>
+
       <div class="card">
         <h2>All Registered Seniors</h2>
         <div class="table-toolbar">
@@ -113,11 +135,14 @@
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
       </div>
+    </div>
 
+    <!-- TAB 3: FAMILY LINKS -->
+    <div id="tab-families" class="tab-content">
       <div class="card">
         <h2>Family Members & Senior Links</h2>
         <div class="table-toolbar">
-          <div class="search-box"><input type="text" id="search-families" placeholder="Search families..."></div>
+          <div class="search-box"><input type="text" id="search-families" placeholder="Search family links..."></div>
           <div class="sort-controls">
             <button class="sort-btn" id="sort-families-asc">Sort ▲</button>
             <button class="sort-btn" id="sort-families-desc">Sort ▼</button>
@@ -125,15 +150,15 @@
         </div>
         <table id="admin-families-table">
           <thead>
-            <tr><th>Family ID</th><th>Name</th><th>Relationship</th><th>Linked Senior ID</th><th>Email</th><th>Phone</th></tr>
+            <tr><th>Family ID</th><th>Name</th><th>Relationship</th><th>Linked Senior</th><th>Email</th><th>Phone</th></tr>
           </thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
       </div>
     </div>
 
-    <!-- TAB 3: STAFF & DOCTORS -->
-    <div id="tab-directory" class="tab-content">
+    <!-- TAB 4: STAFF DIRECTORY -->
+    <div id="tab-staff" class="tab-content">
       <div class="card">
         <h2>Healthcare Staff / Nurses Directory</h2>
         <div class="table-toolbar">
@@ -150,7 +175,10 @@
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
       </div>
+    </div>
 
+    <!-- TAB 5: DOCTORS DIRECTORY -->
+    <div id="tab-doctors" class="tab-content">
       <div class="card">
         <h2>Doctors Directory</h2>
         <div class="table-toolbar">
@@ -169,10 +197,10 @@
       </div>
     </div>
 
-    <!-- TAB 4: SUBSCRIPTIONS & ENTITLEMENTS -->
+    <!-- TAB 6: ACTIVE SUBSCRIPTIONS -->
     <div id="tab-subscriptions" class="tab-content">
       <div class="card">
-        <h2>Create Subscription Plan</h2>
+        <h2>Create Subscription Plan (Auto 30-Day Period)</h2>
         <form id="create-sub-form">
           <div class="grid">
             <div class="form-group">
@@ -199,12 +227,15 @@
         </div>
         <table id="admin-subs-table">
           <thead>
-            <tr><th>Sub ID</th><th>Senior ID</th><th>Plan</th><th>Nurse Visits/Mo</th><th>Doctor Consults/Mo</th><th>Status</th></tr>
+            <tr><th>Sub ID</th><th>Senior</th><th>Plan</th><th>Start Date</th><th>End Date (+30d)</th><th>Status</th></tr>
           </thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
       </div>
+    </div>
 
+    <!-- TAB 7: MONTHLY ENTITLEMENTS -->
+    <div id="tab-entitlements" class="tab-content">
       <div class="card">
         <h2>Monthly Entitlements (Used / Allowed)</h2>
         <div class="table-toolbar">
@@ -216,64 +247,81 @@
         </div>
         <table id="admin-entitlements-table">
           <thead>
-            <tr><th>Senior ID</th><th>Month</th><th>Nurse Visits</th><th>Doctor Consults</th></tr>
+            <tr><th>Senior</th><th>Month</th><th>Nurse Visits (Used/Allowed)</th><th>Doctor Consults (Used/Allowed)</th></tr>
           </thead>
           <tbody><tr><td colspan="4">Loading...</td></tr></tbody>
         </table>
       </div>
     </div>
 
-    <!-- TAB 5: DOCTOR APPOINTMENTS (CHANGE #3: simplified, senior-wise) -->
-    <div id="tab-appointments" class="tab-content">
+    <!-- TAB 8: DIAGNOSTIC REPORTS & SHARING -->
+    <div id="tab-reports" class="tab-content">
       <div class="card">
-        <h2>Request / Create Doctor Appointment</h2>
-        <form id="create-apt-form">
+        <h2>Upload / Register Clinical Diagnosis Report</h2>
+        <form id="create-report-form">
           <div class="grid">
             <div class="form-group">
               <label>Select Senior</label>
-              <select id="apt-senior-id" required><option value="">-- Choose Senior --</option></select>
+              <select id="report-senior-id" required><option value="">-- Choose Senior --</option></select>
             </div>
             <div class="form-group">
-              <label>Preferred Date & Time</label>
-              <input type="datetime-local" id="apt-scheduled-at" required>
+              <label>Report Type</label>
+              <select id="report-type">
+                <option value="Blood Test / Lab">Blood Test / Lab</option>
+                <option value="ECG / Cardiology">ECG / Cardiology</option>
+                <option value="Nurse Assessment Summary">Nurse Assessment Summary</option>
+                <option value="Doctor Clinical Prescription">Doctor Clinical Prescription</option>
+                <option value="Other Diagnostics">Other Diagnostics</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Report Document / Drive URL</label>
+              <input type="url" id="report-url" placeholder="https://drive.google.com/..." required>
             </div>
           </div>
-          <button type="submit">Create Doctor Appointment</button>
+          <button type="submit">Record Diagnostic Report</button>
         </form>
       </div>
 
       <div class="card">
-        <h2>Senior-Wise Doctor Appointments</h2>
+        <h2>Diagnosis Reports & Secure Share Links</h2>
         <div class="table-toolbar">
-          <div class="search-box"><input type="text" id="search-apts" placeholder="Search by senior..."></div>
+          <div class="search-box"><input type="text" id="search-reports" placeholder="Search reports..."></div>
           <div class="sort-controls">
-            <button class="sort-btn" id="sort-apts-asc">Sort ▲</button>
-            <button class="sort-btn" id="sort-apts-desc">Sort ▼</button>
+            <button class="sort-btn" id="sort-reports-asc">Sort ▲</button>
+            <button class="sort-btn" id="sort-reports-desc">Sort ▼</button>
           </div>
         </div>
-        <table id="admin-apts-table">
+        <table id="admin-reports-table">
           <thead>
-            <tr><th>Appointment ID</th><th>Senior</th><th>Scheduled Time</th><th>Status</th></tr>
+            <tr>
+              <th>Report ID</th>
+              <th>Senior Patient</th>
+              <th>Type</th>
+              <th>Report Link</th>
+              <th>Created Date</th>
+              <th>Share (72-Hour Token)</th>
+            </tr>
           </thead>
-          <tbody><tr><td colspan="4">Loading...</td></tr></tbody>
+          <tbody><tr><td colspan="6">Loading reports...</td></tr></tbody>
         </table>
       </div>
     </div>
 
-    <!-- TAB 6: CLINICAL REVIEWS -->
+    <!-- TAB 9: CLINICAL REVIEWS -->
     <div id="tab-clinical" class="tab-content">
       <div class="card">
         <h2>Doctor Clinical Escalations & Reviews</h2>
         <table id="admin-reviews-table">
           <thead>
-            <tr><th>Review ID</th><th>Senior ID</th><th>Priority</th><th>Reason</th><th>Assigned Doctor</th><th>Status</th></tr>
+            <tr><th>Review ID</th><th>Senior</th><th>Priority</th><th>Reason</th><th>Assigned Doctor</th><th>Status</th></tr>
           </thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
       </div>
     </div>
 
-    <!-- TAB 7: AUDIT TRAIL -->
+    <!-- TAB 10: AUDIT TRAIL -->
     <div id="tab-audit" class="tab-content">
       <div class="card">
         <h2>System Compliance Audit Trail (Last 100 Events)</h2>
