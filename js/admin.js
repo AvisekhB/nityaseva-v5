@@ -4,6 +4,7 @@ import { callApi } from './dataService.js';
 let currentProfile = null;
 let allData = { seniors: [], workOrders: [], staff: [], doctors: [], families: [], familyLinks: [], subscriptions: [], entitlements: [], appointments: [], reviews: [], logs: [] };
 let practitionerList = [];
+let sortState = {};
 
 async function init() {
   setupTabs();
@@ -66,6 +67,9 @@ async function loadAdminDashboard() {
     renderAppointments((data.appointments || []).filter(a => a.type === 'DoctorConsult'));
     renderReviews(data.reviews || []);
     renderAudit(data.logs || []);
+
+    setupAllColumnSorting();
+    wireAllSearchBoxes();
 
   } catch (err) {
     console.error('Dashboard load error:', err);
@@ -158,59 +162,167 @@ function setupSearchableStaffDropdown() {
   });
 }
 
-// ===== Search + Sort Utility =====
-function attachSearchSort(searchId, ascBtnId, descBtnId, tableBodyId, originalDataRef, renderFn, sortKeyFn) {
-  const searchInput = document.getElementById(searchId);
-  const ascBtn = document.getElementById(ascBtnId);
-  const descBtn = document.getElementById(descBtnId);
+// ===== Generic Column-Header Click-to-Sort =====
+function makeSortable(tableId, dataGetter, renderFn, extractors) {
+  const table = document.getElementById(tableId);
+  if (!table) return;
 
-  if (searchInput) {
-    searchInput.addEventListener('input', () => {
-      const q = searchInput.value.trim().toLowerCase();
-      const filtered = originalDataRef().filter(row => JSON.stringify(row).toLowerCase().includes(q));
-      renderFn(filtered);
-    });
-  }
+  const ths = table.querySelectorAll('thead th[data-key]');
+  ths.forEach(th => {
+    th.style.cursor = 'pointer';
+    th.style.userSelect = 'none';
+    if (!th.querySelector('.sort-arrow')) {
+      th.innerHTML = th.textContent.trim() + ' <span class="sort-arrow">⇕</span>';
+    }
 
-  if (ascBtn) {
-    ascBtn.addEventListener('click', () => {
-      const sorted = [...originalDataRef()].sort((a, b) => {
-        const va = sortKeyFn(a), vb = sortKeyFn(b);
-        return va > vb ? 1 : va < vb ? -1 : 0;
+    // Remove old listener by cloning (prevents duplicate bindings on re-render)
+    const freshTh = th;
+    freshTh.onclick = () => {
+      const col = freshTh.getAttribute('data-key');
+      if (!sortState[tableId] || sortState[tableId].col !== col) {
+        sortState[tableId] = { col: col, dir: 'asc' };
+      } else {
+        sortState[tableId].dir = sortState[tableId].dir === 'asc' ? 'desc' : 'asc';
+      }
+
+      ths.forEach(h => {
+        const arrow = h.querySelector('.sort-arrow');
+        if (arrow) arrow.textContent = '⇕';
       });
-      renderFn(sorted);
-    });
-  }
-  if (descBtn) {
-    descBtn.addEventListener('click', () => {
-      const sorted = [...originalDataRef()].sort((a, b) => {
-        const va = sortKeyFn(a), vb = sortKeyFn(b);
-        return va < vb ? 1 : va > vb ? -1 : 0;
+      const activeArrow = freshTh.querySelector('.sort-arrow');
+      if (activeArrow) activeArrow.textContent = sortState[tableId].dir === 'asc' ? '▲' : '▼';
+
+      const data = [...dataGetter()];
+      const extractor = extractors[col] || (row => row[col]);
+      data.sort((a, b) => {
+        const va = extractor(a);
+        const vb = extractor(b);
+        let cmp;
+        if (typeof va === 'number' && typeof vb === 'number') {
+          cmp = va - vb;
+        } else {
+          cmp = String(va || '').localeCompare(String(vb || ''));
+        }
+        return sortState[tableId].dir === 'asc' ? cmp : -cmp;
       });
-      renderFn(sorted);
-    });
-  }
+      renderFn(data);
+    };
+  });
 }
 
-// ===== Render Functions =====
+function setupAllColumnSorting() {
+  makeSortable('admin-wo-table', () => allData.workOrders || [], renderWorkOrders, {
+    work_order_id: r => r.work_order_id,
+    senior: r => getSeniorName(r.senior_id),
+    type: r => r.type,
+    created_at: r => r.created_at || '',
+    status: r => r.status
+  });
+
+  makeSortable('admin-seniors-table', () => allData.seniors || [], renderSeniors, {
+    senior_id: r => r.senior_id,
+    full_name: r => r.full_name,
+    phone: r => r.phone || '',
+    email: r => r.email || '',
+    address: r => r.address || '',
+    status: r => r.status || ''
+  });
+
+  makeSortable('admin-families-table', () => allData.families || [], (f) => renderFamilies(f, allData.familyLinks || []), {
+    family_id: r => r.family_id,
+    full_name: r => r.full_name,
+    relationship: r => r.relationship || '',
+    email: r => r.email || '',
+    phone: r => r.phone || ''
+  });
+
+  makeSortable('admin-staff-table', () => allData.staff || [], renderStaff, {
+    staff_id: r => r.staff_id,
+    full_name: r => r.full_name,
+    role: r => r.role || '',
+    email: r => r.email || '',
+    phone: r => r.phone || '',
+    status: r => r.status || ''
+  });
+
+  makeSortable('admin-doctors-table', () => allData.doctors || [], renderDoctors, {
+    doctor_id: r => r.doctor_id,
+    full_name: r => r.full_name,
+    specialty: r => r.specialty || '',
+    email: r => r.email || '',
+    phone: r => r.phone || '',
+    status: r => r.status || ''
+  });
+
+  makeSortable('admin-subs-table', () => allData.subscriptions || [], renderSubscriptions, {
+    subscription_id: r => r.subscription_id,
+    senior: r => getSeniorName(r.senior_id),
+    plan_name: r => r.plan_name || '',
+    nurse_visits_per_month: r => Number(r.nurse_visits_per_month || 0),
+    doctor_consults_per_month: r => Number(r.doctor_consults_per_month || 0),
+    status: r => r.status || ''
+  });
+
+  makeSortable('admin-entitlements-table', () => allData.entitlements || [], renderEntitlements, {
+    senior: r => getSeniorName(r.senior_id),
+    month: r => r.month || '',
+    nurse_used: r => Number(r.nurse_used || 0),
+    doctor_used: r => Number(r.doctor_used || 0)
+  });
+
+  makeSortable('admin-apts-table', () => (allData.appointments || []).filter(a => a.type === 'DoctorConsult'), renderAppointments, {
+    appointment_id: r => r.appointment_id,
+    senior: r => getSeniorName(r.senior_id),
+    scheduled_at: r => r.scheduled_at || '',
+    status: r => r.status || ''
+  });
+}
+
+// ===== Search Boxes (filter without needing asc/desc buttons) =====
+function wireAllSearchBoxes() {
+  const map = [
+    ['search-wo', () => allData.workOrders || [], renderWorkOrders],
+    ['search-seniors', () => allData.seniors || [], renderSeniors],
+    ['search-families', () => allData.families || [], (f) => renderFamilies(f, allData.familyLinks || [])],
+    ['search-staff', () => allData.staff || [], renderStaff],
+    ['search-doctors', () => allData.doctors || [], renderDoctors],
+    ['search-subs', () => allData.subscriptions || [], renderSubscriptions],
+    ['search-ent', () => allData.entitlements || [], renderEntitlements],
+    ['search-apts', () => (allData.appointments || []).filter(a => a.type === 'DoctorConsult'), renderAppointments]
+  ];
+
+  map.forEach(([inputId, getData, renderFn]) => {
+    const input = document.getElementById(inputId);
+    if (!input || input.dataset.bound) return;
+    input.dataset.bound = 'true';
+    input.addEventListener('input', () => {
+      const q = input.value.trim().toLowerCase();
+      const filtered = getData().filter(row => JSON.stringify(row).toLowerCase().includes(q));
+      renderFn(filtered);
+    });
+  });
+}
+
+// ===== Render Functions
 function renderWorkOrders(orders) {
   const tbody = document.querySelector('#admin-wo-table tbody');
+  if (!tbody) return;
   tbody.innerHTML = '';
   if (orders.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6">No work orders recorded yet.</td></tr>';
     return;
   }
-  [...orders].forEach(wo => {
+  orders.forEach(wo => {
     const tr = document.createElement('tr');
-    const isClosedState = (wo.status === 'COMPLETE' || wo.status === 'CLOSE');
-    const badgeColor = isClosedState ? 'badge-complete' : (wo.status === 'IN_PROGRESS' ? 'badge-in-progress' : 'badge-scheduled');
+    const isClosed = (wo.status === 'COMPLETE' || wo.status === 'CLOSE');
+    const badgeColor = isClosed ? 'badge-complete' : (wo.status === 'IN_PROGRESS' ? 'badge-in-progress' : 'badge-scheduled');
     const typeBadge = wo.type === 'DoctorConsult' ? 'badge-doctor-consult' : 'badge-nurse-visit';
 
     let displayTime = '-';
     if (wo.created_at) {
       try { displayTime = new Date(wo.created_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }); } catch (e) { displayTime = wo.created_at; }
     }
-    const canCancel = wo.status !== 'CANCELLED' && wo.status !== 'COMPLETE' && wo.status !== 'CLOSE';
+    const canCancel = wo.status !== 'CANCELLED' && !isClosed;
 
     tr.innerHTML = `
       <td><strong>${wo.work_order_id}</strong></td>
@@ -223,9 +335,9 @@ function renderWorkOrders(orders) {
     tbody.appendChild(tr);
   });
 
-  document.querySelectorAll('.override-btn').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      const woId = e.target.getAttribute('data-id');
+  tbody.querySelectorAll('.override-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const woId = btn.getAttribute('data-id');
       const reason = prompt('Enter override/cancellation reason:');
       if (!reason) return;
       try {
@@ -235,135 +347,91 @@ function renderWorkOrders(orders) {
       } catch (err) {
         alert('Override failed: ' + err.message);
       }
-    });
+    };
   });
 }
 
 function renderSeniors(seniors) {
   const tbody = document.querySelector('#admin-seniors-table tbody');
-  tbody.innerHTML = '';
-  if (seniors.length === 0) return tbody.innerHTML = '<tr><td colspan="6">No seniors registered yet.</td></tr>';
-  seniors.forEach(s => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td><strong>${s.senior_id}</strong></td><td>${s.full_name}</td><td>${s.phone || '-'}</td><td>${s.email || '-'}</td><td>${s.address || '-'}</td><td><span class="badge badge-complete">${s.status || 'ACTIVE'}</span></td>`;
-    tbody.appendChild(tr);
-  });
+  if (!tbody) return;
+  tbody.innerHTML = seniors.length === 0 ? '<tr><td colspan="6">No seniors registered yet.</td></tr>' :
+    seniors.map(s => `<tr><td><strong>${s.senior_id}</strong></td><td>${s.full_name}</td><td>${s.phone || '-'}</td><td>${s.email || '-'}</td><td>${s.address || '-'}</td><td><span class="badge badge-complete">${s.status || 'ACTIVE'}</span></td></tr>`).join('');
 }
 
 function renderFamilies(families, links) {
   const tbody = document.querySelector('#admin-families-table tbody');
-  tbody.innerHTML = '';
-  if (families.length === 0) return tbody.innerHTML = '<tr><td colspan="6">No families recorded.</td></tr>';
-  families.forEach(f => {
-    const link = links.find(l => l.family_id === f.family_id);
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td><strong>${f.family_id}</strong></td><td>${f.full_name}</td><td>${f.relationship || '-'}</td><td>${link ? `<code>${link.senior_id}</code>` : '<em>Unlinked</em>'}</td><td>${f.email || '-'}</td><td>${f.phone || '-'}</td>`;
-    tbody.appendChild(tr);
-  });
+  if (!tbody) return;
+  tbody.innerHTML = families.length === 0 ? '<tr><td colspan="6">No families recorded.</td></tr>' :
+    families.map(f => {
+      const link = links.find(l => l.family_id === f.family_id);
+      return `<tr><td><strong>${f.family_id}</strong></td><td>${f.full_name}</td><td>${f.relationship || '-'}</td><td>${link ? `<code>${link.senior_id}</code>` : '<em>Unlinked</em>'}</td><td>${f.email || '-'}</td><td>${f.phone || '-'}</td></tr>`;
+    }).join('');
 }
 
 function renderStaff(staff) {
   const tbody = document.querySelector('#admin-staff-table tbody');
-  tbody.innerHTML = '';
-  if (staff.length === 0) return tbody.innerHTML = '<tr><td colspan="6">No staff recorded.</td></tr>';
-  staff.forEach(st => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td><strong>${st.staff_id}</strong></td><td>${st.full_name}</td><td>${st.role}</td><td>${st.email}</td><td>${st.phone || '-'}</td><td><span class="badge badge-complete">${st.status || 'ACTIVE'}</span></td>`;
-    tbody.appendChild(tr);
-  });
+  if (!tbody) return;
+  tbody.innerHTML = staff.length === 0 ? '<tr><td colspan="6">No staff recorded.</td></tr>' :
+    staff.map(st => `<tr><td><strong>${st.staff_id}</strong></td><td>${st.full_name}</td><td>${st.role}</td><td>${st.email}</td><td>${st.phone || '-'}</td><td><span class="badge badge-complete">${st.status}</span></td></tr>`).join('');
 }
 
 function renderDoctors(doctors) {
   const tbody = document.querySelector('#admin-doctors-table tbody');
-  tbody.innerHTML = '';
-  if (doctors.length === 0) return tbody.innerHTML = '<tr><td colspan="6">No doctors recorded.</td></tr>';
-  doctors.forEach(d => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td><strong>${d.doctor_id}</strong></td><td>${d.full_name}</td><td>${d.specialty || 'General'}</td><td>${d.email}</td><td>${d.phone || '-'}</td><td><span class="badge badge-complete">${d.status || 'ACTIVE'}</span></td>`;
-    tbody.appendChild(tr);
-  });
+  if (!tbody) return;
+  tbody.innerHTML = doctors.length === 0 ? '<tr><td colspan="6">No doctors recorded.</td></tr>' :
+    doctors.map(d => `<tr><td><strong>${d.doctor_id}</strong></td><td>${d.full_name}</td><td>${d.specialty || 'General'}</td><td>${d.email}</td><td>${d.phone || '-'}</td><td><span class="badge badge-complete">${d.status}</span></td></tr>`).join('');
 }
 
 function renderSubscriptions(subs) {
   const tbody = document.querySelector('#admin-subs-table tbody');
-  tbody.innerHTML = '';
-  if (subs.length === 0) return tbody.innerHTML = '<tr><td colspan="6">No active subscriptions found.</td></tr>';
-  subs.forEach(s => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td><strong>${s.subscription_id}</strong></td><td>${getSeniorName(s.senior_id)}</td><td>${s.plan_name}</td><td>${s.nurse_visits_per_month}</td><td>${s.doctor_consults_per_month}</td><td><span class="badge badge-complete">${s.status || 'ACTIVE'}</span></td>`;
-    tbody.appendChild(tr);
-  });
+  if (!tbody) return;
+  tbody.innerHTML = subs.length === 0 ? '<tr><td colspan="6">No active subscriptions found.</td></tr>' :
+    subs.map(s => `<tr><td><strong>${s.subscription_id}</strong></td><td>${getSeniorName(s.senior_id)}</td><td>${s.plan_name}</td><td>${s.nurse_visits_per_month}</td><td>${s.doctor_consults_per_month}</td><td><span class="badge badge-complete">${s.status || 'ACTIVE'}</span></td></tr>`).join('');
 }
 
 function renderEntitlements(ents) {
   const tbody = document.querySelector('#admin-entitlements-table tbody');
-  tbody.innerHTML = '';
-  if (ents.length === 0) return tbody.innerHTML = '<tr><td colspan="4">No entitlement records recorded.</td></tr>';
-  ents.forEach(e => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td><strong>${getSeniorName(e.senior_id)}</strong></td><td>${e.month}</td><td>${e.nurse_used} / ${e.nurse_allowed}</td><td>${e.doctor_used} / ${e.doctor_allowed}</td>`;
-    tbody.appendChild(tr);
-  });
+  if (!tbody) return;
+  tbody.innerHTML = ents.length === 0 ? '<tr><td colspan="4">No entitlement records recorded.</td></tr>' :
+    ents.map(e => `<tr><td><strong>${getSeniorName(e.senior_id)}</strong></td><td>${e.month}</td><td>${e.nurse_used} / ${e.nurse_allowed}</td><td>${e.doctor_used} / ${e.doctor_allowed}</td></tr>`).join('');
 }
 
 function renderAppointments(apts) {
   const tbody = document.querySelector('#admin-apts-table tbody');
-  tbody.innerHTML = '';
-  if (apts.length === 0) return tbody.innerHTML = '<tr><td colspan="4">No doctor appointments recorded.</td></tr>';
-  [...apts].forEach(a => {
-    const tr = document.createElement('tr');
-    let displayTime = a.scheduled_at || '-';
-    try { if (a.scheduled_at) displayTime = new Date(a.scheduled_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }); } catch (e) {}
-    tr.innerHTML = `<td><strong>${a.appointment_id}</strong></td><td>${getSeniorName(a.senior_id)}</td><td>${displayTime}</td><td><span class="badge badge-scheduled">${a.status}</span></td>`;
-    tbody.appendChild(tr);
-  });
+  if (!tbody) return;
+  tbody.innerHTML = apts.length === 0 ? '<tr><td colspan="4">No doctor appointments recorded.</td></tr>' :
+    apts.map(a => {
+      let displayTime = a.scheduled_at || '-';
+      try { if (a.scheduled_at) displayTime = new Date(a.scheduled_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }); } catch (e) {}
+      return `<tr><td><strong>${a.appointment_id}</strong></td><td>${getSeniorName(a.senior_id)}</td><td>${displayTime}</td><td><span class="badge badge-scheduled">${a.status}</span></td></tr>`;
+    }).join('');
 }
 
 function renderReviews(revs) {
   const tbody = document.querySelector('#admin-reviews-table tbody');
-  tbody.innerHTML = '';
-  if (revs.length === 0) return tbody.innerHTML = '<tr><td colspan="6">No doctor reviews pending.</td></tr>';
-  revs.forEach(r => {
-    const tr = document.createElement('tr');
-    const color = r.priority === 'EMERGENCY' ? 'badge-red' : (r.priority === 'URGENT' ? 'badge-yellow' : 'badge-blue');
-    tr.innerHTML = `<td><strong>${r.review_id}</strong></td><td>${getSeniorName(r.senior_id)}</td><td><span class="badge ${color}">${r.priority}</span></td><td>${r.reason}</td><td>${getStaffName(r.assigned_doctor_id)}</td><td><span class="badge badge-yellow">${r.status}</span></td>`;
-    tbody.appendChild(tr);
-  });
+  if (!tbody) return;
+  tbody.innerHTML = revs.length === 0 ? '<tr><td colspan="6">No doctor reviews pending.</td></tr>' :
+    revs.map(r => {
+      const color = r.priority === 'EMERGENCY' ? 'badge-red' : (r.priority === 'URGENT' ? 'badge-yellow' : 'badge-blue');
+      return `<tr><td><strong>${r.review_id}</strong></td><td>${getSeniorName(r.senior_id)}</td><td><span class="badge ${color}">${r.priority}</span></td><td>${r.reason}</td><td>${getStaffName(r.assigned_doctor_id)}</td><td><span class="badge badge-yellow">${r.status}</span></td></tr>`;
+    }).join('');
 }
 
 function renderAudit(logs) {
   const tbody = document.querySelector('#admin-audit-table tbody');
-  tbody.innerHTML = '';
-  if (logs.length === 0) return tbody.innerHTML = '<tr><td colspan="6">No audit records found.</td></tr>';
-  [...logs].reverse().forEach(l => {
-    const tr = document.createElement('tr');
-    let timeStr = l.timestamp || '-';
-    try { timeStr = new Date(l.timestamp).toLocaleTimeString(); } catch (e) {}
-    tr.innerHTML = `<td><small>${timeStr}</small></td><td>${l.actor_id}</td><td><span class="badge badge-blue">${l.actor_role}</span></td><td><strong>${l.event}</strong></td><td>${l.work_order_id || '-'}</td><td><small>${l.reason || ''}</small></td>`;
-    tbody.appendChild(tr);
-  });
+  if (!tbody) return;
+  tbody.innerHTML = logs.length === 0 ? '<tr><td colspan="6">No audit records found.</td></tr>' :
+    [...logs].reverse().slice(0, 100).map(l => {
+      let timeStr = l.timestamp || '-';
+      try { timeStr = new Date(l.timestamp).toLocaleTimeString(); } catch (e) {}
+      return `<tr><td><small>${timeStr}</small></td><td>${l.actor_id}</td><td><span class="badge badge-blue">${l.actor_role}</span></td><td><strong>${l.event}</strong></td><td>${l.work_order_id || '-'}</td><td><small>${l.reason || ''}</small></td></tr>`;
+    }).join('');
 }
 
-// ===== Wire up Search/Sort per table (called once DOM & data are ready) =====
-function wireAllSearchSort() {
-  attachSearchSort('search-wo', 'sort-wo-asc', 'sort-wo-desc', 'admin-wo-table', () => allData.workOrders || [], renderWorkOrders, r => r.created_at || '');
-  attachSearchSort('search-seniors', 'sort-seniors-asc', 'sort-seniors-desc', 'admin-seniors-table', () => allData.seniors || [], renderSeniors, r => r.full_name || '');
-  attachSearchSort('search-families', 'sort-families-asc', 'sort-families-desc', 'admin-families-table', () => allData.families || [], (f) => renderFamilies(f, allData.familyLinks || []), r => r.full_name || '');
-  attachSearchSort('search-staff', 'sort-staff-asc', 'sort-staff-desc', 'admin-staff-table', () => allData.staff || [], renderStaff, r => r.full_name || '');
-  attachSearchSort('search-doctors', 'sort-doctors-asc', 'sort-doctors-desc', 'admin-doctors-table', () => allData.doctors || [], renderDoctors, r => r.full_name || '');
-  attachSearchSort('search-subs', 'sort-subs-asc', 'sort-subs-desc', 'admin-subs-table', () => allData.subscriptions || [], renderSubscriptions, r => r.subscription_id || '');
-  attachSearchSort('search-ent', 'sort-ent-asc', 'sort-ent-desc', 'admin-entitlements-table', () => allData.entitlements || [], renderEntitlements, r => r.month || '');
-  attachSearchSort('search-apts', 'sort-apts-asc', 'sort-apts-desc', 'admin-apts-table', () => (allData.appointments || []).filter(a => a.type === 'DoctorConsult'), renderAppointments, r => r.scheduled_at || '');
-}
-
-// ===== Form Submit Handlers =====
+// ===== Form Bindings & Boot =====
 function safeBind(id, eventName, handler) {
   const el = document.getElementById(id);
-  if (el) {
-    el.addEventListener(eventName, handler);
-  } else {
-    console.warn('Element not found, skipping binding: #' + id);
-  }
+  if (el) el.addEventListener(eventName, handler);
 }
 
 safeBind('create-senior-form', 'submit', async (e) => {
@@ -377,8 +445,8 @@ safeBind('create-senior-form', 'submit', async (e) => {
       address: document.getElementById('snr-address').value.trim()
     });
     alert('Senior created successfully! ID: ' + res.seniorId);
-    const woSeniorInput = document.getElementById('wo-senior-id');
-    if (woSeniorInput) woSeniorInput.value = res.seniorId;
+    const woSenior = document.getElementById('wo-senior-id');
+    if (woSenior) woSenior.value = res.seniorId;
     document.getElementById('create-senior-form').reset();
     await loadAdminDashboard();
   } catch (err) {
@@ -388,15 +456,27 @@ safeBind('create-senior-form', 'submit', async (e) => {
 
 safeBind('create-wo-form', 'submit', async (e) => {
   e.preventDefault();
+  const seniorId = document.getElementById('wo-senior-id').value.trim();
   const resultDiv = document.getElementById('wo-result');
   resultDiv.className = 'message hidden';
+
+  // Active Subscription Pre-Check
+  const nowStr = new Date().toISOString().slice(0, 10);
+  const hasActiveSub = (allData.subscriptions || []).some(s =>
+    s.senior_id === seniorId && s.status === 'ACTIVE' && (!s.end_date || s.end_date >= nowStr)
+  );
+
+  if (!hasActiveSub) {
+    alert('ALERT: Senior ' + seniorId + ' does NOT have an Active Subscription. Please create a Subscription first.');
+    return;
+  }
 
   try {
     const scheduledVal = document.getElementById('wo-scheduled-at').value;
     const scheduledIso = scheduledVal ? new Date(scheduledVal).toISOString() : new Date().toISOString();
 
     const res = await callApi('createWorkOrder', {
-      seniorId: document.getElementById('wo-senior-id').value.trim(),
+      seniorId: seniorId,
       type: document.getElementById('wo-type').value,
       scheduledAt: scheduledIso,
       staffId: document.getElementById('wo-staff-id').value.trim()
@@ -406,17 +486,14 @@ safeBind('create-wo-form', 'submit', async (e) => {
     try { displayFormatted = new Date(res.scheduledAt).toLocaleString(); } catch (e) {}
 
     resultDiv.innerHTML = `
-      <strong>Work Order Created & Emailed!</strong><br>
+      <strong>Work Order Created!</strong><br>
       ID: <code>${res.workOrderId}</code><br>
-      Scheduled Time: <strong>${displayFormatted}</strong><br>
-      Start Code: <code style="font-size:16px;">${res.startCode}</code> | 
-      End Code: <code style="font-size:16px;">${res.endCode}</code><br>
-      <small>Confirmation email with scheduled date/time & codes has been sent.</small>
+      Scheduled: <strong>${displayFormatted}</strong><br>
+      Start Code: <code>${res.startCode}</code> | End Code: <code>${res.endCode}</code>
     `;
     resultDiv.className = 'message success';
     resultDiv.classList.remove('hidden');
 
-    // Reset searchable staff dropdown
     const staffSearch = document.getElementById('wo-staff-search');
     const staffHidden = document.getElementById('wo-staff-id');
     if (staffSearch) staffSearch.value = '';
@@ -433,7 +510,6 @@ safeBind('create-wo-form', 'submit', async (e) => {
 safeBind('create-sub-form', 'submit', async (e) => {
   e.preventDefault();
   const resultDiv = document.getElementById('sub-result');
-
   try {
     const res = await callApi('adminCreateSubscription', {
       seniorId: document.getElementById('sub-senior-id').value,
@@ -441,16 +517,13 @@ safeBind('create-sub-form', 'submit', async (e) => {
       nurseVisits: Number(document.getElementById('sub-nurse-visits').value),
       doctorConsults: Number(document.getElementById('sub-doctor-consults').value)
     });
-
-    resultDiv.innerHTML = `<strong>Subscription created successfully!</strong> ID: ${res.subscriptionId}`;
+    resultDiv.innerHTML = `<strong>Subscription created!</strong> ID: ${res.subscriptionId}`;
     resultDiv.className = 'message success';
     resultDiv.classList.remove('hidden');
-
     document.getElementById('create-sub-form').reset();
     document.getElementById('sub-plan-name').value = 'Standard Care';
     document.getElementById('sub-nurse-visits').value = 2;
     document.getElementById('sub-doctor-consults').value = 1;
-
     await loadAdminDashboard();
   } catch (err) {
     resultDiv.innerHTML = 'Error: ' + err.message;
@@ -461,36 +534,24 @@ safeBind('create-sub-form', 'submit', async (e) => {
 
 safeBind('create-apt-form', 'submit', async (e) => {
   e.preventDefault();
-
   try {
     const scheduledVal = document.getElementById('apt-scheduled-at').value;
-    const scheduledIso = scheduledVal ? new Date(scheduledVal).toISOString() : '';
-
     await callApi('adminCreateAppointment', {
       seniorId: document.getElementById('apt-senior-id').value,
       type: 'DoctorConsult',
-      scheduledAt: scheduledIso
+      scheduledAt: scheduledVal ? new Date(scheduledVal).toISOString() : ''
     });
-
     alert('Doctor appointment created successfully!');
     document.getElementById('create-apt-form').reset();
-
     const d2 = new Date(Date.now() + 3600000);
     document.getElementById('apt-scheduled-at').value = new Date(d2.getTime() - d2.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-
     await loadAdminDashboard();
   } catch (err) {
     alert('Failed to create appointment: ' + err.message);
   }
 });
 
-// ===== Boot =====
-async function bootstrap() {
-  await init();
-  wireAllSearchSort();
-}
-
-bootstrap().catch(err => {
+init().catch(err => {
   console.error('INIT FAILED:', err);
   alert('Dashboard failed to initialize: ' + err.message);
 });
