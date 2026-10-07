@@ -15,7 +15,7 @@
     </div>
   </header>
 
-  <!-- Top Navigation Tabs -->
+  <!-- Navigation Bar for Admin Views -->
   <div class="admin-nav">
     <button class="nav-tab active" data-tab="tab-operations">📋 Operational Work Orders</button>
     <button class="nav-tab" data-tab="tab-seniors">👴 All Registered Seniors</button>
@@ -30,7 +30,7 @@
   </div>
 
   <main>
-    <!-- TAB 1: WORK ORDERS WITH SLICER BUTTONS -->
+    <!-- TAB 1: WORK ORDERS WITH SLICERS -->
     <div id="tab-operations" class="tab-content active">
       <div class="card">
         <h2>Generate Work Order (Nurse Visit / Doctor Consult)</h2>
@@ -68,7 +68,7 @@
       <div class="card">
         <h2>Operational Work Orders</h2>
 
-        <!-- SLICER BUTTONS ON TOP -->
+        <!-- Top Slicer Buttons -->
         <div class="sub-nav">
           <button class="sub-tab active" data-slicer="ALL">All</button>
           <button class="sub-tab" data-slicer="SCHEDULED">SCHEDULED</button>
@@ -90,11 +90,11 @@
         <table id="admin-wo-table">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Senior</th>
-              <th>Type</th>
-              <th>Scheduled Time</th>
-              <th>Status</th>
+              <th data-key="work_order_id">ID</th>
+              <th data-key="senior">Senior</th>
+              <th data-key="type">Type</th>
+              <th data-key="created_at">Scheduled Time</th>
+              <th data-key="status">Status</th>
               <th>Override</th>
             </tr>
           </thead>
@@ -130,7 +130,14 @@
         </div>
         <table id="admin-seniors-table">
           <thead>
-            <tr><th>ID</th><th>Full Name</th><th>Phone</th><th>Email</th><th>Address</th><th>Status</th></tr>
+            <tr>
+              <th data-key="senior_id">ID</th>
+              <th data-key="full_name">Full Name</th>
+              <th data-key="phone">Phone</th>
+              <th data-key="email">Email</th>
+              <th data-key="address">Address</th>
+              <th data-key="status">Status</th>
+            </tr>
           </thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
@@ -142,7 +149,7 @@
       <div class="card">
         <h2>Family Members & Senior Links</h2>
         <div class="table-toolbar">
-          <div class="search-box"><input type="text" id="search-families" placeholder="Search family links..."></div>
+          <div class="search-box"><input type="text" id="search-families" placeholder="Search families..."></div>
           <div class="sort-controls">
             <button class="sort-btn" id="sort-families-asc">Sort ▲</button>
             <button class="sort-btn" id="sort-families-desc">Sort ▼</button>
@@ -150,7 +157,14 @@
         </div>
         <table id="admin-families-table">
           <thead>
-            <tr><th>Family ID</th><th>Name</th><th>Relationship</th><th>Linked Senior</th><th>Email</th><th>Phone</th></tr>
+            <tr>
+              <th data-key="family_id">Family ID</th>
+              <th data-key="full_name">Name</th>
+              <th data-key="relationship">Relationship</th>
+              <th>Linked Senior</th>
+              <th data-key="email">Email</th>
+              <th data-key="phone">Phone</th>
+            </tr>
           </thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
@@ -170,7 +184,14 @@
         </div>
         <table id="admin-staff-table">
           <thead>
-            <tr><th>Staff ID</th><th>Name</th><th>Role</th><th>Email</th><th>Phone</th><th>Status</th></tr>
+            <tr>
+              <th data-key="staff_id">Staff ID</th>
+              <th data-key="full_name">Name</th>
+              <th data-key="role">Role</th>
+              <th data-key="email">Email</th>
+              <th data-key="phone">Phone</th>
+              <th data-key="status">Status</th>
+            </tr>
           </thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
@@ -190,7 +211,14 @@
         </div>
         <table id="admin-doctors-table">
           <thead>
-            <tr><th>Doctor ID</th><th>Name</th><th>Specialty</th><th>Email</th><th>Phone</th><th>Status</th></tr>
+            <tr>
+              <th data-key="doctor_id">Doctor ID</th>
+              <th data-key="full_name">Name</th>
+              <th data-key="specialty">Specialty</th>
+              <th data-key="email">Email</th>
+              <th data-key="phone">Phone</th>
+              <th data-key="status">Status</th>
+            </tr>
           </thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
@@ -208,6 +236,7 @@
               <select id="sub-senior-id" required><option value="">-- Choose Senior --</option></select>
             </div>
             <div class="form-group"><label>Plan Name</label><input type="text" id="sub-plan-name" value="Standard Care" required></div>
+            <div class="form-group"><label>Start Date</label><input type="date" id="sub-start-date" required></div>
             <div class="form-group"><label>Nurse Visits / Month</label><input type="number" id="sub-nurse-visits" value="2" required></div>
             <div class="form-group"><label>Doctor Consults / Month</label><input type="number" id="sub-doctor-consults" value="1" required></div>
           </div>
@@ -227,7 +256,14 @@
         </div>
         <table id="admin-subs-table">
           <thead>
-            <tr><th>Sub ID</th><th>Senior</th><th>Plan</th><th>Start Date</th><th>End Date (+30d)</th><th>Status</th></tr>
+            <tr>
+              <th data-key="subscription_id">Sub ID</th>
+              <th data-key="senior">Senior</th>
+              <th data-key="plan_name">Plan</th>
+              <th data-key="start_date">Start Date</th>
+              <th data-key="end_date">End Date (+30d)</th>
+              <th data-key="status">Status</th>
+            </tr>
           </thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
@@ -247,7 +283,12 @@
         </div>
         <table id="admin-entitlements-table">
           <thead>
-            <tr><th>Senior</th><th>Month</th><th>Nurse Visits (Used/Allowed)</th><th>Doctor Consults (Used/Allowed)</th></tr>
+            <tr>
+              <th data-key="senior">Senior</th>
+              <th data-key="month">Month</th>
+              <th data-key="nurse_used">Nurse Visits (Used/Allowed)</th>
+              <th data-key="doctor_used">Doctor Consults (Used/Allowed)</th>
+            </tr>
           </thead>
           <tbody><tr><td colspan="4">Loading...</td></tr></tbody>
         </table>
@@ -295,11 +336,11 @@
         <table id="admin-reports-table">
           <thead>
             <tr>
-              <th>Report ID</th>
-              <th>Senior Patient</th>
-              <th>Type</th>
+              <th data-key="report_id">Report ID</th>
+              <th data-key="senior">Senior Patient</th>
+              <th data-key="type">Type</th>
               <th>Report Link</th>
-              <th>Created Date</th>
+              <th data-key="created_at">Created Date</th>
               <th>Share (72-Hour Token)</th>
             </tr>
           </thead>
@@ -314,7 +355,14 @@
         <h2>Doctor Clinical Escalations & Reviews</h2>
         <table id="admin-reviews-table">
           <thead>
-            <tr><th>Review ID</th><th>Senior</th><th>Priority</th><th>Reason</th><th>Assigned Doctor</th><th>Status</th></tr>
+            <tr>
+              <th data-key="review_id">Review ID</th>
+              <th data-key="senior">Senior</th>
+              <th data-key="priority">Priority</th>
+              <th>Reason</th>
+              <th>Assigned Doctor</th>
+              <th data-key="status">Status</th>
+            </tr>
           </thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
@@ -327,7 +375,14 @@
         <h2>System Compliance Audit Trail (Last 100 Events)</h2>
         <table id="admin-audit-table">
           <thead>
-            <tr><th>Time</th><th>Actor</th><th>Role</th><th>Event</th><th>Target ID</th><th>Details</th></tr>
+            <tr>
+              <th>Time</th>
+              <th>Actor</th>
+              <th>Role</th>
+              <th>Event</th>
+              <th>Target ID</th>
+              <th>Details</th>
+            </tr>
           </thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
