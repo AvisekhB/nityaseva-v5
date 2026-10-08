@@ -15,7 +15,6 @@
     </div>
   </header>
 
-  <!-- Navigation Bar for Admin Views -->
   <div class="admin-nav">
     <button class="nav-tab active" data-tab="tab-operations">📋 Operational Work Orders</button>
     <button class="nav-tab" data-tab="tab-seniors">👴 All Registered Seniors</button>
@@ -30,15 +29,15 @@
   </div>
 
   <main>
-    <!-- TAB 1: WORK ORDERS WITH SLICERS -->
+    <!-- TAB 1: WORK ORDERS WITH DYNAMIC SLICERS -->
     <div id="tab-operations" class="tab-content active">
       <div class="card">
         <h2>Generate Work Order (Nurse Visit / Doctor Consult)</h2>
         <form id="create-wo-form">
           <div class="grid">
             <div class="form-group">
-              <label>Senior ID</label>
-              <input type="text" id="wo-senior-id" placeholder="e.g. SNR-..." required>
+              <label>Senior Patient</label>
+              <select id="wo-senior-id" required><option value="">-- Choose Senior --</option></select>
             </div>
             <div class="form-group">
               <label>Service Type</label>
@@ -52,7 +51,7 @@
               <input type="datetime-local" id="wo-scheduled-at" required>
             </div>
             <div class="form-group">
-              <label>Assigned Staff ID (Search Nurse/Doctor)</label>
+              <label>Assigned Staff / Doctor</label>
               <div class="searchable-dropdown">
                 <input type="text" id="wo-staff-search" placeholder="Type to search staff/doctor..." autocomplete="off">
                 <input type="hidden" id="wo-staff-id">
@@ -68,7 +67,7 @@
       <div class="card">
         <h2>Operational Work Orders</h2>
 
-        <!-- Top Slicer Buttons -->
+        <!-- Slicer Buttons on Top -->
         <div class="sub-nav">
           <button class="sub-tab active" data-slicer="ALL">All</button>
           <button class="sub-tab" data-slicer="SCHEDULED">SCHEDULED</button>
@@ -78,9 +77,7 @@
         </div>
 
         <div class="table-toolbar">
-          <div class="search-box">
-            <input type="text" id="search-wo" placeholder="Search by ID, Senior, Staff...">
-          </div>
+          <div class="search-box"><input type="text" id="search-wo" placeholder="Search by ID, Senior, Staff..."></div>
           <div class="sort-controls">
             <button class="sort-btn" id="sort-wo-asc">Sort ▲</button>
             <button class="sort-btn" id="sort-wo-desc">Sort ▼</button>
@@ -103,19 +100,29 @@
       </div>
     </div>
 
-    <!-- TAB 2: REGISTERED SENIORS -->
+    <!-- TAB 2: SENIORS + COMBINED FAMILY ENROLLMENT -->
     <div id="tab-seniors" class="tab-content">
       <div class="card">
-        <h2>Create Senior Record</h2>
+        <h2>Enroll Senior & Primary Family Contact</h2>
         <form id="create-senior-form">
+          <div class="section-divider">Senior Patient Details</div>
           <div class="grid">
-            <div class="form-group"><label>Full Name</label><input type="text" id="snr-name" required></div>
+            <div class="form-group"><label>Senior Full Name</label><input type="text" id="snr-name" required></div>
             <div class="form-group"><label>Date of Birth</label><input type="date" id="snr-dob"></div>
             <div class="form-group"><label>Phone</label><input type="tel" id="snr-phone"></div>
             <div class="form-group"><label>Email</label><input type="email" id="snr-email" required></div>
           </div>
           <div class="form-group"><label>Residential Address</label><input type="text" id="snr-address"></div>
-          <button type="submit">Add Senior</button>
+
+          <div class="section-divider">Primary Family Contact (Auto-linked)</div>
+          <div class="grid">
+            <div class="form-group"><label>Family Member Name</label><input type="text" id="fam-name" placeholder="Contact Person" required></div>
+            <div class="form-group"><label>Relationship</label><input type="text" id="fam-rel" placeholder="Son, Daughter, etc." required></div>
+            <div class="form-group"><label>Family Phone</label><input type="tel" id="fam-phone" required></div>
+            <div class="form-group"><label>Family Email</label><input type="email" id="fam-email" required></div>
+          </div>
+
+          <button type="submit" style="margin-top:12px;">Enroll Senior & Link Family</button>
         </form>
       </div>
 
@@ -144,12 +151,12 @@
       </div>
     </div>
 
-    <!-- TAB 3: FAMILY LINKS -->
+    <!-- TAB 3: FAMILY LINKS DIRECTORY -->
     <div id="tab-families" class="tab-content">
       <div class="card">
         <h2>Family Members & Senior Links</h2>
         <div class="table-toolbar">
-          <div class="search-box"><input type="text" id="search-families" placeholder="Search families..."></div>
+          <div class="search-box"><input type="text" id="search-families" placeholder="Search family links..."></div>
           <div class="sort-controls">
             <button class="sort-btn" id="sort-families-asc">Sort ▲</button>
             <button class="sort-btn" id="sort-families-desc">Sort ▼</button>
@@ -228,7 +235,7 @@
     <!-- TAB 6: ACTIVE SUBSCRIPTIONS -->
     <div id="tab-subscriptions" class="tab-content">
       <div class="card">
-        <h2>Create Subscription Plan (Auto 30-Day Period)</h2>
+        <h2>Create Subscription Plan (Auto 30-Day Expiry)</h2>
         <form id="create-sub-form">
           <div class="grid">
             <div class="form-group">
@@ -237,8 +244,8 @@
             </div>
             <div class="form-group"><label>Plan Name</label><input type="text" id="sub-plan-name" value="Standard Care" required></div>
             <div class="form-group"><label>Start Date</label><input type="date" id="sub-start-date" required></div>
-            <div class="form-group"><label>Nurse Visits / Month</label><input type="number" id="sub-nurse-visits" value="2" required></div>
-            <div class="form-group"><label>Doctor Consults / Month</label><input type="number" id="sub-doctor-consults" value="1" required></div>
+            <div class="form-group"><label>Nurse Visits / Mo</label><input type="number" id="sub-nurse-visits" value="2" required></div>
+            <div class="form-group"><label>Doctor Consults / Mo</label><input type="number" id="sub-doctor-consults" value="1" required></div>
           </div>
           <button type="submit">Create Subscription</button>
         </form>
@@ -298,7 +305,7 @@
     <!-- TAB 8: DIAGNOSTIC REPORTS & SHARING -->
     <div id="tab-reports" class="tab-content">
       <div class="card">
-        <h2>Upload / Register Clinical Diagnosis Report</h2>
+        <h2>Register Clinical Diagnosis Report</h2>
         <form id="create-report-form">
           <div class="grid">
             <div class="form-group">
@@ -325,7 +332,7 @@
       </div>
 
       <div class="card">
-        <h2>Diagnosis Reports & Secure Share Links</h2>
+        <h2>Past Diagnostic Reports & Secure Share Links</h2>
         <div class="table-toolbar">
           <div class="search-box"><input type="text" id="search-reports" placeholder="Search reports..."></div>
           <div class="sort-controls">
@@ -339,9 +346,9 @@
               <th data-key="report_id">Report ID</th>
               <th data-key="senior">Senior Patient</th>
               <th data-key="type">Type</th>
-              <th>Report Link</th>
+              <th>Document</th>
               <th data-key="created_at">Created Date</th>
-              <th>Share (72-Hour Token)</th>
+              <th>Share Link (72-Hour Token)</th>
             </tr>
           </thead>
           <tbody><tr><td colspan="6">Loading reports...</td></tr></tbody>
