@@ -1,7 +1,13 @@
 import { requireAuth, signOut } from './auth.js';
 import { callApi } from './dataService.js';
 import * as UI from './admin_render.js';
+import { requireAuth, signOut } from './auth.js';
+import { callApi } from './dataService.js';
 
+let currentProfile = null;
+let allData = { seniors: [], workOrders: [], staff: [], doctors: [], families: [], familyLinks: [], subscriptions: [], entitlements: [], reports: [], reviews: [], logs: [] };
+let practitionerList = [];
+let sortState = {};
 let currentProfile = null;
 let allData = { seniors: [], workOrders: [], staff: [], doctors: [], families: [], familyLinks: [], subscriptions: [], entitlements: [], reports: [], reviews: [], logs: [] };
 let practitionerList = [];
