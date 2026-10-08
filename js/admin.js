@@ -551,6 +551,182 @@ safeBind('create-apt-form', 'submit', async (e) => {
   }
 });
 
+
+
+/**
+ * Nityaseva V5 — Admin Entity Management
+ */
+
+function adminCreateSenior(auth, params) {
+  requireRole_(auth, ['admin']);
+  const seniorId = generateId_('SNR');
+
+  // 1. Create Senior Record
+  appendRow_('Seniors', {
+    senior_id: seniorId,
+    full_name: params.fullName,
+    dob: params.dob || '',
+    gender: params.gender || '',
+    phone: params.phone || '',
+    email: params.email || '',
+    address: params.address || '',
+    emergency_contact: params.emergencyContact || '',
+    status: 'ACTIVE',
+    created_at: new Date().toISOString()
+  });
+
+  // 2. Automatically register & link Family Member if details provided
+  let familyId = '';
+  if (params.familyName && params.familyEmail) {
+    familyId = generateId_('FAM');
+    appendRow_('Families', {
+      family_id: familyId,
+      full_name: params.familyName,
+      relationship: params.familyRelation || 'Family',
+      phone: params.familyPhone || '',
+      email: params.familyEmail.trim().toLowerCase(),
+      created_at: new Date().toISOString()
+    });
+
+    const linkId = generateId_('LNK');
+    appendRow_('Family_Senior_Links', {
+      link_id: linkId,
+      family_id: familyId,
+      senior_id: seniorId,
+      authorized: 'TRUE',
+      created_at: new Date().toISOString()
+    });
+  }
+
+  try {
+    if (typeof logAudit_ === 'function') {
+      logAudit_(auth.userId, auth.role, 'ADMIN_CREATE_SENIOR', { seniorId: seniorId, familyId: familyId }, 'Seniors');
+    }
+  } catch (e) {}
+
+  return { seniorId: seniorId, familyId: familyId };
+}
+
+function adminLinkFamilyToSenior(auth, params) {
+  requireRole_(auth, ['admin']);
+  const linkId = generateId_('LNK');
+  appendRow_('Family_Senior_Links', {
+    link_id: linkId,
+    family_id: params.familyId,
+    senior_id: params.seniorId,
+    authorized: 'TRUE',
+    created_at: new Date().toISOString()
+  });
+  return { linkId: linkId, success: true };
+}
+
+function adminCreateSubscription(auth, params) {
+  requireRole_(auth, ['admin']);
+  const subId = generateId_('SUB');
+
+  const startDate = params.startDate || new Date().toISOString().slice(0, 10);
+
+  // Auto-calculate end date: exactly 30 days from start date
+  const startObj = new Date(startDate);
+  const endObj = new Date(startObj.getTime() + (30 * 24 * 60 * 60 * 1000));
+  const autoEndDate = endObj.toISOString().slice(0, 10);
+
+  appendRow_('Subscriptions', {
+    subscription_id: subId,
+    senior_id: params.seniorId,
+    plan_name: params.planName || 'Standard Care',
+    nurse_visits_per_month: params.nurseVisits || 2,
+    doctor_consults_per_month: params.doctorConsults || 1,
+    start_date: startDate,
+    end_date: params.endDate || autoEndDate,
+    status: 'ACTIVE',
+    created_at: new Date().toISOString()
+  });
+
+  // Pre-create current month's entitlement row
+  try {
+    const monthStr = currentMonthStr_();
+    appendRow_('Monthly_Entitlements', {
+      entitlement_id: generateId_('ENT'),
+      senior_id: params.seniorId,
+      month: monthStr,
+      nurse_allowed: params.nurseVisits || 2,
+      nurse_used: 0,
+      doctor_allowed: params.doctorConsults || 1,
+      doctor_used: 0,
+      updated_at: new Date().toISOString()
+    });
+  } catch (e) {
+    Logger.log('Entitlement pre-creation skipped: ' + e.message);
+  }
+
+  try {
+    if (typeof logAudit_ === 'function') {
+      logAudit_(auth.userId, auth.role, 'ADMIN_CREATE_SUBSCRIPTION', {
+        subscriptionId: subId,
+        seniorId: params.seniorId,
+        endDate: autoEndDate
+      }, 'Subscriptions');
+    }
+  } catch (e) {}
+
+  return { subscriptionId: subId, success: true, endDate: params.endDate || autoEndDate };
+}
+
+function adminCreateAppointment(auth, params) {
+  requireRole_(auth, ['admin']);
+  const appointmentId = generateId_('APT');
+
+  appendRow_('Appointments', {
+    appointment_id: appointmentId,
+    senior_id: params.seniorId,
+    type: params.type || 'DoctorConsult',
+    assigned_staff_id: params.staffId || '',
+    assigned_doctor_id: params.doctorId || '',
+    scheduled_at: params.scheduledAt || '',
+    status: 'REQUESTED',
+    created_by: auth.userId,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  });
+
+  try {
+    if (typeof logAudit_ === 'function') {
+      logAudit_(auth.userId, auth.role, 'ADMIN_CREATE_APPOINTMENT', { appointmentId: appointmentId, seniorId: params.seniorId }, 'Appointments');
+    }
+  } catch (e) {}
+
+  return { appointmentId: appointmentId, success: true };
+}
+
+function adminCreateReport(auth, params) {
+  requireRole_(auth, ['admin', 'doctor', 'nurse']);
+  const reportId = generateId_('RPT');
+
+  appendRow_('Reports', {
+    report_id: reportId,
+    senior_id: params.seniorId,
+    type: params.type || 'Other Diagnostics',
+    file_url: params.fileUrl,
+    source_table: params.sourceTable || 'Manual',
+    source_id: params.sourceId || '',
+    uploaded_by: auth.userId,
+    created_at: new Date().toISOString()
+  });
+
+  try {
+    if (typeof logAudit_ === 'function') {
+      logAudit_(auth.userId, auth.role, 'REPORT_CREATED', {
+        reportId: reportId,
+        seniorId: params.seniorId,
+        type: params.type
+      }, 'Reports');
+    }
+  } catch (e) {}
+
+  return { reportId: reportId, success: true };
+}
+
 init().catch(err => {
   console.error('INIT FAILED:', err);
   alert('Dashboard failed to initialize: ' + err.message);
