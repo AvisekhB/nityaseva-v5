@@ -3,67 +3,73 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nityaseva — Secure Clinical Report</title>
+  <title>Nityaseva Care Summary & Clinical Report</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
-    .report-viewer-card {
-      max-width: 800px;
-      margin: 40px auto;
-      background: white;
-      border-radius: 10px;
-      padding: 30px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-    }
-    .status-banner {
-      padding: 12px 16px;
-      border-radius: 6px;
-      margin-bottom: 20px;
-      font-size: 13px;
-    }
-    .status-valid { background: #c6f6d5; color: #22543d; border-left: 4px solid #38a169; }
-    .status-invalid { background: #fed7d7; color: #742a2a; border-left: 4px solid #e53e3e; }
+    body { background: #eef2f5; }
+    .report-container { max-width: 900px; margin: 30px auto; padding: 0 16px; }
+    .vitals-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 16px 0; }
+    .vital-tile { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; text-align: center; }
+    .vital-val { font-size: 22px; font-weight: 700; color: #1e5238; }
+    .vital-lbl { font-size: 11px; text-transform: uppercase; color: #718096; margin-top: 4px; font-weight: 600; }
+    
+    /* CHAT STREAM / TIMELINE STYLING */
+    .timeline-stream { display: flex; flex-direction: column; gap: 16px; margin-top: 24px; }
+    .chat-bubble { display: flex; gap: 14px; max-width: 85%; padding: 14px 18px; border-radius: 12px; font-size: 14px; line-height: 1.5; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+    .chat-nurse { align-self: flex-start; background: #ffffff; border-left: 5px solid #3182ce; }
+    .chat-doctor { align-self: flex-start; background: #ffffff; border-left: 5px solid #805ad5; }
+    .chat-family { align-self: flex-end; background: #e6fffa; border-right: 5px solid #319795; }
+
+    .chat-icon { font-size: 24px; line-height: 1; }
+    .chat-meta { font-size: 11px; color: #718096; margin-bottom: 4px; font-weight: 700; display: flex; justify-content: space-between; gap: 12px; }
+    .chat-title { font-weight: 700; color: #2d3748; margin-bottom: 4px; }
+    .chat-text { color: #4a5568; }
+    .alert-tag { background: #fed7d7; color: #9b2c2c; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 700; display: inline-block; margin-top: 6px; }
   </style>
 </head>
 <body>
   <header>
-    <h1>Nityaseva Care — Clinical Diagnostic Viewer</h1>
+    <h1>Nityaseva Patient Care Summary & Journal</h1>
+    <div id="expiry-badge" class="badge badge-yellow">Validating Token...</div>
   </header>
 
-  <main>
-    <div class="report-viewer-card">
-      <div id="loading-state">
-        <h2>Validating Secure 72-Hour Access Token...</h2>
-        <p style="color:#718096; font-size:14px;">Please wait while we verify cryptographic credentials.</p>
+  <main class="report-container">
+    <div id="loading" class="card" style="text-align: center; padding: 40px;">
+      <h2>Loading Clinical Care Summary...</h2>
+      <p style="color:#718096;">Validating secure 72-hour access credentials.</p>
+    </div>
+
+    <div id="error" class="card hidden" style="border-left: 5px solid #e53e3e;">
+      <h2 style="color:#e53e3e;">Access Denied / Expired</h2>
+      <p id="error-msg">This report link is invalid, revoked, or has passed its 72-hour access window.</p>
+    </div>
+
+    <div id="report-view" class="hidden">
+      <!-- SENIOR DEMOGRAPHICS -->
+      <div class="card">
+        <h2>Patient Care Summary: <span id="pat-name" style="color:#1e5238;"></span></h2>
+        <div class="grid">
+          <div><strong>Senior ID:</strong> <span id="pat-id"></span></div>
+          <div><strong>Generated For:</strong> Family & Attending Doctor</div>
+          <div><strong>Access Window:</strong> 72 Hours (Cryptographically Hashed)</div>
+        </div>
       </div>
 
-      <div id="error-state" class="hidden">
-        <div class="status-banner status-invalid">
-          <strong>Access Denied:</strong> <span id="error-message"></span>
+      <!-- LATEST VITALS SECTION (CLINICAL VIEW FOR DOCTOR) -->
+      <div class="card">
+        <h2>Latest Clinical Vitals (Recorded by Nurse)</h2>
+        <div id="vitals-container" class="vitals-grid">
+          <!-- Populated dynamically -->
         </div>
-        <p style="font-size:13px; color:#4a5568;">
-          This secure link may have expired (72-hour window passed) or been revoked by the system administrator. 
-          Please contact Nityaseva coordination to request a fresh access link.
-        </p>
       </div>
 
-      <div id="content-state" class="hidden">
-        <div class="status-banner status-valid">
-          ✓ <strong>Authorized Access:</strong> Validated via temporary token. Valid until: <strong id="val-expiry"></strong>
-        </div>
-
-        <div class="card" style="margin-top:0;">
-          <h2>Clinical Diagnostic Record</h2>
-          <div class="grid">
-            <div class="form-group"><label>Report ID</label><div id="val-report-id" style="font-weight:700;"></div></div>
-            <div class="form-group"><label>Senior Patient ID</label><div id="val-senior-id"></div></div>
-            <div class="form-group"><label>Report Category</label><div id="val-type" class="badge badge-nurse-visit"></div></div>
-          </div>
-
-          <div style="margin-top: 24px; text-align: center;">
-            <a id="val-download-btn" href="#" target="_blank" rel="noopener">
-              <button style="font-size: 16px; padding: 12px 24px;">View Official Medical Document ↗</button>
-            </a>
-          </div>
+      <!-- CHATBOT-STYLE CARE JOURNAL (FOR FAMILY & DOCTOR) -->
+      <div class="card">
+        <h2>Continuous Care Journal & Status Log</h2>
+        <p style="font-size:13px; color:#718096;">Chronological care timeline between Nurse visits, Doctor consultations, and Family requests:</p>
+        
+        <div id="timeline-stream" class="timeline-stream">
+          <!-- Populated dynamically -->
         </div>
       </div>
     </div>
@@ -72,60 +78,87 @@
   <script type="module">
     import { CONFIG } from './js/config.js';
 
-    async function loadReport() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
-
-      if (!token) {
-        showError('No access token provided in URL.');
-        return;
-      }
+    async function init() {
+      const token = new URLSearchParams(window.location.search).get('token');
+      if (!token) return showError('No token found in link.');
 
       try {
-        const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
+        const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({
-            action: 'getReportLink',
-            params: { token: token.trim() }
-          })
+          body: JSON.stringify({ action: 'getReportLink', params: { token: token.trim() } })
         });
+        const json = await res.json();
+        if (!json.success || !json.data.success) return showError(json.data ? json.data.error : json.error);
 
-        const resJson = await response.json();
-
-        if (!resJson.success) {
-          showError(resJson.error || 'Invalid or expired token.');
-          return;
-        }
-
-        const data = resJson.data;
-        if (!data || !data.success) {
-          showError(data.error || 'Access verification failed.');
-          return;
-        }
-
-        const report = data.report;
-        document.getElementById('loading-state').classList.add('hidden');
-        document.getElementById('content-state').classList.remove('hidden');
-
-        document.getElementById('val-report-id').textContent = report.reportId;
-        document.getElementById('val-senior-id').textContent = report.seniorId;
-        document.getElementById('val-type').textContent = report.type;
-        document.getElementById('val-expiry').textContent = new Date(report.expiresAt).toLocaleString('en-IN');
-        document.getElementById('val-download-btn').href = report.fileUrl;
-
-      } catch (err) {
-        showError('Network error connecting to verification gateway: ' + err.message);
+        const data = json.data.report.careJournal;
+        renderCareReport(data, json.data.report.expiresAt);
+      } catch (e) {
+        showError(e.message);
       }
+    }
+
+    function renderCareReport(data, expiresAt) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('report-view').classList.remove('hidden');
+      document.getElementById('expiry-badge').textContent = 'Valid until: ' + new Date(expiresAt).toLocaleString('en-IN');
+      document.getElementById('expiry-badge').className = 'badge badge-green';
+
+      document.getElementById('pat-name').textContent = data.seniorName;
+      document.getElementById('pat-id').textContent = data.latestVitals ? data.latestVitals.senior_id : '--';
+
+      // 1. Render Vitals Grid (for Doctor)
+      const v = data.latestVitals;
+      const vitalsBox = document.getElementById('vitals-container');
+      if (v) {
+        vitalsBox.innerHTML = `
+          <div class="vital-tile"><div class="vital-val">${v.bp_systolic || '--'}/${v.bp_diastolic || '--'}</div><div class="vital-lbl">Blood Pressure (mmHg)</div></div>
+          <div class="vital-tile"><div class="vital-val">${v.heart_rate || '--'}</div><div class="vital-lbl">Heart Rate (bpm)</div></div>
+          <div class="vital-tile"><div class="vital-val">${v.spo2 || '--'}%</div><div class="vital-lbl">SpO2 (Oxygen)</div></div>
+          <div class="vital-tile"><div class="vital-val">${v.temperature || '--'}°${v.temperature_unit || 'C'}</div><div class="vital-lbl">Temperature</div></div>
+          <div class="vital-tile"><div class="vital-val">${v.glucose_random || v.glucose_fasting || '--'}</div><div class="vital-lbl">Blood Glucose (mg/dL)</div></div>
+          <div class="vital-tile"><div class="vital-val">${v.bmi || '--'}</div><div class="vital-lbl">BMI (${v.weight || '--'} kg)</div></div>
+          <div class="vital-tile"><div class="vital-val">${v.pain_level || '0'}/10</div><div class="vital-lbl">Pain Level</div></div>
+          <div class="vital-tile"><div class="vital-val">${v.level_of_consciousness || 'Alert'}</div><div class="vital-lbl">Consciousness</div></div>
+        `;
+      } else {
+        vitalsBox.innerHTML = '<p style="color:#718096;">No nurse assessments recorded yet.</p>';
+      }
+
+      // 2. Render Chat Stream Timeline
+      const stream = document.getElementById('timeline-stream');
+      stream.innerHTML = '';
+      (data.timeline || []).forEach(evt => {
+        const div = document.createElement('div');
+        let roleClass = 'chat-nurse';
+        let icon = '👩‍⚕️';
+        if (evt.senderRole === 'doctor') { roleClass = 'chat-doctor'; icon = '🩺'; }
+        if (evt.senderRole === 'family') { roleClass = 'chat-family'; icon = '👨‍👩‍👦'; }
+
+        div.className = `chat-bubble ${roleClass}`;
+        div.innerHTML = `
+          <div class="chat-icon">${icon}</div>
+          <div style="flex:1;">
+            <div class="chat-meta">
+              <span><strong>${evt.sender} Says:</strong></span>
+              <span>${evt.date}</span>
+            </div>
+            <div class="chat-title">${evt.title}</div>
+            <div class="chat-text">${evt.message}</div>
+            ${evt.flagged ? `<div class="alert-tag">⚠ Flagged for Review: ${evt.flagReasons || 'Abnormal vitals'}</div>` : ''}
+          </div>
+        `;
+        stream.appendChild(div);
+      });
     }
 
     function showError(msg) {
-      document.getElementById('loading-state').classList.add('hidden');
-      document.getElementById('error-state').classList.remove('hidden');
-      document.getElementById('error-message').textContent = msg;
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('error').classList.remove('hidden');
+      document.getElementById('error-msg').textContent = msg;
     }
 
-    loadReport();
+    init();
   </script>
 </body>
 </html>
