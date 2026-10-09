@@ -5,6 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Doctor Portal — Nityaseva</title>
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .vitals-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 14px 0; }
+    .vital-tile { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; text-align: center; }
+    .vital-val { font-size: 20px; font-weight: 700; color: #1e5238; }
+    .vital-lbl { font-size: 11px; text-transform: uppercase; color: #718096; margin-top: 3px; font-weight: 600; }
+
+    /* Chatbot-Style Timeline */
+    .timeline-stream { display: flex; flex-direction: column; gap: 12px; margin: 14px 0; max-height: 420px; overflow-y: auto; padding-right: 6px; }
+    .chat-bubble { display: flex; gap: 12px; padding: 12px 14px; border-radius: 10px; font-size: 13px; line-height: 1.45; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+    .chat-nurse { background: #ffffff; border-left: 5px solid #3182ce; }
+    .chat-doctor { background: #ffffff; border-left: 5px solid #805ad5; }
+    .chat-family { background: #e6fffa; border-left: 5px solid #319795; }
+    .chat-icon { font-size: 22px; line-height: 1; }
+    .chat-meta { font-size: 11px; color: #718096; margin-bottom: 3px; font-weight: 700; display: flex; justify-content: space-between; gap: 8px; }
+    .chat-title { font-weight: 700; color: #2d3748; margin-bottom: 2px; }
+    .chat-text { color: #4a5568; }
+    .alert-tag { background: #fed7d7; color: #9b2c2c; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 700; display: inline-block; margin-top: 4px; }
+  </style>
 </head>
 <body>
   <header>
@@ -16,7 +34,7 @@
   </header>
 
   <main>
-    <!-- Direct Doctor Consultation Work Orders -->
+    <!-- Doctor Scheduled Work Orders -->
     <div class="card">
       <h2>My Assigned Doctor Consultations (Work Orders)</h2>
       <table id="doctor-wo-table">
@@ -35,31 +53,88 @@
       </table>
     </div>
 
-    <!-- Doctor Work Order Execution Workspace -->
+    <!-- ACTIVE WORKSPACE FOR SELECTED CONSULTATION -->
     <div id="doctor-wo-workspace" class="card hidden">
-      <h2>Consultation: <span id="doc-active-wo-id"></span></h2>
-      <p style="font-size: 13px; color: #718096;">Senior: <strong id="doc-active-senior"></strong></p>
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #edf2f7; padding-bottom:10px; margin-bottom:14px;">
+        <h2 style="margin:0; color:#1e5238;">Consultation Workspace: <span id="doc-active-wo-id"></span></h2>
+        <span id="doc-active-status" class="badge badge-yellow"></span>
+      </div>
+      <p style="font-size: 14px; margin-top:0;">Senior: <strong id="doc-active-senior" style="color:#1e5238;"></strong></p>
 
-      <div id="doc-start-step">
-        <p style="font-size: 13px;">Enter the <strong>Start Code</strong> to begin this consultation:</p>
-        <div class="form-group" style="max-width: 260px;">
-          <input type="text" id="doc-input-start-code" placeholder="Enter Start Code" style="font-size: 16px; letter-spacing: 2px; text-transform: uppercase;">
+      <!-- START CODE ENTRY (IF SCHEDULED) -->
+      <div id="doc-start-step" style="background:#f7fafc; padding:14px; border-radius:8px; margin-bottom:16px;">
+        <p style="font-size: 13px; margin:0 0 8px 0;">Request the 8-character <strong>Start Code</strong> from the patient to begin the consultation:</p>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <input type="text" id="doc-input-start-code" placeholder="Enter Start Code" style="max-width:200px; font-size:15px; letter-spacing:1px; text-transform:uppercase;">
+          <button id="doc-btn-verify-start">Authorize & Start Teleconsult</button>
         </div>
-        <button id="doc-btn-verify-start">Start Consultation</button>
       </div>
 
-      <div id="doc-end-step" class="hidden" style="margin-top: 16px;">
-        <p style="font-size: 13px;">After consultation and feedback are complete, enter the <strong>End Code</strong>:</p>
-        <div class="form-group" style="max-width: 260px;">
-          <input type="text" id="doc-input-end-code" placeholder="Enter End Code" style="font-size: 16px; letter-spacing: 2px; text-transform: uppercase;">
+      <!-- SECTION 1: LATEST NURSE VISIT REPORT & VITALS -->
+      <div class="card" style="border: 1px solid #bee3f8; background:#ebf8ff; margin-bottom:16px;">
+        <h3 style="margin:0 0 6px 0; color:#2b6cb0; font-size:15px;">📋 Latest Nurse Home Visit Report & Vitals</h3>
+        <p id="nurse-report-date" style="font-size:12px; color:#4a5568; margin:0;"></p>
+        <div id="doc-vitals-container" class="vitals-grid">
+          <div>Loading nurse visit vitals...</div>
         </div>
-        <button id="doc-btn-verify-end">Complete Consultation</button>
+        <div id="nurse-notes-box" style="font-size:13px; color:#2d3748; background:#fff; padding:10px; border-radius:6px; margin-top:8px;">
+          <strong>Nurse Observations:</strong> <span id="doc-nurse-notes">None recorded</span>
+        </div>
+      </div>
+
+      <!-- SECTION 2: CHATBOT-STYLE CARE JOURNAL TIMELINE -->
+      <div class="card" style="border: 1px solid #e2e8f0; margin-bottom:16px;">
+        <h3 style="margin:0 0 6px 0; color:#1e5238; font-size:15px;">💬 Care Journal & Timeline (Nurse, Doctor & Family History)</h3>
+        <p style="font-size:12px; color:#718096; margin:0 0 10px 0;">Chronological history of what the nurse observed, past doctor advice, and family requests:</p>
+        <div id="doc-timeline-stream" class="timeline-stream">
+          <div>Loading care history...</div>
+        </div>
+      </div>
+
+      <!-- SECTION 3: DOCTOR CONSULTATION NOTES & RECOMMENDATIONS -->
+      <div class="card" style="border: 1px solid #d6bcfa; background:#faf5ff; margin-bottom:16px;">
+        <h3 style="margin:0 0 8px 0; color:#6b46c1; font-size:15px;">🩺 Doctor Clinical Advice & Prescription ("Doctor Says")</h3>
+        <form id="doc-consult-feedback-form">
+          <div class="form-group">
+            <label>Clinical Summary</label>
+            <textarea id="doc-consult-summary" rows="2" placeholder="e.g. Patient evaluated via teleconsult. Vitals reviewed." required></textarea>
+          </div>
+          <div class="form-group">
+            <label>Observations</label>
+            <textarea id="doc-consult-obs" rows="2" placeholder="e.g. Mild hypertension observed in nurse vitals. General condition stable."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Doctor Advice to Family & Nurse ("Doctor Says")</label>
+            <textarea id="doc-consult-advice" rows="2" placeholder="e.g. Continue Amlodipine 5mg. Restrict sodium. Retake BP in 3 days." required></textarea>
+          </div>
+          <div class="grid">
+            <div class="form-group">
+              <label>Recommended Tests / Diagnostics</label>
+              <input type="text" id="doc-consult-inv" placeholder="e.g. Serum Creatinine, ECG">
+            </div>
+            <div class="form-group">
+              <label>Follow-up Date</label>
+              <input type="date" id="doc-consult-followup">
+            </div>
+          </div>
+          <button type="submit" style="background:#6b46c1;">Save Clinical Advice to Care Journal</button>
+        </form>
+      </div>
+
+      <!-- SECTION 4: END CODE VERIFICATION -->
+      <div id="doc-end-step" class="hidden" style="background:#f7fafc; padding:14px; border-radius:8px;">
+        <h3 style="margin:0 0 6px 0; color:#1e5238; font-size:15px;">Complete Consultation (End Code)</h3>
+        <p style="font-size: 13px; margin:0 0 8px 0;">Once consultation is concluded, enter the <strong>End Code</strong> provided by the patient:</p>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <input type="text" id="doc-input-end-code" placeholder="Enter End Code" style="max-width:200px; font-size:15px; letter-spacing:1px; text-transform:uppercase;">
+          <button id="doc-btn-verify-end">Verify End Code & Close Consultation</button>
+        </div>
       </div>
     </div>
 
-    <!-- Clinical Escalations & Reviews (from Nurses) -->
+    <!-- Clinical Escalations Queue from Nurses -->
     <div class="card">
-      <h2>Pending Clinical Escalations & Reviews</h2>
+      <h2>Pending Clinical Escalations from Nurses</h2>
       <table id="doctor-queue-table">
         <thead>
           <tr>
@@ -74,34 +149,6 @@
           <tr><td colspan="5">Loading queue...</td></tr>
         </tbody>
       </table>
-    </div>
-
-    <!-- Clinical Feedback Panel -->
-    <div id="feedback-panel" class="card hidden">
-      <h2>Clinical Assessment & Recommendations: <span id="current-senior-title"></span></h2>
-      <form id="doctor-feedback-form">
-        <div class="form-group">
-          <label>Clinical Summary</label>
-          <textarea id="doc-summary" rows="3" required></textarea>
-        </div>
-        <div class="form-group">
-          <label>Medical Observations</label>
-          <textarea id="doc-obs" rows="2"></textarea>
-        </div>
-        <div class="form-group">
-          <label>Doctor Advice to Family & Nurse</label>
-          <textarea id="doc-advice" rows="2" required></textarea>
-        </div>
-        <div class="form-group">
-          <label>Investigation / Lab Recommendations</label>
-          <input type="text" id="doc-inv" placeholder="e.g. Complete Blood Count, ECG">
-        </div>
-        <div class="form-group">
-          <label>Follow-up Date Required?</label>
-          <input type="date" id="doc-followup">
-        </div>
-        <button type="submit">Submit Feedback & Close Review</button>
-      </form>
     </div>
   </main>
 
