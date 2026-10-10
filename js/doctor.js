@@ -97,6 +97,9 @@ function renderWorkOrders(orders) {
       }
     } catch (e) {}
 
+    // 👇 ADD THIS EXACT LINE RIGHT HERE:
+    const tr = document.createElement('tr');
+
     tr.innerHTML = `
       <td><strong>${wo.work_order_id}</strong></td>
       <td><code>${wo.senior_id}</code></td>
