@@ -83,7 +83,6 @@ function renderWorkOrders(orders) {
   }
 
   orders.forEach(wo => {
-    const tr = document.createElement('tr');
     const badgeColor = wo.status === 'COMPLETE'
       ? 'badge-green'
       : (wo.status === 'IN_PROGRESS' ? 'badge-yellow' : 'badge-blue');
@@ -155,14 +154,13 @@ async function openClinicalWorkspace(seniorId, workOrder) {
       if (endStep) endStep.classList.add('hidden');
     }
   } else {
-    // Pure escalation review
     if (startStep) startStep.classList.add('hidden');
     if (endStep) endStep.classList.add('hidden');
   }
 
   workspace.scrollIntoView({ behavior: 'smooth' });
 
-  // Load Patient Clinical Summary: Nurse Vitals + Care Journal
+  // Load Patient Clinical Summary: All 22 Nurse Vitals + Care Journal Timeline
   await loadPatientClinicalSummary(seniorId);
 }
 
@@ -172,68 +170,147 @@ async function loadPatientClinicalSummary(seniorId) {
   const nurseNotesEl = document.getElementById('doc-nurse-notes');
   const stream = document.getElementById('doc-timeline-stream');
 
-  if (vitalsContainer) vitalsContainer.innerHTML = '<div>Loading latest nurse report...</div>';
+  if (vitalsContainer) vitalsContainer.innerHTML = '<div>Loading complete nurse assessment...</div>';
   if (stream) stream.innerHTML = '<div>Loading care history...</div>';
 
   try {
     const summary = await callApi('getSeniorClinicalSummary', { seniorId: seniorId });
-
-    // 1. Render Latest Nurse Report
     const v = summary.latestAssessment;
+
     if (v && vitalsContainer) {
       if (reportDateEl) {
         const d = v.created_at ? new Date(v.created_at).toLocaleString('en-IN') : 'Recent';
         reportDateEl.textContent = `Recorded by Nurse on: ${d} | Visit ID: ${v.visit_id || '--'}`;
       }
 
+      // Safe field extractors
+      const sys = v.bp_systolic || (v.bp ? v.bp.split('/')[0] : '--');
+      const dia = v.bp_diastolic || (v.bp ? v.bp.split('/')[1] : '--');
+      const bpTime = v.bp_timestamp ? ` @ ${v.bp_timestamp}` : '';
+      const hr = v.heart_rate || '--';
+      const spo2 = v.spo2 || '--';
+      const rr = v.respiratory_rate || '--';
+      const tempUnit = v.temperature_unit || 'C';
+      const temp = v.temperature ? `${v.temperature}°${tempUnit}` : '--';
+
+      const fastingGluc = v.glucose_fasting ? `${v.glucose_fasting} mg/dL` : 'Not Done';
+      const randomGluc = v.glucose_random || v.blood_sugar || '--';
+      const glucTiming = v.glucose_timing ? ` (${v.glucose_timing})` : '';
+
+      const wt = v.weight ? `${v.weight} kg` : '--';
+      const ht = v.height ? `${v.height} cm` : '--';
+      const bmiVal = v.bmi || '--';
+      const waist = v.waist_circumference ? `${v.waist_circumference} cm` : 'Not Done';
+
+      const pain = (v.pain_level !== undefined && v.pain_level !== '') ? `${v.pain_level}/10` : '0/10';
+      const painLoc = v.pain_location ? ` (${v.pain_location})` : '';
+
+      const loc = v.level_of_consciousness || 'Alert';
+      const fall = v.fall_risk || 'Low';
+      const mobility = v.mobility_status || v.mobility || 'Independent';
+
+      const respSym = v.respiratory_symptoms || 'None';
+      const respNotes = v.respiratory_notes ? ` (${v.respiratory_notes})` : '';
+
+      const edema = v.edema_severity || v.edema || 'None';
+      const edemaNotes = v.edema_notes ? ` (${v.edema_notes})` : '';
+
+      const hydration = v.hydration_status || v.hydration || 'Normal';
+      const meds = v.medication_adherence || 'Good';
+      const medsNotes = v.medication_notes ? ` (${v.medication_notes})` : '';
+      const cog = v.cognitive_observation || 'Normal';
+
       vitalsContainer.innerHTML = `
+        <!-- Vital Signs (1-5) -->
         <div class="vital-tile">
-          <div class="vital-val">${v.bp_systolic || '--'}/${v.bp_diastolic || '--'}</div>
-          <div class="vital-lbl">BP (mmHg) ${v.bp_timestamp ? '@ ' + v.bp_timestamp : ''}</div>
+          <div class="vital-val">${sys}/${dia}</div>
+          <div class="vital-lbl">1. Blood Pressure${bpTime}</div>
         </div>
         <div class="vital-tile">
-          <div class="vital-val">${v.heart_rate || '--'}</div>
-          <div class="vital-lbl">Pulse (bpm)</div>
+          <div class="vital-val">${hr}</div>
+          <div class="vital-lbl">2. Heart Rate (bpm)</div>
         </div>
         <div class="vital-tile">
-          <div class="vital-val">${v.spo2 || '--'}%</div>
-          <div class="vital-lbl">SpO2</div>
+          <div class="vital-val">${spo2}%</div>
+          <div class="vital-lbl">3. SpO₂</div>
         </div>
         <div class="vital-tile">
-          <div class="vital-val">${v.temperature || '--'}°${v.temperature_unit || 'C'}</div>
-          <div class="vital-lbl">Temperature</div>
+          <div class="vital-val">${rr}</div>
+          <div class="vital-lbl">4. Resp Rate (/min)</div>
         </div>
         <div class="vital-tile">
-          <div class="vital-val">${v.glucose_random || v.glucose_fasting || '--'}</div>
-          <div class="vital-lbl">Blood Sugar (mg/dL)</div>
+          <div class="vital-val">${temp}</div>
+          <div class="vital-lbl">5. Body Temperature</div>
+        </div>
+
+        <!-- Glucose (6-7) -->
+        <div class="vital-tile">
+          <div class="vital-val" style="font-size:17px;">${fastingGluc}</div>
+          <div class="vital-lbl">6. Fasting Glucose</div>
         </div>
         <div class="vital-tile">
-          <div class="vital-val">${v.bmi || '--'}</div>
-          <div class="vital-lbl">BMI (${v.weight || '--'} kg)</div>
+          <div class="vital-val" style="font-size:17px;">${randomGluc}</div>
+          <div class="vital-lbl">7. Random Glucose${glucTiming}</div>
+        </div>
+
+        <!-- Body Measurements (8-11) -->
+        <div class="vital-tile">
+          <div class="vital-val">${wt}</div>
+          <div class="vital-lbl">8. Weight</div>
         </div>
         <div class="vital-tile">
-          <div class="vital-val">${v.pain_level || 0}/10</div>
-          <div class="vital-lbl">Pain Score</div>
+          <div class="vital-val">${ht}</div>
+          <div class="vital-lbl">9. Height</div>
         </div>
         <div class="vital-tile">
-          <div class="vital-val">${v.level_of_consciousness || 'Alert'}</div>
-          <div class="vital-lbl">Consciousness</div>
+          <div class="vital-val">${bmiVal}</div>
+          <div class="vital-lbl">10. BMI (kg/m²)</div>
         </div>
         <div class="vital-tile">
-          <div class="vital-val">${v.fall_risk || 'Low'}</div>
-          <div class="vital-lbl">Fall Risk</div>
+          <div class="vital-val" style="font-size:17px;">${waist}</div>
+          <div class="vital-lbl">11. Waist Circumference</div>
+        </div>
+
+        <!-- Pain & Consciousness (12-13) -->
+        <div class="vital-tile">
+          <div class="vital-val">${pain}</div>
+          <div class="vital-lbl">12. Pain Score${painLoc}</div>
         </div>
         <div class="vital-tile">
-          <div class="vital-val">${v.edema_severity || 'None'}</div>
-          <div class="vital-lbl">Edema</div>
+          <div class="vital-val" style="font-size:17px;">${loc}</div>
+          <div class="vital-lbl">13. Consciousness</div>
+        </div>
+
+        <!-- Risk & Mobility (14-15) -->
+        <div class="vital-tile">
+          <div class="vital-val" style="font-size:17px;">${fall}</div>
+          <div class="vital-lbl">14. Fall Risk</div>
         </div>
         <div class="vital-tile">
-          <div class="vital-val">${v.hydration_status || 'Normal'}</div>
-          <div class="vital-lbl">Hydration</div>
+          <div class="vital-val" style="font-size:16px;">${mobility}</div>
+          <div class="vital-lbl">15. Mobility Status</div>
+        </div>
+
+        <!-- Symptoms & Observations (16-20) -->
+        <div class="vital-tile">
+          <div class="vital-val" style="font-size:16px;">${respSym}</div>
+          <div class="vital-lbl">16. Resp Symptoms${respNotes}</div>
         </div>
         <div class="vital-tile">
-          <div class="vital-val">${v.medication_adherence || 'Good'}</div>
-          <div class="vital-lbl">Med Adherence</div>
+          <div class="vital-val" style="font-size:16px;">${edema}</div>
+          <div class="vital-lbl">17. Edema${edemaNotes}</div>
+        </div>
+        <div class="vital-tile">
+          <div class="vital-val" style="font-size:16px;">${hydration}</div>
+          <div class="vital-lbl">18. Hydration Status</div>
+        </div>
+        <div class="vital-tile">
+          <div class="vital-val" style="font-size:16px;">${meds}</div>
+          <div class="vital-lbl">19. Med Adherence${medsNotes}</div>
+        </div>
+        <div class="vital-tile">
+          <div class="vital-val" style="font-size:16px;">${cog}</div>
+          <div class="vital-lbl">20. Cognitive Observation</div>
         </div>
       `;
 
@@ -350,10 +427,10 @@ function wireWorkspaceActions() {
         alert('Clinical advice saved successfully to the patient Care Journal!');
         formFeedback.reset();
 
-        // Refresh care journal timeline in place so the doctor sees their new entry
+        // Refresh care journal timeline in place so doctor sees their new entry
         await loadPatientClinicalSummary(activeSeniorId);
 
-        // If in Work Order mode, ensure the End Code section is visible
+        // If in Work Order mode, show End Code section
         const endStep = document.getElementById('doc-end-step');
         if (activeDocWO && endStep) {
           endStep.classList.remove('hidden');
