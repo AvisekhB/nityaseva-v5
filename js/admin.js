@@ -144,7 +144,6 @@ function setupSearchableStaffDropdown() {
   });
 }
 
-// 1. Work Orders with Slicers
 function renderWorkOrders(orders) {
   const tbody = document.querySelector('#admin-wo-table tbody');
   if (!tbody) return;
@@ -187,13 +186,16 @@ function renderWorkOrders(orders) {
     btn.onclick = async () => {
       const reason = prompt('Cancellation reason:');
       if (!reason) return;
-      await callApi('adminOverrideWorkOrder', { workOrderId: btn.getAttribute('data-id'), newStatus: 'CANCELLED', reason });
-      await loadAdminDashboard();
+      try {
+        await callApi('adminOverrideWorkOrder', { workOrderId: btn.getAttribute('data-id'), newStatus: 'CANCELLED', reason });
+        await loadAdminDashboard();
+      } catch (err) {
+        alert('Override failed: ' + err.message);
+      }
     };
   });
 }
 
-// 2. Subscriptions Table (Fixed Date Mapping)
 function renderSubscriptions(subs) {
   const tbody = document.querySelector('#admin-subs-table tbody');
   if (!tbody) return;
@@ -213,7 +215,6 @@ function renderSubscriptions(subs) {
   `).join('');
 }
 
-// 3. Entitlements Table
 function renderEntitlements(ents) {
   const tbody = document.querySelector('#admin-entitlements-table tbody');
   if (!tbody) return;
@@ -231,7 +232,6 @@ function renderEntitlements(ents) {
   `).join('');
 }
 
-// 4. Reports Table with 72-Hour Token Sharing
 function renderReports(reports) {
   const tbody = document.querySelector('#admin-reports-table tbody');
   if (!tbody) return;
@@ -317,17 +317,19 @@ function renderReviews(revs) {
   const tbody = document.querySelector('#admin-reviews-table tbody');
   if (!tbody) return;
   tbody.innerHTML = !revs || revs.length === 0 ? '<tr><td colspan="6">No reviews pending.</td></tr>' :
-    revs.map(r => `<tr><td><strong>${r.review_id}</strong></td><td>${getSeniorName(r.senior_id)}</td><td><span class="badge badge-cancelled">${r.priority}</span></td><td>${r.reason}</td><td>${getStaffName(r.assigned_doctor_id)}</td><td><span class="badge badge-scheduled">${r.status}</span></td></tr>`).join('');
+    revs.map(r => {
+      const color = r.priority === 'EMERGENCY' ? 'badge-cancelled' : (r.priority === 'URGENT' ? 'badge-scheduled' : 'badge-doctor-consult');
+      return `<tr><td><strong>${r.review_id}</strong></td><td>${getSeniorName(r.senior_id)}</td><td><span class="badge ${color}">${r.priority}</span></td><td>${r.reason}</td><td>${getStaffName(r.assigned_doctor_id)}</td><td><span class="badge badge-scheduled">${r.status}</span></td></tr>`;
+    }).join('');
 }
 
 function renderAudit(logs) {
   const tbody = document.querySelector('#admin-audit-table tbody');
   if (!tbody) return;
   tbody.innerHTML = !logs || logs.length === 0 ? '<tr><td colspan="6">No audit records found.</td></tr>' :
-    [...logs].reverse().slice(0, 100).map(l => `<tr><td><small>${l.timestamp ? new Date(l.timestamp).toLocaleTimeString() : '-'}</small></td><td>${l.actor_id}</td><td>${l.actor_role}</td><td><strong>${l.event}</strong></td><td>${l.work_order_id||'-'}</td><td><small>${l.reason||''}</small></td></tr>`).join('');
+    [...logs].reverse().slice(0, 100).map(l => `<tr><td><small>${l.timestamp ? new Date(l.timestamp).toLocaleTimeString() : '-'}</small></td><td>${l.actor_id}</td><td>${l.actor_role}</td><td><strong>${l.event}</strong></td><td>${l.work_order_id || '-'}</td><td><small>${l.reason || ''}</small></td></tr>`).join('');
 }
 
-// Search and Sort System
 function setupTableSortAndSearch() {
   const tables = [
     { searchId: 'search-wo', ascId: 'sort-wo-asc', descId: 'sort-wo-desc', getData: () => allData.workOrders || [], render: renderWorkOrders, sortKey: 'created_at' },
@@ -371,13 +373,9 @@ document.getElementById('create-senior-form')?.addEventListener('submit', async 
       dob: document.getElementById('snr-dob').value,
       phone: document.getElementById('snr-phone').value.trim(),
       email: document.getElementById('snr-email').value.trim(),
-      address: document.getElementById('snr-address').value.trim(),
-      familyName: document.getElementById('fam-name').value.trim(),
-      familyRelation: document.getElementById('fam-rel').value.trim(),
-      familyPhone: document.getElementById('fam-phone').value.trim(),
-      familyEmail: document.getElementById('fam-email').value.trim()
+      address: document.getElementById('snr-address').value.trim()
     });
-    alert('Senior & Family Linked Successfully! Senior ID: ' + res.seniorId);
+    alert('Senior Created Successfully! ID: ' + res.seniorId);
     document.getElementById('create-senior-form').reset();
     await loadAdminDashboard();
   } catch (err) {
@@ -388,33 +386,55 @@ document.getElementById('create-senior-form')?.addEventListener('submit', async 
 document.getElementById('create-wo-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const seniorId = document.getElementById('wo-senior-id').value.trim();
-  const resDiv = document.getElementById('wo-result');
-  resDiv.className = 'message hidden';
+  const resultDiv = document.getElementById('wo-result');
+  resultDiv.className = 'message hidden';
 
-  const nowStr = new Date().toISOString().slice(0, 10);
-  const hasActiveSub = (allData.subscriptions || []).some(s => s.senior_id === seniorId && s.status === 'ACTIVE' && (!s.end_date || s.end_date >= nowStr));
-  if (!hasActiveSub) {
-    alert('ALERT: Senior ' + seniorId + ' has NO Active Subscription.');
+  if (!seniorId) {
+    alert('Please choose a Senior Patient.');
     return;
   }
 
+  // Active Subscription Pre-Check
+  const nowStr = new Date().toISOString().slice(0, 10);
+  const hasActiveSub = (allData.subscriptions || []).some(s =>
+    s.senior_id === seniorId && s.status === 'ACTIVE' && (!s.end_date || s.end_date >= nowStr)
+  );
+  if (!hasActiveSub) {
+    alert('ALERT: Senior ' + seniorId + ' has NO Active Subscription. Please create a Subscription first.');
+    return;
+  }
+
+  // Resolve Staff ID safely
+  let staffId = (document.getElementById('wo-staff-id')?.value || '').trim();
+  const staffSearchText = (document.getElementById('wo-staff-search')?.value || '').trim().toLowerCase();
+  if (!staffId && staffSearchText) {
+    const match = practitionerList.find(p =>
+      p.name.toLowerCase() === staffSearchText ||
+      p.id.toLowerCase() === staffSearchText ||
+      `dr. ${p.name.toLowerCase()}` === staffSearchText
+    );
+    if (match) staffId = match.id;
+  }
+
   try {
+    const scheduledVal = document.getElementById('wo-scheduled-at').value;
     const res = await callApi('createWorkOrder', {
       seniorId,
       type: document.getElementById('wo-type').value,
-      scheduledAt: new Date(document.getElementById('wo-scheduled-at').value).toISOString(),
-      staffId: document.getElementById('wo-staff-id').value.trim()
+      scheduledAt: scheduledVal ? new Date(scheduledVal).toISOString() : new Date().toISOString(),
+      staffId: staffId
     });
-    resDiv.innerHTML = `<strong>Work Order Created!</strong> ID: <code>${res.workOrderId}</code> | Start: <strong>${res.startCode}</strong> | End: <strong>${res.endCode}</strong>`;
-    resDiv.className = 'message success';
-    resDiv.classList.remove('hidden');
+    resultDiv.innerHTML = `<strong>Work Order Created!</strong> ID: <code>${res.workOrderId}</code> | Start: <strong>${res.startCode}</strong> | End: <strong>${res.endCode}</strong>`;
+    resultDiv.className = 'message success';
+    resultDiv.classList.remove('hidden');
+    
     document.getElementById('wo-staff-search').value = '';
     document.getElementById('wo-staff-id').value = '';
     await loadAdminDashboard();
   } catch (err) {
-    resDiv.innerHTML = 'Error: ' + err.message;
-    resDiv.className = 'message error';
-    resDiv.classList.remove('hidden');
+    resultDiv.innerHTML = 'Error: ' + err.message;
+    resultDiv.className = 'message error';
+    resultDiv.classList.remove('hidden');
   }
 });
 
