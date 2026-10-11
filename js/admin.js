@@ -62,8 +62,8 @@ async function loadAdminDashboard() {
     allData = data || {};
 
     practitionerList = [
-      ...(allData.staff || []).map(s => ({ id: s.staff_id, name: s.full_name, type: 'Nurse' })),
-      ...(allData.doctors || []).map(d => ({ id: d.doctor_id, name: d.full_name, type: 'Doctor' }))
+      ...(allData.staff || []).map(s => ({ id: String(s.staff_id || '').trim(), name: String(s.full_name || '').trim(), type: 'Nurse' })),
+      ...(allData.doctors || []).map(d => ({ id: String(d.doctor_id || '').trim(), name: String(d.full_name || '').trim(), type: 'Doctor' }))
     ];
 
     populateSeniorDropdowns(allData.seniors || []);
@@ -87,20 +87,22 @@ async function loadAdminDashboard() {
 }
 
 function getSeniorName(id) {
-  const s = (allData.seniors || []).find(x => x.senior_id === id);
-  return s ? s.full_name : id;
+  const cleanId = String(id || '').trim();
+  const s = (allData.seniors || []).find(x => String(x.senior_id || '').trim() === cleanId);
+  return s ? s.full_name : cleanId;
 }
 
 function getStaffName(id) {
-  if (!id) return '<span style="color:#a0aec0;">Unassigned</span>';
-  const p = practitionerList.find(x => x.id === id);
-  if (!p) return id;
+  const cleanId = String(id || '').trim();
+  if (!cleanId) return '<span style="color:#a0aec0;">Unassigned</span>';
+  const p = practitionerList.find(x => x.id === cleanId);
+  if (!p) return cleanId;
   return p.type === 'Doctor' ? `🩺 Dr. ${p.name}` : `👩‍⚕️ ${p.name}`;
 }
 
 function populateSeniorDropdowns(seniors) {
   const options = '<option value="">-- Choose Senior --</option>' +
-    seniors.map(s => `<option value="${s.senior_id}">${s.full_name} (${s.senior_id})</option>`).join('');
+    seniors.map(s => `<option value="${String(s.senior_id || '').trim()}">${s.full_name} (${String(s.senior_id || '').trim()})</option>`).join('');
 
   ['wo-senior-id', 'sub-senior-id', 'report-senior-id'].forEach(id => {
     const el = document.getElementById(id);
@@ -123,7 +125,7 @@ function setupSearchableStaffDropdown() {
     } else {
       box.innerHTML = matches.map(p => `
         <div class="suggestion-item" data-id="${p.id}" data-name="${p.name}">
-          ${p.type === 'Doctor' ? 'Dr. ' : ''}${p.name}
+          ${p.type === 'Doctor' ? 'Dr. ' : ''}${p.name} (${p.id})
           <span class="tag ${p.type === 'Doctor' ? 'badge-doctor-consult' : 'badge-nurse-visit'}">${p.type}</span>
         </div>
       `).join('');
@@ -150,10 +152,10 @@ function renderWorkOrders(orders) {
   tbody.innerHTML = '';
 
   let filtered = [...orders];
-  if (activeSlicer === 'SCHEDULED') filtered = filtered.filter(w => w.status === 'SCHEDULED' || w.status === 'UNSCHEDULED');
-  else if (activeSlicer === 'IN_PROGRESS') filtered = filtered.filter(w => w.status === 'IN_PROGRESS');
-  else if (activeSlicer === 'COMPLETE') filtered = filtered.filter(w => w.status === 'COMPLETE' || w.status === 'CLOSE');
-  else if (activeSlicer === 'CANCELLED') filtered = filtered.filter(w => w.status === 'CANCELLED');
+  if (activeSlicer === 'SCHEDULED') filtered = filtered.filter(w => String(w.status).toUpperCase() === 'SCHEDULED' || String(w.status).toUpperCase() === 'UNSCHEDULED');
+  else if (activeSlicer === 'IN_PROGRESS') filtered = filtered.filter(w => String(w.status).toUpperCase() === 'IN_PROGRESS');
+  else if (activeSlicer === 'COMPLETE') filtered = filtered.filter(w => String(w.status).toUpperCase() === 'COMPLETE' || String(w.status).toUpperCase() === 'CLOSE');
+  else if (activeSlicer === 'CANCELLED') filtered = filtered.filter(w => String(w.status).toUpperCase() === 'CANCELLED');
 
   if (filtered.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6">No work orders in this view.</td></tr>';
@@ -162,8 +164,9 @@ function renderWorkOrders(orders) {
 
   filtered.reverse().forEach(wo => {
     const tr = document.createElement('tr');
-    const isClosed = (wo.status === 'COMPLETE' || wo.status === 'CLOSE');
-    const badgeColor = isClosed ? 'badge-complete' : (wo.status === 'IN_PROGRESS' ? 'badge-in-progress' : (wo.status === 'CANCELLED' ? 'badge-cancelled' : 'badge-scheduled'));
+    const stUpper = String(wo.status || '').toUpperCase();
+    const isClosed = (stUpper === 'COMPLETE' || stUpper === 'CLOSE');
+    const badgeColor = isClosed ? 'badge-complete' : (stUpper === 'IN_PROGRESS' ? 'badge-in-progress' : (stUpper === 'CANCELLED' ? 'badge-cancelled' : 'badge-scheduled'));
     const typeBadge = wo.type === 'DoctorConsult' ? 'badge-doctor-consult' : 'badge-nurse-visit';
     const displayTime = wo.created_at ? new Date(wo.created_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : '-';
 
@@ -174,7 +177,7 @@ function renderWorkOrders(orders) {
       <td>${displayTime}</td>
       <td><span class="badge ${badgeColor}">${wo.status}</span></td>
       <td>
-        ${!isClosed && wo.status !== 'CANCELLED'
+        ${!isClosed && stUpper !== 'CANCELLED'
           ? `<button class="override-btn danger" data-id="${wo.work_order_id}">Cancel</button>`
           : `<span style="color:#a0aec0;font-size:12px;">Locked</span>`}
       </td>
@@ -203,16 +206,25 @@ function renderSubscriptions(subs) {
     tbody.innerHTML = '<tr><td colspan="6">No active subscriptions found.</td></tr>';
     return;
   }
-  tbody.innerHTML = subs.map(s => `
-    <tr>
-      <td><strong>${s.subscription_id}</strong></td>
-      <td>${getSeniorName(s.senior_id)}</td>
-      <td>${s.plan_name}</td>
-      <td>${s.start_date || '-'}</td>
-      <td><strong>${s.end_date || '-'}</strong></td>
-      <td><span class="badge badge-complete">${s.status || 'ACTIVE'}</span></td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = subs.map(s => {
+    let sDate = '-';
+    let eDate = '-';
+    try {
+      if (s.start_date) sDate = new Date(s.start_date).toISOString().slice(0, 10);
+      if (s.end_date) eDate = new Date(s.end_date).toISOString().slice(0, 10);
+    } catch (e) {}
+
+    return `
+      <tr>
+        <td><strong>${s.subscription_id}</strong></td>
+        <td>${getSeniorName(s.senior_id)}</td>
+        <td>${s.plan_name}</td>
+        <td>${sDate}</td>
+        <td><strong>${eDate}</strong></td>
+        <td><span class="badge badge-complete">${s.status || 'ACTIVE'}</span></td>
+      </tr>
+    `;
+  }).join('');
 }
 
 function renderEntitlements(ents) {
@@ -364,7 +376,6 @@ function setupTableSortAndSearch() {
   });
 }
 
-// Form Handlers
 document.getElementById('create-senior-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   try {
@@ -385,7 +396,7 @@ document.getElementById('create-senior-form')?.addEventListener('submit', async 
 
 document.getElementById('create-wo-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const seniorId = document.getElementById('wo-senior-id').value.trim();
+  const seniorId = String(document.getElementById('wo-senior-id')?.value || '').trim();
   const resultDiv = document.getElementById('wo-result');
   resultDiv.className = 'message hidden';
 
@@ -394,19 +405,32 @@ document.getElementById('create-wo-form')?.addEventListener('submit', async (e) 
     return;
   }
 
-  // Active Subscription Pre-Check
-  const nowStr = new Date().toISOString().slice(0, 10);
-  const hasActiveSub = (allData.subscriptions || []).some(s =>
-    s.senior_id === seniorId && s.status === 'ACTIVE' && (!s.end_date || s.end_date >= nowStr)
-  );
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const hasActiveSub = (allData.subscriptions || []).some(s => {
+    const sId = String(s.senior_id || '').trim();
+    const st = String(s.status || '').trim().toUpperCase();
+    if (sId !== seniorId || st !== 'ACTIVE') return false;
+    if (!s.end_date) return true;
+
+    let exp;
+    if (s.end_date instanceof Date) {
+      exp = new Date(s.end_date.getTime());
+    } else {
+      exp = new Date(String(s.end_date).trim());
+    }
+    exp.setHours(23, 59, 59, 999);
+    return exp >= today;
+  });
+
   if (!hasActiveSub) {
-    alert('ALERT: Senior ' + seniorId + ' has NO Active Subscription. Please create a Subscription first.');
+    alert('ALERT: Senior ' + seniorId + ' has NO Active Subscription. Please verify dates in Subscriptions tab.');
     return;
   }
 
-  // Resolve Staff ID safely
-  let staffId = (document.getElementById('wo-staff-id')?.value || '').trim();
-  const staffSearchText = (document.getElementById('wo-staff-search')?.value || '').trim().toLowerCase();
+  let staffId = String(document.getElementById('wo-staff-id')?.value || '').trim();
+  const staffSearchText = String(document.getElementById('wo-staff-search')?.value || '').trim().toLowerCase();
   if (!staffId && staffSearchText) {
     const match = practitionerList.find(p =>
       p.name.toLowerCase() === staffSearchText ||
@@ -424,10 +448,11 @@ document.getElementById('create-wo-form')?.addEventListener('submit', async (e) 
       scheduledAt: scheduledVal ? new Date(scheduledVal).toISOString() : new Date().toISOString(),
       staffId: staffId
     });
+
     resultDiv.innerHTML = `<strong>Work Order Created!</strong> ID: <code>${res.workOrderId}</code> | Start: <strong>${res.startCode}</strong> | End: <strong>${res.endCode}</strong>`;
     resultDiv.className = 'message success';
     resultDiv.classList.remove('hidden');
-    
+
     document.getElementById('wo-staff-search').value = '';
     document.getElementById('wo-staff-id').value = '';
     await loadAdminDashboard();
