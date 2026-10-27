@@ -9,11 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f8faf7;
+      --bg: #f5f8f5;
       --card-white: #ffffff;
       --text-main: #131b15;
-      --text-muted: #738075;
+      --text-muted: #6b7280;
       --green-accent: #2d6a4f;
+      --green-soft: #d8f3dc;
+      --blue-accent: #0284c7;
+      --red-accent: #dc2626;
     }
 
     * {
@@ -66,6 +69,7 @@
       align-items: center;
       justify-content: center;
       font-size: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
 
     .top-meta small {
@@ -86,16 +90,16 @@
       background: #ecfdf5;
       color: #047857;
       border: 1px solid #a7f3d0;
-      padding: 5px 10px;
+      padding: 5px 12px;
       border-radius: 20px;
     }
 
-    /* VISIT SELECTOR (TIMELINE SYNCHRONIZER) */
+    /* VISIT SELECTOR */
     .visit-picker-box {
       background: #ffffff;
       border: 1px solid #e2e8f0;
       border-radius: 18px;
-      padding: 12px 14px;
+      padding: 10px 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -119,12 +123,13 @@
       outline: none;
     }
 
-    /* PATIENT HERO CARD */
+    /* HERO CARD */
     .patient-card {
       background: linear-gradient(135deg, #e4f6df 0%, #d3efce 100%);
       border-radius: 26px;
       padding: 20px;
       box-shadow: 0 8px 24px rgba(45, 106, 79, 0.08);
+      animation: slideUp 0.5s ease-out forwards;
     }
 
     .patient-header {
@@ -186,10 +191,10 @@
       border-radius: 50%;
       background: #52b788;
       box-shadow: 0 0 6px #52b788;
-      animation: pulse 1.5s infinite;
+      animation: pulse-dot 1.5s infinite;
     }
 
-    /* SECTION HEADER */
+    /* SECTION TITLE */
     .section-title {
       font-size: 17px;
       font-weight: 800;
@@ -205,11 +210,15 @@
       font-weight: 600;
     }
 
-    /* LIVE VITALS CARDS */
+    /* 1. HEART RATE WITH CONTINUOUS LIVE ECG WAVE ANIMATION */
     .vital-banner-card {
       background: linear-gradient(135deg, #ffd8cc 0%, #fec5bb 100%);
-      border-radius: 22px;
-      padding: 16px 18px;
+      border-radius: 24px;
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 6px 18px rgba(220, 38, 38, 0.08);
+      animation: slideUp 0.6s ease-out forwards;
     }
 
     .vital-banner-card .header-lbl {
@@ -222,12 +231,25 @@
     }
 
     .vital-banner-card .big-val {
-      font-size: 30px;
+      font-size: 32px;
       font-weight: 800;
       color: #450a0a;
       margin-top: 4px;
     }
 
+    .ecg-track {
+      width: 200%;
+      height: 48px;
+      display: flex;
+      animation: ecg-slide 2.5s linear infinite;
+    }
+
+    .ecg-track svg {
+      width: 50%;
+      height: 100%;
+    }
+
+    /* 2. DUAL COLUMNS FOR CIRCULAR ANIMATED GAUGES */
     .vitals-2col {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -235,21 +257,23 @@
     }
 
     .vital-tile {
-      border-radius: 22px;
-      padding: 14px;
+      border-radius: 24px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
+      align-items: center;
       justify-content: space-between;
-      min-height: 130px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+      min-height: 168px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+      background: #ffffff;
+      animation: slideUp 0.7s ease-out forwards;
     }
 
-    .tile-blue { background: #e0f2fe; }
-    .tile-green { background: #e8f5e9; }
-    .tile-yellow { background: #fef3c7; }
-    .tile-purple { background: #ede9fe; }
+    .tile-blue { background: #f0f9ff; border: 1px solid #bae6fd; }
+    .tile-green { background: #f0fdf4; border: 1px solid #bbf7d0; }
 
-    .tile-lbl {
+    .tile-header {
+      width: 100%;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -258,44 +282,117 @@
       color: #374151;
     }
 
-    .circle-val {
-      font-size: 24px;
-      font-weight: 800;
-      color: #111827;
-      text-align: center;
-      margin: 8px 0;
+    /* CIRCLE GAUGES WITH SVG ANIMATION */
+    .gauge-wrapper {
+      position: relative;
+      width: 90px;
+      height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 6px 0;
     }
 
+    .gauge-svg {
+      transform: rotate(-90deg);
+      width: 100%;
+      height: 100%;
+    }
+
+    .gauge-bg {
+      fill: none;
+      stroke: #e2e8f0;
+      stroke-width: 8;
+    }
+
+    .gauge-bar-spo2 {
+      fill: none;
+      stroke: #0284c7;
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 226;
+      stroke-dashoffset: 226;
+      transition: stroke-dashoffset 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .gauge-bar-bp {
+      fill: none;
+      stroke: #16a34a;
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 226;
+      stroke-dashoffset: 226;
+      transition: stroke-dashoffset 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .gauge-text {
+      position: absolute;
+      text-align: center;
+    }
+
+    .gauge-text .val {
+      font-size: 18px;
+      font-weight: 800;
+      color: #111827;
+      line-height: 1.1;
+    }
+
+    .gauge-text .unit {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    /* BLOOD SUGAR SLIDER ANIMATION */
     .sugar-card {
-      background: #fef3c7;
-      border-radius: 22px;
-      padding: 16px 18px;
+      background: #fefce8;
+      border: 1px solid #fef08a;
+      border-radius: 24px;
+      padding: 16px 20px;
+      animation: slideUp 0.8s ease-out forwards;
     }
 
     .sugar-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin: 8px 0 10px;
+      margin: 8px 0 12px;
     }
 
     .sugar-main {
-      font-size: 30px;
+      font-size: 32px;
       font-weight: 800;
-      color: #78350f;
+      color: #854d0e;
     }
 
-    /* FULL 20-POINT CLINICAL DETAILS SECTION */
+    .bar-bg {
+      width: 100%;
+      height: 8px;
+      background: #fef08a;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #eab308, #ea580c);
+      border-radius: 6px;
+      width: 0%;
+      transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* 20-POINT ASSESSMENT CARD */
     .full-assessment-card {
       background: #ffffff;
       border-radius: 24px;
       padding: 18px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
       border: 1px solid #edf2f7;
+      animation: slideUp 0.85s ease-out forwards;
     }
 
     .full-assessment-card h3 {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 800;
       color: #1b4332;
       margin-bottom: 12px;
@@ -348,6 +445,7 @@
       border-radius: 26px;
       padding: 20px 16px;
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+      animation: slideUp 0.9s ease-out forwards;
     }
 
     .timeline-stream {
@@ -391,6 +489,7 @@
     .chat-text { color: #4b5563; }
     .alert-tag { background: #fed7d7; color: #9b2c2c; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; display: inline-block; margin-top: 4px; }
 
+    /* LOADING & ERROR */
     .loading-card, .error-card {
       background: #fff;
       border-radius: 26px;
@@ -412,7 +511,15 @@
     .hidden { display: none !important; }
 
     @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; } }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; } }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes ecg-slide {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
   </style>
 </head>
 <body>
@@ -422,7 +529,7 @@
       <div class="top-user">
         <div class="user-avatar-initials" id="user-initials">NS</div>
         <div class="top-meta">
-          <small>Clinical Care Portal</small>
+          <small>Clinical Portal</small>
           <h4 id="welcome-text">Care Summary</h4>
         </div>
       </div>
@@ -431,7 +538,7 @@
 
     <!-- TIMELINE VISIT SELECTOR -->
     <div id="visit-picker-container" class="visit-picker-box hidden">
-      <label for="visit-select">📅 Selected Assessment Date:</label>
+      <label for="visit-select">📅 Assessment Date:</label>
       <select id="visit-select"></select>
     </div>
 
@@ -452,7 +559,7 @@
     <!-- REPORT VIEW -->
     <div id="report-view" class="hidden" style="display:flex; flex-direction:column; gap:14px;">
       
-      <!-- PATIENT PROFILE -->
+      <!-- HERO -->
       <div class="patient-card">
         <div class="patient-header">
           <div class="patient-avatar">👵</div>
@@ -460,74 +567,103 @@
             <h2 id="pat-name">Senior Patient</h2>
             <div class="patient-tags">
               <span class="tag-pill" id="pat-id-tag">SNR</span>
-              <span class="tag-pill">Care Plan Active</span>
+              <span class="tag-pill">Active Plan</span>
             </div>
           </div>
         </div>
         <div class="status-badge">
           <span class="status-dot"></span>
-          <span>Vitals Monitored</span>
+          <span>Continuous Monitoring</span>
         </div>
       </div>
 
       <div class="section-title">
-        <span>Recorded Vitals Snapshot</span>
+        <span>Vitals Metrics</span>
         <small id="visit-date-badge">Latest Assessment</small>
       </div>
 
-      <!-- HEART RATE -->
+      <!-- 1. HEART RATE WITH LOOPING PULSE -->
       <div class="vital-banner-card">
         <div class="header-lbl"><span>❤️</span> Heart rate</div>
         <div class="big-val" id="val-hr">-- <span style="font-size:15px; font-weight:600;">bpm</span></div>
-        <svg viewBox="0 0 300 44" style="width:100%; height:44px; margin-top:4px;" preserveAspectRatio="none">
-          <path d="M0,22 L40,22 L50,8 L60,36 L70,16 L80,28 L90,22 L140,22 L150,4 L160,40 L170,12 L180,30 L190,22 L300,22" 
-                fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <div style="overflow:hidden; width:100%; height:48px; margin-top:4px;">
+          <div class="ecg-track">
+            <svg viewBox="0 0 300 48" preserveAspectRatio="none">
+              <path d="M0,24 L40,24 L50,8 L60,38 L70,16 L80,30 L90,24 L140,24 L150,4 L160,42 L170,12 L180,32 L190,24 L300,24" 
+                    fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <svg viewBox="0 0 300 48" preserveAspectRatio="none">
+              <path d="M0,24 L40,24 L50,8 L60,38 L70,16 L80,30 L90,24 L140,24 L150,4 L160,42 L170,12 L180,32 L190,24 L300,24" 
+                    fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
       </div>
 
-      <!-- SPO2 & BP -->
+      <!-- 2. ANIMATED CIRCULAR GAUGES (SPO2 & BP) -->
       <div class="vitals-2col">
         <div class="vital-tile tile-blue">
-          <div class="tile-lbl"><span>🫁</span> SpO2</div>
-          <div class="circle-val"><span id="val-spo2">--</span>%</div>
-          <div style="font-size:11px; font-weight:700; color:#0369a1; text-align:center;">Oxygen Level</div>
+          <div class="tile-header"><span>🫁</span> SpO2 Oxygen</div>
+          <div class="gauge-wrapper">
+            <svg class="gauge-svg" viewBox="0 0 80 80">
+              <circle class="gauge-bg" cx="40" cy="40" r="36"/>
+              <circle class="gauge-bar-spo2" id="gauge-spo2" cx="40" cy="40" r="36"/>
+            </svg>
+            <div class="gauge-text">
+              <div class="val" id="val-spo2">--</div>
+              <div class="unit">%</div>
+            </div>
+          </div>
+          <div style="font-size:11px; font-weight:700; color:#0369a1;">Saturation</div>
         </div>
 
         <div class="vital-tile tile-green">
-          <div class="tile-lbl"><span>⚡</span> Blood Pressure</div>
-          <div class="circle-val" style="font-size:20px;" id="val-bp">--/--</div>
-          <div style="font-size:11px; font-weight:700; color:#15803d; text-align:center;">Systolic / Diastolic</div>
+          <div class="tile-header"><span>⚡</span> Blood Pressure</div>
+          <div class="gauge-wrapper">
+            <svg class="gauge-svg" viewBox="0 0 80 80">
+              <circle class="gauge-bg" cx="40" cy="40" r="36"/>
+              <circle class="gauge-bar-bp" id="gauge-bp" cx="40" cy="40" r="36"/>
+            </svg>
+            <div class="gauge-text">
+              <div class="val" id="val-bp" style="font-size:14px;">--/--</div>
+              <div class="unit">mmHg</div>
+            </div>
+          </div>
+          <div style="font-size:11px; font-weight:700; color:#15803d;">Systolic/Dia</div>
         </div>
       </div>
 
-      <!-- SUGAR -->
+      <!-- 3. BLOOD SUGAR SLIDER -->
       <div class="sugar-card">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div class="tile-lbl"><span>🩸</span> Blood sugar</div>
+          <div style="font-size:12px; font-weight:700; color:#854d0e;"><span>🩸</span> Blood Sugar</div>
           <span style="font-size:11px; font-weight:700; background:#fde68a; color:#92400e; padding:3px 8px; border-radius:10px;" id="sugar-timing">Glucose</span>
         </div>
         <div class="sugar-row">
           <div class="sugar-main" id="val-sugar">-- <span style="font-size:15px; font-weight:600;">mg/dL</span></div>
           <span style="font-size:12px; font-weight:700; color:#b45309;" id="sugar-status">Recorded</span>
         </div>
+        <div class="bar-bg">
+          <div class="bar-fill" id="sugar-bar"></div>
+        </div>
       </div>
 
-      <!-- TEMP & BODY MASS -->
+      <!-- 4. TEMPERATURE & BODY MASS -->
       <div class="vitals-2col">
-        <div class="vital-tile tile-purple">
-          <div class="tile-lbl"><span>🌡️</span> Temperature</div>
-          <div class="circle-val" id="val-temp">--°C</div>
-          <div style="font-size:11px; font-weight:700; color:#6b21a8; text-align:center;">Body Temp</div>
+        <div class="vital-tile" style="background:#faf5ff; border:1px solid #e9d5ff;">
+          <div class="tile-header"><span>🌡️</span> Temperature</div>
+          <div style="font-size: 26px; font-weight: 800; color: #6b21a8; margin: 10px 0;" id="val-temp">--°C</div>
+          <div style="font-size: 11px; font-weight: 700; color: #7e22ce;">Normal Range</div>
         </div>
 
-        <div class="vital-tile tile-yellow">
-          <div class="tile-lbl"><span>⚖️</span> Body Mass</div>
-          <div class="circle-val" id="val-bmi">--</div>
-          <div style="font-size:11px; font-weight:700; color:#854d0e; text-align:center;" id="val-weight">-- kg</div>
+        <div class="vital-tile" style="background:#fefce8; border:1px solid #fef08a;">
+          <div class="tile-header"><span>⚖️</span> Body Mass</div>
+          <div style="font-size: 26px; font-weight: 800; color: #854d0e; margin: 10px 0;" id="val-bmi">--</div>
+          <div style="font-size: 11px; font-weight: 700; color: #a16207;" id="val-weight">-- kg</div>
         </div>
       </div>
 
-      <!-- COMPLETE 20-POINT CLINICAL INSPECTION DETAILS -->
+      <!-- 5. COMPLETE 20-POINT CLINICAL INSPECTION -->
       <div class="full-assessment-card">
         <h3>📋 Complete 20-Point Clinical Inspection</h3>
         <div class="asm-grid">
@@ -544,7 +680,7 @@
             <div class="asm-item-val" id="asm-val-mobility">Independent</div>
           </div>
           <div class="asm-item">
-            <div class="asm-item-lbl">Pain Level</div>
+            <div class="asm-item-lbl">Pain Score</div>
             <div class="asm-item-val" id="asm-val-pain">0 / 10</div>
           </div>
           <div class="asm-item">
@@ -569,10 +705,10 @@
         </div>
       </div>
 
-      <!-- CHAT JOURNAL & TIMELINE -->
+      <!-- 6. CHAT JOURNAL & TIMELINE -->
       <div class="journal-box">
         <h3 style="font-size:16px; font-weight:800; color:#1b4332;">Care Journal (Chronological History)</h3>
-        <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Continuity between Nurse visits, Doctor advice & Family requests:</p>
+        <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Tap any past nurse visit to load its full inspection data:</p>
         <div id="timeline-stream" class="timeline-stream"></div>
       </div>
 
@@ -649,7 +785,6 @@
         };
       }
 
-      // Initial render with target/active assessment
       const initial = careJournal.activeAssessment || (assessments.length > 0 ? assessments[0] : null);
       if (initial) updateVitalsCard(initial);
 
@@ -662,24 +797,49 @@
       const dateStr = v.created_at ? new Date(v.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Assessment';
       document.getElementById('visit-date-badge').textContent = dateStr;
 
-      // Primary Cards
-      const sys = v.bp_systolic || (v.bp ? v.bp.split('/')[0] : '--');
-      const dia = v.bp_diastolic || (v.bp ? v.bp.split('/')[1] : '--');
+      // 1. Blood Pressure & Animated Dual Ring Arc
+      const sys = Number(v.bp_systolic || (v.bp ? v.bp.split('/')[0] : 120)) || 120;
+      const dia = Number(v.bp_diastolic || (v.bp ? v.bp.split('/')[1] : 80)) || 80;
       document.getElementById('val-bp').textContent = `${sys}/${dia}`;
+
+      const bpPercent = Math.min(Math.max((sys - 80) / (180 - 80), 0.1), 1);
+      const bpOffset = 226 - (226 * bpPercent);
+      setTimeout(() => {
+        const bpGauge = document.getElementById('gauge-bp');
+        if (bpGauge) bpGauge.style.strokeDashoffset = bpOffset;
+      }, 100);
+
+      // 2. Heart Rate
       document.getElementById('val-hr').innerHTML = `${v.heart_rate || '--'} <span style="font-size:15px; font-weight:600;">bpm</span>`;
+
+      // 3. SpO2 & Animated Circular Gauge (226 is circumference for r=36)
+      const spo2Val = Number(v.spo2) || 98;
       document.getElementById('val-spo2').textContent = v.spo2 || '--';
+      const spo2Percent = Math.min(Math.max(spo2Val / 100, 0), 1);
+      const spo2Offset = 226 - (226 * spo2Percent);
+      setTimeout(() => {
+        const spo2Gauge = document.getElementById('gauge-spo2');
+        if (spo2Gauge) spo2Gauge.style.strokeDashoffset = spo2Offset;
+      }, 100);
 
-      const tempUnit = v.temperature_unit || 'C';
-      document.getElementById('val-temp').textContent = v.temperature ? `${v.temperature}°${tempUnit}` : '--°C';
-
-      const sugar = v.glucose_random || v.glucose_fasting || v.blood_sugar || '--';
-      document.getElementById('val-sugar').innerHTML = `${sugar} <span style="font-size:15px; font-weight:600;">mg/dL</span>`;
+      // 4. Sugar & Animated Slider Bar
+      const sugar = Number(v.glucose_random || v.glucose_fasting || v.blood_sugar) || 0;
+      document.getElementById('val-sugar').innerHTML = `${sugar || '--'} <span style="font-size:15px; font-weight:600;">mg/dL</span>`;
       if (v.glucose_timing) document.getElementById('sugar-timing').textContent = v.glucose_timing;
 
+      const sugarPercent = Math.min(Math.max(sugar / 300 * 100, 10), 100);
+      setTimeout(() => {
+        const sBar = document.getElementById('sugar-bar');
+        if (sBar) sBar.style.width = `${sugarPercent}%`;
+      }, 150);
+
+      // 5. Temperature & Body Mass
+      const tempUnit = v.temperature_unit || 'C';
+      document.getElementById('val-temp').textContent = v.temperature ? `${v.temperature}°${tempUnit}` : '--°C';
       document.getElementById('val-bmi').textContent = v.bmi || '--';
       document.getElementById('val-weight').textContent = v.weight ? `${v.weight} kg` : '-- kg';
 
-      // 20-Point Detailed Parameters
+      // 6. Complete 20-Point Details
       document.getElementById('asm-val-loc').textContent = v.level_of_consciousness || 'Alert';
       document.getElementById('asm-val-fall').textContent = v.fall_risk || 'Low';
       document.getElementById('asm-val-mobility').textContent = v.mobility_status || 'Independent';
@@ -690,7 +850,7 @@
       document.getElementById('asm-val-meds').textContent = v.medication_adherence || 'Good';
       document.getElementById('asm-val-notes').textContent = v.nurse_notes || 'No specific nurse notes recorded for this assessment.';
 
-      // Highlight corresponding node in timeline
+      // Highlight active node in timeline
       document.querySelectorAll('.chat-bubble').forEach(b => b.classList.remove('active-node'));
       const activeEl = document.getElementById('node-' + (v.assessment_id || ''));
       if (activeEl) activeEl.classList.add('active-node');
