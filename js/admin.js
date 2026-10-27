@@ -576,3 +576,52 @@ init().catch(err => {
   console.error('INIT FAILED:', err);
   alert('Dashboard initialization failed: ' + err.message);
 });
+// Wire the Generate Clinical Care Summary Button
+document.getElementById('btn-gen-care-report')?.addEventListener('click', async () => {
+  const seniorSelect = document.getElementById('gen-report-senior');
+  const seniorId = seniorSelect ? seniorSelect.value.trim() : '';
+
+  if (!seniorId) {
+    alert('Please choose a Senior Patient first.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-gen-care-report');
+  btn.disabled = true;
+  btn.textContent = 'Generating Care Summary...';
+
+  try {
+    const res = await callApi('generateClinicalCareReport', { seniorId: seniorId });
+
+    const shareUrl = `${window.location.origin}${window.location.pathname.replace('admin.html', '')}report.html?token=${res.token}`;
+    
+    // Refresh table so the newly generated Care Journal appears in the table
+    await loadAdminDashboard();
+
+    const input = prompt(
+      `72-Hour Care Summary Generated for ${res.seniorName}!\n\n` +
+      `Secure Link:\n${shareUrl}\n\n` +
+      `Type 'copy' to copy the link, or enter an email address to send it to the family/doctor:`
+    );
+
+    if (input) {
+      if (input.toLowerCase() === 'copy') {
+        await navigator.clipboard.writeText(shareUrl);
+        alert('Link copied to clipboard!');
+      } else if (input.includes('@')) {
+        await callApi('shareReportByEmail', {
+          recipientEmail: input.trim(),
+          seniorName: res.seniorName,
+          reportType: 'Clinical Assessment & Care Journal',
+          secureUrl: shareUrl
+        });
+        alert('Care report link emailed to ' + input.trim());
+      }
+    }
+  } catch (err) {
+    alert('Error generating summary: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Generate 72-Hour Shareable Care Summary';
+  }
+});
