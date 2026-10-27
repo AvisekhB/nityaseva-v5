@@ -94,7 +94,13 @@
       border-radius: 20px;
     }
 
-    /* VISIT SELECTOR */
+    /* VISIT SELECTOR & COMPARE BUTTON BAR */
+    .toolbar-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
     .visit-picker-box {
       background: #ffffff;
       border: 1px solid #e2e8f0;
@@ -122,6 +128,104 @@
       background: #f9fafb;
       outline: none;
     }
+
+    .btn-compare-trigger {
+      background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%);
+      color: #ffffff;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-weight: 800;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(45, 106, 79, 0.25);
+      transition: all 0.2s ease;
+    }
+
+    .btn-compare-trigger:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(45, 106, 79, 0.35);
+    }
+
+    /* COMPARISON CARD MODAL / PANEL */
+    .compare-panel {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      border: 2px solid #bbf7d0;
+      animation: slideUp 0.4s ease-out forwards;
+    }
+
+    .compare-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px dashed #e2e8f0;
+      padding-bottom: 10px;
+    }
+
+    .compare-header h3 {
+      font-size: 15px;
+      font-weight: 800;
+      color: #1b4332;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-close-compare {
+      background: #f1f5f9;
+      border: none;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      font-weight: 800;
+      color: #64748b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .compare-table th {
+      text-align: left;
+      padding: 8px 6px;
+      color: var(--text-muted);
+      font-weight: 700;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 11px;
+    }
+
+    .compare-table td {
+      padding: 10px 6px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .trend-pill {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .trend-improved { background: #dcfce7; color: #166534; }
+    .trend-caution { background: #fef3c7; color: #92400e; }
+    .trend-neutral { background: #f1f5f9; color: #475569; }
 
     /* HERO CARD */
     .patient-card {
@@ -210,7 +314,7 @@
       font-weight: 600;
     }
 
-    /* 1. HEART RATE WITH CONTINUOUS LIVE ECG WAVE ANIMATION */
+    /* 1. HEART RATE WITH LOOPING WAVE */
     .vital-banner-card {
       background: linear-gradient(135deg, #ffd8cc 0%, #fec5bb 100%);
       border-radius: 24px;
@@ -536,10 +640,36 @@
       <div class="validity-pill" id="expiry-pill">Checking...</div>
     </div>
 
-    <!-- TIMELINE VISIT SELECTOR -->
-    <div id="visit-picker-container" class="visit-picker-box hidden">
-      <label for="visit-select">📅 Assessment Date:</label>
-      <select id="visit-select"></select>
+    <!-- TOOLBAR (VISIT PICKER & COMPARE BUTTON) -->
+    <div class="toolbar-bar">
+      <div id="visit-picker-container" class="visit-picker-box hidden">
+        <label for="visit-select">📅 Assessment Date:</label>
+        <select id="visit-select"></select>
+      </div>
+
+      <button id="btn-compare" class="btn-compare-trigger hidden">
+        <span>⚖️ Compare Last 2 Visits</span>
+      </button>
+    </div>
+    <!-- COMPARISON PANEL (TOGGLED BY BUTTON) -->
+    <div id="compare-panel" class="compare-panel hidden">
+      <div class="compare-header">
+        <h3>⚖️ Clinical Trends (Previous vs. Latest)</h3>
+        <button id="btn-close-compare" class="btn-close-compare">✕</button>
+      </div>
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th id="cmp-date-old">Previous</th>
+            <th id="cmp-date-new">Latest</th>
+            <th>Variation</th>
+          </tr>
+        </thead>
+        <tbody id="compare-tbody">
+          <!-- Dynamically populated -->
+        </tbody>
+      </table>
     </div>
 
     <!-- LOADING SCREEN -->
@@ -770,7 +900,9 @@
       const assessments = careJournal.allAssessments || [];
       const picker = document.getElementById('visit-select');
       const pickerBox = document.getElementById('visit-picker-container');
+      const btnCompare = document.getElementById('btn-compare');
 
+      // Setup Assessment Picker
       if (assessments.length > 1) {
         pickerBox.classList.remove('hidden');
         picker.innerHTML = assessments.map((a, i) => {
@@ -783,12 +915,137 @@
           const chosen = assessments.find((a, i) => (a.assessment_id || String(i)) === selectedId);
           if (chosen) updateVitalsCard(chosen);
         };
+
+        // Enable & Wire "Compare Last 2 Visits" Button
+        btnCompare.classList.remove('hidden');
+        btnCompare.onclick = () => {
+          populateComparison(assessments[1], assessments[0]);
+          const panel = document.getElementById('compare-panel');
+          panel.classList.toggle('hidden');
+          if (!panel.classList.contains('hidden')) {
+            panel.scrollIntoView({ behavior: 'smooth' });
+          }
+        };
+
+        document.getElementById('btn-close-compare').onclick = () => {
+          document.getElementById('compare-panel').classList.add('hidden');
+        };
       }
 
       const initial = careJournal.activeAssessment || (assessments.length > 0 ? assessments[0] : null);
       if (initial) updateVitalsCard(initial);
 
       renderTimeline(careJournal.timeline || [], initial ? initial.assessment_id : null);
+    }
+
+    function populateComparison(oldAsm, newAsm) {
+      if (!oldAsm || !newAsm) return;
+
+      const dOld = oldAsm.created_at ? new Date(oldAsm.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Prev';
+      const dNew = newAsm.created_at ? new Date(newAsm.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Latest';
+
+      document.getElementById('cmp-date-old').textContent = dOld;
+      document.getElementById('cmp-date-new').textContent = dNew;
+
+      const tbody = document.getElementById('compare-tbody');
+      tbody.innerHTML = '';
+
+      const metrics = [
+        {
+          label: 'Blood Pressure',
+          oldVal: oldAsm.bp || `${oldAsm.bp_systolic}/${oldAsm.bp_diastolic}`,
+          newVal: newAsm.bp || `${newAsm.bp_systolic}/${newAsm.bp_diastolic}`,
+          calcTrend: () => {
+            const sysOld = Number(oldAsm.bp_systolic || (oldAsm.bp ? oldAsm.bp.split('/')[0] : 0));
+            const sysNew = Number(newAsm.bp_systolic || (newAsm.bp ? newAsm.bp.split('/')[0] : 0));
+            if (!sysOld || !sysNew) return { text: 'Recorded', cls: 'trend-neutral' };
+            const diff = sysNew - sysOld;
+            if (diff === 0) return { text: 'Stable (0)', cls: 'trend-improved' };
+            return diff > 0 ? { text: `+${diff} mmHg (Higher)`, cls: 'trend-caution' } : { text: `${diff} mmHg (Lower)`, cls: 'trend-improved' };
+          }
+        },
+        {
+          label: 'Heart Rate',
+          oldVal: oldAsm.heart_rate ? `${oldAsm.heart_rate} bpm` : '--',
+          newVal: newAsm.heart_rate ? `${newAsm.heart_rate} bpm` : '--',
+          calcTrend: () => {
+            const hOld = Number(oldAsm.heart_rate);
+            const hNew = Number(newAsm.heart_rate);
+            if (!hOld || !hNew) return { text: '--', cls: 'trend-neutral' };
+            const diff = hNew - hOld;
+            return diff === 0 ? { text: 'No change', cls: 'trend-improved' } : (diff > 0 ? { text: `+${diff} bpm`, cls: 'trend-caution' } : { text: `${diff} bpm`, cls: 'trend-improved' });
+          }
+        },
+        {
+          label: 'SpO2 Oxygen',
+          oldVal: oldAsm.spo2 ? `${oldAsm.spo2}%` : '--',
+          newVal: newAsm.spo2 ? `${newAsm.spo2}%` : '--',
+          calcTrend: () => {
+            const sOld = Number(oldAsm.spo2);
+            const sNew = Number(newAsm.spo2);
+            if (!sOld || !sNew) return { text: '--', cls: 'trend-neutral' };
+            const diff = sNew - sOld;
+            return diff >= 0 ? { text: `+${diff}% (Good)`, cls: 'trend-improved' } : { text: `${diff}% (Drop)`, cls: 'trend-caution' };
+          }
+        },
+        {
+          label: 'Blood Glucose',
+          oldVal: (oldAsm.glucose_random || oldAsm.glucose_fasting || oldAsm.blood_sugar) ? `${oldAsm.glucose_random || oldAsm.glucose_fasting || oldAsm.blood_sugar} mg/dL` : '--',
+          newVal: (newAsm.glucose_random || newAsm.glucose_fasting || newAsm.blood_sugar) ? `${newAsm.glucose_random || newAsm.glucose_fasting || newAsm.blood_sugar} mg/dL` : '--',
+          calcTrend: () => {
+            const gOld = Number(oldAsm.glucose_random || oldAsm.glucose_fasting || oldAsm.blood_sugar);
+            const gNew = Number(newAsm.glucose_random || newAsm.glucose_fasting || newAsm.blood_sugar);
+            if (!gOld || !gNew) return { text: '--', cls: 'trend-neutral' };
+            const diff = gNew - gOld;
+            return diff === 0 ? { text: 'Unchanged', cls: 'trend-neutral' } : (diff > 0 ? { text: `+${diff} mg/dL`, cls: 'trend-caution' } : { text: `${diff} mg/dL`, cls: 'trend-improved' });
+          }
+        },
+        {
+          label: 'Body Weight',
+          oldVal: oldAsm.weight ? `${oldAsm.weight} kg` : '--',
+          newVal: newAsm.weight ? `${newAsm.weight} kg` : '--',
+          calcTrend: () => {
+            const wOld = Number(oldAsm.weight);
+            const wNew = Number(newAsm.weight);
+            if (!wOld || !wNew) return { text: '--', cls: 'trend-neutral' };
+            const diff = (wNew - wOld).toFixed(1);
+            return { text: `${diff > 0 ? '+' : ''}${diff} kg`, cls: 'trend-neutral' };
+          }
+        },
+        {
+          label: 'Pain Score',
+          oldVal: oldAsm.pain_level !== undefined ? `${oldAsm.pain_level}/10` : '0/10',
+          newVal: newAsm.pain_level !== undefined ? `${newAsm.pain_level}/10` : '0/10',
+          calcTrend: () => {
+            const pOld = Number(oldAsm.pain_level || 0);
+            const pNew = Number(newAsm.pain_level || 0);
+            const diff = pNew - pOld;
+            return diff < 0 ? { text: `${diff} (Relief)`, cls: 'trend-improved' } : (diff > 0 ? { text: `+${diff} (Higher)`, cls: 'trend-caution' } : { text: 'Same', cls: 'trend-neutral' });
+          }
+        },
+        {
+          label: 'Fall Risk',
+          oldVal: oldAsm.fall_risk || 'Low',
+          newVal: newAsm.fall_risk || 'Low',
+          calcTrend: () => {
+            return (newAsm.fall_risk === oldAsm.fall_risk)
+              ? { text: 'Maintained', cls: 'trend-improved' }
+              : { text: `Changed to ${newAsm.fall_risk}`, cls: 'trend-caution' };
+          }
+        }
+      ];
+
+      tbody.innerHTML = metrics.map(m => {
+        const trend = m.calcTrend();
+        return `
+          <tr>
+            <td><strong>${m.label}</strong></td>
+            <td>${m.oldVal}</td>
+            <td><strong>${m.newVal}</strong></td>
+            <td><span class="trend-pill ${trend.cls}">${trend.text}</span></td>
+          </tr>
+        `;
+      }).join('');
     }
 
     function updateVitalsCard(v) {
