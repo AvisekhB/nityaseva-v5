@@ -13,7 +13,6 @@
       --card-white: #ffffff;
       --text-main: #131b15;
       --text-muted: #738075;
-      --green-soft: #d8f3dc;
       --green-accent: #2d6a4f;
     }
 
@@ -30,7 +29,7 @@
       color: var(--text-main);
       display: flex;
       justify-content: center;
-      padding: 20px 14px 60px;
+      padding: 16px 12px 60px;
       min-height: 100vh;
     }
 
@@ -39,10 +38,9 @@
       max-width: 440px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
 
-    /* TOP BAR */
     .top-bar {
       display: flex;
       justify-content: space-between;
@@ -79,7 +77,6 @@
     .top-meta h4 {
       font-size: 16px;
       font-weight: 800;
-      color: var(--text-main);
     }
 
     .validity-pill {
@@ -88,41 +85,38 @@
       background: #ecfdf5;
       color: #047857;
       border: 1px solid #a7f3d0;
-      padding: 6px 12px;
+      padding: 5px 10px;
       border-radius: 20px;
     }
 
-    /* HERO CARD */
     .patient-card {
       background: linear-gradient(135deg, #e4f6df 0%, #d3efce 100%);
-      border-radius: 28px;
-      padding: 22px 20px;
+      border-radius: 26px;
+      padding: 20px;
       box-shadow: 0 8px 24px rgba(45, 106, 79, 0.08);
-      animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
     .patient-header {
       display: flex;
       align-items: center;
-      gap: 16px;
-      margin-bottom: 14px;
+      gap: 14px;
+      margin-bottom: 12px;
     }
 
     .patient-avatar {
-      width: 68px;
-      height: 68px;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
-      background: #ffffff;
-      border: 3px solid rgba(255, 255, 255, 0.9);
+      background: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 34px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      font-size: 30px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
     }
 
     .patient-title h2 {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 800;
       color: #1b4332;
     }
@@ -131,7 +125,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
-      margin-top: 6px;
+      margin-top: 4px;
     }
 
     .tag-pill {
@@ -139,8 +133,8 @@
       font-weight: 700;
       background: rgba(255, 255, 255, 0.7);
       color: #2d6a4f;
-      padding: 4px 10px;
-      border-radius: 12px;
+      padding: 3px 8px;
+      border-radius: 10px;
     }
 
     .status-badge {
@@ -148,12 +142,11 @@
       align-items: center;
       gap: 6px;
       background: #1b4332;
-      color: #ffffff;
-      font-size: 12px;
+      color: #fff;
+      font-size: 11px;
       font-weight: 700;
-      padding: 6px 14px;
+      padding: 5px 12px;
       border-radius: 20px;
-      margin-top: 4px;
     }
 
     .status-dot {
@@ -161,76 +154,60 @@
       height: 7px;
       border-radius: 50%;
       background: #52b788;
-      box-shadow: 0 0 8px #52b788;
+      box-shadow: 0 0 6px #52b788;
       animation: pulse 1.5s infinite;
     }
 
-    /* BODY SCAN FITNESS METRICS CARD */
     .fitness-banner {
       background: #141714;
-      border-radius: 26px;
-      padding: 20px;
-      color: #ffffff;
+      border-radius: 24px;
+      padding: 18px;
+      color: #fff;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
-      animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
     }
 
     .fitness-info small {
       color: #74c69d;
       font-weight: 800;
-      letter-spacing: 1px;
       font-size: 10px;
-      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     .fitness-info h3 {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 800;
-      margin: 4px 0 6px;
+      margin: 3px 0 4px;
     }
 
     .fitness-info p {
-      font-size: 12px;
+      font-size: 11px;
       color: #a0aec0;
-      line-height: 1.4;
     }
 
     .fitness-pill {
       display: inline-block;
       background: #1e3a2b;
       color: #95d5b2;
-      padding: 4px 10px;
-      border-radius: 10px;
-      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 8px;
+      font-size: 10px;
       font-weight: 700;
-      margin-top: 8px;
+      margin-top: 6px;
     }
 
-    .body-icon-box {
-      font-size: 38px;
-      line-height: 1;
-      padding-right: 6px;
-    }
-
-    /* SECTION TITLE */
     .section-title {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 800;
-      color: var(--text-main);
-      margin: 8px 4px 0;
+      margin: 6px 4px 0;
     }
 
-    /* VITALS CARDS */
     .vital-banner-card {
       background: linear-gradient(135deg, #ffd8cc 0%, #fec5bb 100%);
-      border-radius: 24px;
-      padding: 18px 20px;
-      position: relative;
-      overflow: hidden;
-      animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      border-radius: 22px;
+      padding: 16px 18px;
     }
 
     .vital-banner-card .header-lbl {
@@ -243,15 +220,9 @@
     }
 
     .vital-banner-card .big-val {
-      font-size: 32px;
+      font-size: 30px;
       font-weight: 800;
       color: #450a0a;
-      margin-top: 6px;
-    }
-
-    .pulse-wave {
-      width: 100%;
-      height: 48px;
       margin-top: 4px;
     }
 
@@ -262,14 +233,13 @@
     }
 
     .vital-tile {
-      border-radius: 24px;
-      padding: 16px;
+      border-radius: 22px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      min-height: 150px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
-      animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      min-height: 130px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
     }
 
     .tile-blue { background: #e0f2fe; }
@@ -286,124 +256,52 @@
       color: #374151;
     }
 
-    .circle-display {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 10px 0;
-      position: relative;
-    }
-
     .circle-val {
-      font-size: 22px;
+      font-size: 24px;
       font-weight: 800;
       color: #111827;
       text-align: center;
+      margin: 8px 0;
     }
 
-    /* BLOOD SUGAR SPECIAL CARD */
     .sugar-card {
       background: #fef3c7;
-      border-radius: 24px;
-      padding: 18px 20px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
-      animation: slideUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      border-radius: 22px;
+      padding: 16px 18px;
     }
 
     .sugar-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin: 10px 0 14px;
+      margin: 8px 0 10px;
     }
 
     .sugar-main {
-      font-size: 32px;
+      font-size: 30px;
       font-weight: 800;
       color: #78350f;
     }
 
-    .sugar-toggle-pill {
-      font-size: 11px;
-      font-weight: 800;
-      padding: 4px 10px;
-      border-radius: 12px;
-      background: #fde68a;
-      color: #92400e;
-    }
-
-    .sugar-progress {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .sugar-track-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-      font-weight: 600;
-      color: #92400e;
-    }
-
-    .bar-bg {
-      width: 100px;
-      height: 8px;
-      background: #fde68a;
-      border-radius: 4px;
-      overflow: hidden;
-    }
-
-    .bar-fill {
-      height: 100%;
-      background: #d97706;
-      border-radius: 4px;
-      width: 65%;
-      transition: width 1s ease;
-    }
-
-    /* ECG CARD */
-    .ecg-card {
-      background: #e0f2fe;
-      border-radius: 24px;
-      padding: 16px 20px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
-      animation: slideUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
-    .ecg-wave-svg {
-      width: 100%;
-      height: 40px;
-      stroke: #0284c7;
-      stroke-width: 2.5;
-      fill: none;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    /* CHAT TIMELINE */
     .journal-box {
-      background: #ffffff;
-      border-radius: 28px;
-      padding: 22px 18px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
-      margin-top: 4px;
-      animation: slideUp 0.95s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      background: #fff;
+      border-radius: 26px;
+      padding: 20px 16px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
     }
 
     .timeline-stream {
       display: flex;
       flex-direction: column;
-      gap: 14px;
-      margin-top: 14px;
+      gap: 12px;
+      margin-top: 12px;
     }
 
     .chat-bubble {
       display: flex;
-      gap: 12px;
-      padding: 14px;
-      border-radius: 18px;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 16px;
       font-size: 13px;
       line-height: 1.45;
     }
@@ -421,43 +319,37 @@
       margin-bottom: 2px;
     }
 
-    .chat-title { font-weight: 800; color: #1f2937; margin-bottom: 3px; font-size: 13px; }
+    .chat-title { font-weight: 800; color: #1f2937; margin-bottom: 2px; }
     .chat-text { color: #4b5563; }
-    .alert-tag { background: #fed7d7; color: #9b2c2c; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 700; display: inline-block; margin-top: 4px; }
+    .alert-tag { background: #fed7d7; color: #9b2c2c; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; display: inline-block; margin-top: 4px; }
 
-    /* STATES */
     .loading-card, .error-card {
-      background: #ffffff;
-      border-radius: 28px;
-      padding: 50px 20px;
+      background: #fff;
+      border-radius: 26px;
+      padding: 44px 18px;
       text-align: center;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05);
     }
 
     .spinner {
-      width: 44px;
-      height: 44px;
+      width: 40px;
+      height: 40px;
       border: 4px solid #e2e8f0;
       border-top-color: var(--green-accent);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
-      margin: 0 auto 16px;
+      margin: 0 auto 14px;
     }
 
     .hidden { display: none !important; }
 
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.9); } }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
   </style>
 </head>
 <body>
   <div class="app-viewport">
     
-    <!-- TOP HEADER -->
     <div class="top-bar">
       <div class="top-user">
         <div class="user-avatar-initials" id="user-initials">NS</div>
@@ -472,163 +364,221 @@
     <!-- LOADING SCREEN -->
     <div id="loading" class="loading-card">
       <div class="spinner"></div>
-      <h3 style="font-weight: 800; margin-bottom: 6px;">Accessing Medical Vault</h3>
-      <p style="color: var(--text-muted); font-size: 13px;">Verifying 72-hour cryptographic token...</p>
+      <h3 style="font-weight: 800; margin-bottom: 4px;">Accessing Medical Vault</h3>
+      <p style="color: var(--text-muted); font-size: 13px;">Validating 72-hour cryptographic token...</p>
     </div>
 
     <!-- ERROR SCREEN -->
     <div id="error" class="error-card hidden">
-      <div style="font-size: 48px; margin-bottom: 12px;">🔒</div>
+      <div style="font-size: 44px; margin-bottom: 10px;">🔒</div>
       <h3 style="color: #b91c1c; font-weight: 800; margin-bottom: 6px;">Access Denied / Expired</h3>
-      <p id="error-msg" style="color: var(--text-muted); font-size: 13px;">Invalid or expired access token.</p>
+      <p id="error-msg" style="color: var(--text-muted); font-size: 13px;"></p>
     </div>
 
-    <!-- MAIN DASHBOARD CONTENT -->
+    <!-- REPORT VIEW -->
     <div id="report-view" class="hidden" style="display:flex; flex-direction:column; gap:14px;">
       
-      <!-- PATIENT PROFILE CARD -->
       <div class="patient-card">
         <div class="patient-header">
-          <div class="patient-avatar" id="pat-avatar">👵</div>
+          <div class="patient-avatar">👵</div>
           <div class="patient-title">
-            <h2 id="pat-name">Patient Name</h2>
+            <h2 id="pat-name">Senior Patient</h2>
             <div class="patient-tags">
-              <span class="tag-pill" id="pat-id-tag">SNR-001</span>
+              <span class="tag-pill" id="pat-id-tag">SNR</span>
               <span class="tag-pill">Care Plan Active</span>
             </div>
           </div>
         </div>
         <div class="status-badge">
           <span class="status-dot"></span>
-          <span id="pat-status-txt">Vitals Monitored</span>
+          <span>Vitals Monitored</span>
         </div>
       </div>
 
-      <!-- BODY SCAN METRICS CARD -->
       <div class="fitness-banner">
         <div class="fitness-info">
           <small>BODY COMPOSITION</small>
           <h3>Clinical Vitals</h3>
-          <p id="fitness-desc">Weight • BMI • Consciousness • Pain Score</p>
+          <p>Weight • BMI • Consciousness • Pain Score</p>
           <span class="fitness-pill" id="metrics-pill">20 metrics recorded</span>
         </div>
-        <div class="body-icon-box">🧘</div>
+        <div style="font-size:36px;">🧘</div>
       </div>
 
       <div class="section-title">Live Vitals</div>
 
-      <!-- HEART RATE BANNER -->
+      <!-- HEART RATE -->
       <div class="vital-banner-card">
-        <div class="header-lbl">
-          <span>❤️</span> Heart rate
-        </div>
-        <div class="big-val" id="val-hr">-- <span style="font-size:16px; font-weight:600;">bpm</span></div>
-        <svg class="pulse-wave" viewBox="0 0 300 48" preserveAspectRatio="none">
-          <path d="M0,24 L40,24 L50,8 L60,40 L70,16 L80,30 L90,24 L140,24 L150,4 L160,44 L170,12 L180,32 L190,24 L300,24" 
+        <div class="header-lbl"><span>❤️</span> Heart rate</div>
+        <div class="big-val" id="val-hr">-- <span style="font-size:15px; font-weight:600;">bpm</span></div>
+        <svg viewBox="0 0 300 44" style="width:100%; height:44px; margin-top:4px;" preserveAspectRatio="none">
+          <path d="M0,22 L40,22 L50,8 L60,36 L70,16 L80,28 L90,22 L140,22 L150,4 L160,40 L170,12 L180,30 L190,22 L300,22" 
                 fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
 
-      <!-- 2-COL VITALS (SpO2 & Blood Pressure) -->
+      <!-- SPO2 & BP -->
       <div class="vitals-2col">
         <div class="vital-tile tile-blue">
           <div class="tile-lbl"><span>🫁</span> SpO2</div>
-          <div class="circle-display">
-            <div class="circle-val"><span id="val-spo2">--</span>%</div>
-          </div>
-          <div style="font-size:11px; font-weight:700; color:#0369a1; text-align:center;">Normal Oxygen</div>
+          <div class="circle-val"><span id="val-spo2">--</span>%</div>
+          <div style="font-size:11px; font-weight:700; color:#0369a1; text-align:center;">Oxygen Level</div>
         </div>
 
         <div class="vital-tile tile-green">
           <div class="tile-lbl"><span>⚡</span> Blood Pressure</div>
-          <div class="circle-display">
-            <div class="circle-val" style="font-size:20px;" id="val-bp">--/--</div>
-          </div>
+          <div class="circle-val" style="font-size:20px;" id="val-bp">--/--</div>
           <div style="font-size:11px; font-weight:700; color:#15803d; text-align:center;">Systolic / Diastolic</div>
         </div>
       </div>
 
-      <!-- BLOOD SUGAR CARD -->
+      <!-- SUGAR -->
       <div class="sugar-card">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div class="tile-lbl"><span>🩸</span> Blood sugar</div>
-          <span class="sugar-toggle-pill" id="sugar-timing-pill">Post-Meal</span>
+          <span style="font-size:11px; font-weight:700; background:#fde68a; color:#92400e; padding:3px 8px; border-radius:10px;" id="sugar-timing">Glucose</span>
         </div>
         <div class="sugar-row">
-          <div class="sugar-main" id="val-sugar">-- <span style="font-size:16px; font-weight:600;">mg/dL</span></div>
+          <div class="sugar-main" id="val-sugar">-- <span style="font-size:15px; font-weight:600;">mg/dL</span></div>
           <span style="font-size:12px; font-weight:700; color:#b45309;" id="sugar-status">Recorded</span>
-        </div>
-        <div class="sugar-progress">
-          <div class="sugar-track-row">
-            <span>Fasting</span>
-            <div class="bar-bg"><div class="bar-fill" id="sugar-bar-fasting" style="width: 40%;"></div></div>
-          </div>
-          <div class="sugar-track-row">
-            <span>After meal</span>
-            <div class="bar-bg"><div class="bar-fill" id="sugar-bar-random" style="width: 70%;"></div></div>
-          </div>
         </div>
       </div>
 
-      <!-- 2-COL VITALS (Temperature & Pain/BMI) -->
+      <!-- TEMP & BODY MASS -->
       <div class="vitals-2col">
         <div class="vital-tile tile-purple">
           <div class="tile-lbl"><span>🌡️</span> Temperature</div>
-          <div class="circle-val" style="font-size:26px; margin: 12px 0;" id="val-temp">--°C</div>
-          <div style="font-size:11px; font-weight:700; color:#6b21a8; text-align:center;" id="val-temp-status">Normal</div>
+          <div class="circle-val" id="val-temp">--°C</div>
+          <div style="font-size:11px; font-weight:700; color:#6b21a8; text-align:center;">Body Temp</div>
         </div>
 
         <div class="vital-tile tile-yellow">
           <div class="tile-lbl"><span>⚖️</span> Body Mass</div>
-          <div class="circle-val" style="font-size:26px; margin: 12px 0;" id="val-bmi">--</div>
+          <div class="circle-val" id="val-bmi">--</div>
           <div style="font-size:11px; font-weight:700; color:#854d0e; text-align:center;" id="val-weight">-- kg</div>
         </div>
       </div>
 
-      <!-- ECG CARD -->
-      <div class="ecg-card">
-        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-          <div class="tile-lbl"><span>〰️</span> Rhythm & Consciousness</div>
-          <span style="font-size:11px; font-weight:800; color:#0369a1;" id="val-consciousness">Alert</span>
-        </div>
-        <svg class="ecg-wave-svg" viewBox="0 0 300 40" preserveAspectRatio="none">
-          <path d="M0,20 L60,20 L68,20 L72,5 L78,35 L84,10 L90,25 L96,20 L150,20 L158,20 L162,5 L168,35 L174,10 L180,25 L186,20 L300,20"/>
-        </svg>
-      </div>
-
-      <!-- CARE JOURNAL CHAT TIMELINE -->
+      <!-- CHAT JOURNAL -->
       <div class="journal-box">
-        <h3 style="font-size:17px; font-weight:800; color:#1b4332;">Care Journal & Chronological Log</h3>
-        <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Continuity between Nurse visits, Doctor advice, and Family:</p>
+        <h3 style="font-size:16px; font-weight:800; color:#1b4332;">Care Journal</h3>
+        <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Timeline between Nurse visits, Doctor advice & Family:</p>
         <div id="timeline-stream" class="timeline-stream"></div>
       </div>
 
     </div>
   </div>
 
-  <script type="module">
-    import { CONFIG } from './js/config.js';
+  <script>
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxfaUyba2jRYmHlLlI24mRBneMlxoOd5BAv-8UfJmfsR-9bOLmdfmR9gX0M4mq38IwDeA/exec';
 
     async function init() {
       const token = new URLSearchParams(window.location.search).get('token');
       if (!token) return showError('No token found in link.');
 
       try {
-        const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+        const res = await fetch(APPS_SCRIPT_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'getReportLink', params: { token: token.trim() } })
         });
-        const json = await res.json();
-        if (!json.success || !json.data.success) {
-          return showError(json.data ? json.data.error : (json.error || 'Invalid report token'));
+
+        const raw = await res.text();
+        let json;
+        try {
+          json = JSON.parse(raw);
+        } catch (err) {
+          return showError('Invalid server response: ' + raw.substring(0, 100));
         }
 
-        const data = json.data.report.careJournal;
-        renderCareReport(data, json.data.report.expiresAt);
-      } catch (e) {
-        showError(e.message);
+        if (!json.success || !json.data || !json.data.success) {
+          const errMsg = (json.data && json.data.error) ? json.data.error : (json.error || 'Invalid or expired report token.');
+          return showError(errMsg);
+        }
+
+        const report = json.data.report || {};
+        const careJournal = report.careJournal || {};
+        renderCareReport(careJournal, report.expiresAt, report.seniorId);
+      } catch (err) {
+        showError('Network error: ' + err.message);
       }
     }
 
-    function renderCareReport(data, expiresAt)
+    function renderCareReport(data, expiresAt, seniorId) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('error').classList.add('hidden');
+      const view = document.getElementById('report-view');
+      view.classList.remove('hidden');
+
+      if (expiresAt) {
+        document.getElementById('expiry-pill').textContent = 'Valid until: ' + new Date(expiresAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      }
+
+      const name = data.seniorName || 'Senior Patient';
+      document.getElementById('pat-name').textContent = name;
+      document.getElementById('welcome-text').textContent = name;
+      document.getElementById('user-initials').textContent = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'NS';
+      document.getElementById('pat-id-tag').textContent = seniorId || (data.latestVitals ? data.latestVitals.senior_id : 'SENIOR');
+
+      const v = data.latestVitals || {};
+      const sys = v.bp_systolic || (v.bp ? v.bp.split('/')[0] : '--');
+      const dia = v.bp_diastolic || (v.bp ? v.bp.split('/')[1] : '--');
+      document.getElementById('val-bp').textContent = `${sys}/${dia}`;
+      document.getElementById('val-hr').innerHTML = `${v.heart_rate || '--'} <span style="font-size:15px; font-weight:600;">bpm</span>`;
+      document.getElementById('val-spo2').textContent = v.spo2 || '--';
+
+      const tempUnit = v.temperature_unit || 'C';
+      document.getElementById('val-temp').textContent = v.temperature ? `${v.temperature}°${tempUnit}` : '--°C';
+
+      const sugar = v.glucose_random || v.glucose_fasting || v.blood_sugar || '--';
+      document.getElementById('val-sugar').innerHTML = `${sugar} <span style="font-size:15px; font-weight:600;">mg/dL</span>`;
+      if (v.glucose_timing) document.getElementById('sugar-timing').textContent = v.glucose_timing;
+
+      document.getElementById('val-bmi').textContent = v.bmi || '--';
+      document.getElementById('val-weight').textContent = v.weight ? `${v.weight} kg` : '-- kg';
+
+      // Care Journal Timeline
+      const stream = document.getElementById('timeline-stream');
+      stream.innerHTML = '';
+      const timeline = data.timeline || [];
+
+      if (timeline.length === 0) {
+        stream.innerHTML = '<p style="color:#718096; font-size:12px;">No past entries recorded in this care journal.</p>';
+      } else {
+        timeline.forEach(evt => {
+          const div = document.createElement('div');
+          let roleClass = 'chat-nurse';
+          let icon = '👩‍⚕️';
+          if (evt.senderRole === 'doctor') { roleClass = 'chat-doctor'; icon = '🩺'; }
+          if (evt.senderRole === 'family') { roleClass = 'chat-family'; icon = '👨‍👩‍👦'; }
+
+          div.className = `chat-bubble ${roleClass}`;
+          div.innerHTML = `
+            <div style="font-size:22px; line-height:1;">${icon}</div>
+            <div style="flex:1;">
+              <div class="chat-meta">
+                <span><strong>${evt.sender} Says:</strong></span>
+                <span>${evt.date || ''}</span>
+              </div>
+              <div class="chat-title">${evt.title || ''}</div>
+              <div class="chat-text">${evt.message || ''}</div>
+              ${evt.flagged ? '<div class="alert-tag">⚠ Flagged for Review</div>' : ''}
+            </div>
+          `;
+          stream.appendChild(div);
+        });
+      }
+    }
+
+    function showError(msg) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('report-view').classList.add('hidden');
+      const err = document.getElementById('error');
+      err.classList.remove('hidden');
+      document.getElementById('error-msg').textContent = msg;
+    }
+
+    init();
+  </script>
+</body>
+</html>
