@@ -320,49 +320,6 @@ function renderReports(reports) {
   });
 }
 
-
-  tbody.innerHTML = [...reports].reverse().map(r => `
-    <tr>
-      <td><strong>${r.report_id}</strong></td>
-      <td>${getSeniorName(r.senior_id)}</td>
-      <td><span class="badge badge-nurse-visit">${r.type}</span></td>
-      <td><a href="${r.file_url}" target="_blank" rel="noopener">Open Document ↗</a></td>
-      <td>${r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN') : '-'}</td>
-      <td>
-        <button class="share-btn" data-id="${r.report_id}" data-senior="${r.senior_id}" data-type="${r.type}">Share 72h Link</button>
-      </td>
-    </tr>
-  `).join('');
-
-  tbody.querySelectorAll('.share-btn').forEach(btn => {
-    btn.onclick = async () => {
-      const reportId = btn.getAttribute('data-id');
-      const seniorId = btn.getAttribute('data-senior');
-      const type = btn.getAttribute('data-type');
-      try {
-        const res = await callApi('createReportLink', { reportId, expiryHours: 72 });
-        const shareUrl = `${window.location.origin}${window.location.pathname.replace('admin.html', '')}report.html?token=${res.token}`;
-        const input = prompt(`72-Hour Secure Link Created:\n\n${shareUrl}\n\nType 'copy' to copy to clipboard, or enter an email address to send directly:`);
-        if (!input) return;
-        if (input.toLowerCase() === 'copy') {
-          await navigator.clipboard.writeText(shareUrl);
-          alert('Link copied to clipboard!');
-        } else if (input.includes('@')) {
-          await callApi('shareReportByEmail', {
-            recipientEmail: input.trim(),
-            seniorName: getSeniorName(seniorId),
-            reportType: type,
-            secureUrl: shareUrl
-          });
-          alert('Report link emailed to ' + input.trim());
-        }
-      } catch (err) {
-        alert('Share error: ' + err.message);
-      }
-    };
-  });
-}
-
 function renderSeniors(seniors) {
   const tbody = document.querySelector('#admin-seniors-table tbody');
   if (!tbody) return;
@@ -572,11 +529,7 @@ document.getElementById('create-report-form')?.addEventListener('submit', async 
   }
 });
 
-init().catch(err => {
-  console.error('INIT FAILED:', err);
-  alert('Dashboard initialization failed: ' + err.message);
-});
-// Wire the Generate Clinical Care Summary Button
+// Wire the Generate Clinical Care Summary Button (Green Card)
 document.getElementById('btn-gen-care-report')?.addEventListener('click', async () => {
   const seniorSelect = document.getElementById('gen-report-senior');
   const seniorId = seniorSelect ? seniorSelect.value.trim() : '';
@@ -624,4 +577,9 @@ document.getElementById('btn-gen-care-report')?.addEventListener('click', async 
     btn.disabled = false;
     btn.textContent = 'Generate 72-Hour Shareable Care Summary';
   }
+});
+
+init().catch(err => {
+  console.error('INIT FAILED:', err);
+  alert('Dashboard initialization failed: ' + err.message);
 });
