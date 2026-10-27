@@ -66,7 +66,12 @@ async function loadNurseWorkOrders() {
         <td><code>${wo.senior_id}</code></td>
         <td>${displayTime}</td>
         <td><span class="badge ${badgeClass}">${wo.status}</span></td>
-        <td><button class="open-wo-btn" data-id="${wo.work_order_id}">Open Workspace</button></td>
+        <td>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <button class="open-wo-btn" data-id="${wo.work_order_id}">Open Workspace</button>
+            <button class="view-report-btn secondary" data-senior="${wo.senior_id}" title="View Clinical Care Summary">👁️ View</button>
+          </div>
+        </td>
       `;
       tbody.appendChild(tr);
     });
@@ -76,6 +81,27 @@ async function loadNurseWorkOrders() {
         const id = e.target.getAttribute('data-id');
         const match = orders.find(w => w.work_order_id === id);
         if (match) openVisitWorkspace(match);
+      });
+    });
+
+    document.querySelectorAll('.view-report-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const seniorId = e.target.getAttribute('data-senior');
+        if (!seniorId) return alert('No senior patient ID associated with this visit.');
+
+        const originalText = e.target.textContent;
+        e.target.textContent = 'Loading...';
+        e.target.disabled = true;
+
+        try {
+          const res = await callApi('generateClinicalCareReport', { seniorId: seniorId });
+          window.open(`report.html?token=${res.token}`, '_blank');
+        } catch (err) {
+          alert('Error opening patient report: ' + err.message);
+        } finally {
+          e.target.textContent = originalText;
+          e.target.disabled = false;
+        }
       });
     });
 
