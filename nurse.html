@@ -81,18 +81,19 @@
         Senior: <strong id="active-senior-name"></strong> | Status: <span id="active-lifecycle-badge" class="badge"></span>
       </p>
 
-      <!-- STEP 1: START CODE ENTRY -->
-      <div id="step-start" class="step-card active">
-        <div class="step-header">
-          <span>Step 1: On-Arrival Start Code Verification (PRD §12.7–10)</span>
-          <span id="badge-step-start" class="badge badge-yellow">REQUIRED TO START</span>
-        </div>
-        <p style="font-size: 13px;">Upon reaching the senior's residence, request the 8-character <strong>Start Code</strong> provided in their confirmation email:</p>
-        <div class="form-group" style="max-width: 260px;">
-          <input type="text" id="input-start-code" placeholder="Enter Start Code (e.g. 8 chars)" style="font-size: 16px; letter-spacing: 2px; text-transform: uppercase;">
-        </div>
-        <button id="btn-verify-start">Authorize & Start Visit</button>
-      </div>
+<!-- STEP 1: START CODE ENTRY -->
+<div id="step-start" class="step-card active">
+  <div class="step-header">
+    <span>Step 1: On-Arrival Start Code Verification (PRD §12.7–10)</span>
+    <span id="badge-step-start" class="badge badge-yellow">REQUIRED TO START</span>
+  </div>
+  <p style="font-size: 13px;">Upon reaching the senior's residence, request the numeric <strong>Start Code</strong> provided in their confirmation email:</p>
+  <div class="form-group" style="max-width: 260px;">
+    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="input-start-code" placeholder="Enter 6-digit Code" style="font-size: 20px; letter-spacing: 4px; text-align: center;">
+  </div>
+  <button id="btn-verify-start">Authorize & Start Visit</button>
+</div>
+
 
       <!-- STEP 2: 20-POINT CLINICAL ASSESSMENT -->
       <div id="step-assessment" class="step-card hidden">
@@ -323,17 +324,19 @@
       </div>
 
       <!-- STEP 4: END CODE VERIFICATION -->
-      <div id="step-end" class="step-card hidden">
-        <div class="step-header">
-          <span>Step 4: End Code Visit Completion (PRD §12.11–15)</span>
-          <span id="badge-step-end" class="badge badge-yellow">FINAL AUTHORIZATION</span>
-        </div>
-        <p style="font-size: 13px;">Service complete. Request the 8-character <strong>End Code</strong> from the senior or family to verify completion:</p>
-        <div class="form-group" style="max-width: 260px;">
-          <input type="text" id="input-end-code" placeholder="Enter End Code" style="font-size: 16px; letter-spacing: 2px; text-transform: uppercase;">
-        </div>
-        <button id="btn-verify-end">Verify End Code & Complete Visit</button>
-      </div>
+<!-- STEP 4: END CODE VERIFICATION -->
+<div id="step-end" class="step-card hidden">
+  <div class="step-header">
+    <span>Step 4: End Code Visit Completion (PRD §12.11–15)</span>
+    <span id="badge-step-end" class="badge badge-yellow">FINAL AUTHORIZATION</span>
+  </div>
+  <p style="font-size: 13px;">Service complete. Request the numeric <strong>End Code</strong> from the senior or family to verify completion:</p>
+  <div class="form-group" style="max-width: 260px;">
+    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="input-end-code" placeholder="Enter 6-digit Code" style="font-size: 20px; letter-spacing: 4px; text-align: center;">
+  </div>
+  <button id="btn-verify-end">Verify End Code & Complete Visit</button>
+</div>
+
     </div>
   </main>
 
