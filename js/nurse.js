@@ -99,6 +99,12 @@ function openVisitWorkspace(wo) {
   const stepDoc = document.getElementById('step-doctor');
   const stepEnd = document.getElementById('step-end');
 
+  // Clear numeric inputs when workspace opens
+  const inputStart = document.getElementById('input-start-code');
+  const inputEnd = document.getElementById('input-end-code');
+  if (inputStart) inputStart.value = '';
+  if (inputEnd) inputEnd.value = '';
+
   if (wo.status === 'IN_PROGRESS') {
     stepStart.className = 'step-card done';
     document.getElementById('badge-step-start').textContent = 'VERIFIED';
@@ -121,10 +127,18 @@ function openVisitWorkspace(wo) {
   workspace.scrollIntoView({ behavior: 'smooth' });
 }
 
-// 1. Verify Start Code
+// 1. Verify Start Code (NUMERIC ONLY)
 document.getElementById('btn-verify-start').addEventListener('click', async () => {
-  const code = document.getElementById('input-start-code').value.trim();
-  if (!code) return alert('Please enter the Start Code provided by the senior/family.');
+  const rawInput = document.getElementById('input-start-code').value;
+  const code = rawInput.trim().replace(/\D/g, ''); // Extract digits only
+
+  if (!code) {
+    return alert('Please enter the numeric Start Code provided by the senior/family.');
+  }
+
+  if (code.length !== 6) {
+    return alert('Invalid code format. Start Code must be exactly 6 digits.');
+  }
 
   try {
     const res = await callApi('verifyStartCode', {
@@ -260,10 +274,18 @@ document.getElementById('btn-skip-consult').addEventListener('click', () => {
   document.getElementById('input-end-code').focus();
 });
 
-// 4. Verify End Code
+// 4. Verify End Code (NUMERIC ONLY)
 document.getElementById('btn-verify-end').addEventListener('click', async () => {
-  const code = document.getElementById('input-end-code').value.trim();
-  if (!code) return alert('Please enter the End Code provided by the senior/family to complete this visit.');
+  const rawInput = document.getElementById('input-end-code').value;
+  const code = rawInput.trim().replace(/\D/g, ''); // Extract digits only
+
+  if (!code) {
+    return alert('Please enter the numeric End Code provided by the senior/family to complete this visit.');
+  }
+
+  if (code.length !== 6) {
+    return alert('Invalid code format. End Code must be exactly 6 digits.');
+  }
 
   try {
     const res = await callApi('verifyEndCode', {
