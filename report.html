@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Patient Care Summary — Nityaseva</title>
+  <title>Patient Clinical Care Summary — Nityaseva</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -41,6 +41,7 @@
       gap: 14px;
     }
 
+    /* TOP BAR */
     .top-bar {
       display: flex;
       justify-content: space-between;
@@ -89,6 +90,36 @@
       border-radius: 20px;
     }
 
+    /* VISIT SELECTOR (TIMELINE SYNCHRONIZER) */
+    .visit-picker-box {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+
+    .visit-picker-box label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #2d6a4f;
+    }
+
+    .visit-picker-box select {
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e0;
+      font-size: 12px;
+      font-weight: 700;
+      color: #1f2937;
+      background: #f9fafb;
+      outline: none;
+    }
+
+    /* PATIENT HERO CARD */
     .patient-card {
       background: linear-gradient(135deg, #e4f6df 0%, #d3efce 100%);
       border-radius: 26px;
@@ -158,52 +189,23 @@
       animation: pulse 1.5s infinite;
     }
 
-    .fitness-banner {
-      background: #141714;
-      border-radius: 24px;
-      padding: 18px;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-    }
-
-    .fitness-info small {
-      color: #74c69d;
-      font-weight: 800;
-      font-size: 10px;
-      letter-spacing: 1px;
-    }
-
-    .fitness-info h3 {
-      font-size: 17px;
-      font-weight: 800;
-      margin: 3px 0 4px;
-    }
-
-    .fitness-info p {
-      font-size: 11px;
-      color: #a0aec0;
-    }
-
-    .fitness-pill {
-      display: inline-block;
-      background: #1e3a2b;
-      color: #95d5b2;
-      padding: 3px 8px;
-      border-radius: 8px;
-      font-size: 10px;
-      font-weight: 700;
-      margin-top: 6px;
-    }
-
+    /* SECTION HEADER */
     .section-title {
       font-size: 17px;
       font-weight: 800;
       margin: 6px 4px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
+    .section-title small {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* LIVE VITALS CARDS */
     .vital-banner-card {
       background: linear-gradient(135deg, #ffd8cc 0%, #fec5bb 100%);
       border-radius: 22px;
@@ -283,6 +285,64 @@
       color: #78350f;
     }
 
+    /* FULL 20-POINT CLINICAL DETAILS SECTION */
+    .full-assessment-card {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+      border: 1px solid #edf2f7;
+    }
+
+    .full-assessment-card h3 {
+      font-size: 16px;
+      font-weight: 800;
+      color: #1b4332;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .asm-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .asm-item {
+      background: #f8fafc;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .asm-item-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .asm-item-val {
+      font-size: 13px;
+      font-weight: 800;
+      color: #1f2937;
+      margin-top: 3px;
+    }
+
+    .asm-notes-box {
+      margin-top: 10px;
+      background: #f0fdf4;
+      border-left: 4px solid #10b981;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #065f46;
+      line-height: 1.4;
+    }
+
+    /* TIMELINE */
     .journal-box {
       background: #fff;
       border-radius: 26px;
@@ -304,6 +364,13 @@
       border-radius: 16px;
       font-size: 13px;
       line-height: 1.45;
+      transition: all 0.2s ease;
+    }
+
+    .chat-bubble.active-node {
+      border: 2px solid #2d6a4f;
+      transform: scale(1.02);
+      box-shadow: 0 4px 12px rgba(45, 106, 79, 0.15);
     }
 
     .chat-nurse { background: #eff6ff; border-left: 4px solid #3b82f6; }
@@ -344,7 +411,7 @@
     .hidden { display: none !important; }
 
     @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.9); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; } }
   </style>
 </head>
 <body>
@@ -354,11 +421,17 @@
       <div class="top-user">
         <div class="user-avatar-initials" id="user-initials">NS</div>
         <div class="top-meta">
-          <small>Clinical Portal</small>
+          <small>Clinical Care Portal</small>
           <h4 id="welcome-text">Care Summary</h4>
         </div>
       </div>
       <div class="validity-pill" id="expiry-pill">Checking...</div>
+    </div>
+
+    <!-- TIMELINE VISIT SELECTOR -->
+    <div id="visit-picker-container" class="visit-picker-box hidden">
+      <label for="visit-select">📅 Selected Assessment Date:</label>
+      <select id="visit-select"></select>
     </div>
 
     <!-- LOADING SCREEN -->
@@ -378,6 +451,7 @@
     <!-- REPORT VIEW -->
     <div id="report-view" class="hidden" style="display:flex; flex-direction:column; gap:14px;">
       
+      <!-- PATIENT PROFILE -->
       <div class="patient-card">
         <div class="patient-header">
           <div class="patient-avatar">👵</div>
@@ -395,17 +469,10 @@
         </div>
       </div>
 
-      <div class="fitness-banner">
-        <div class="fitness-info">
-          <small>BODY COMPOSITION</small>
-          <h3>Clinical Vitals</h3>
-          <p>Weight • BMI • Consciousness • Pain Score</p>
-          <span class="fitness-pill" id="metrics-pill">20 metrics recorded</span>
-        </div>
-        <div style="font-size:36px;">🧘</div>
+      <div class="section-title">
+        <span>Recorded Vitals Snapshot</span>
+        <small id="visit-date-badge">Latest Assessment</small>
       </div>
-
-      <div class="section-title">Live Vitals</div>
 
       <!-- HEART RATE -->
       <div class="vital-banner-card">
@@ -459,126 +526,50 @@
         </div>
       </div>
 
-      <!-- CHAT JOURNAL -->
-      <div class="journal-box">
-        <h3 style="font-size:16px; font-weight:800; color:#1b4332;">Care Journal</h3>
-        <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Timeline between Nurse visits, Doctor advice & Family:</p>
-        <div id="timeline-stream" class="timeline-stream"></div>
+      <!-- COMPLETE 20-POINT CLINICAL INSPECTION DETAILS -->
+      <div class="full-assessment-card">
+        <h3>📋 Complete 20-Point Clinical Inspection</h3>
+        <div class="asm-grid">
+          <div class="asm-item">
+            <div class="asm-item-lbl">Level of Consciousness</div>
+            <div class="asm-item-val" id="asm-val-loc">Alert</div>
+          </div>
+          <div class="asm-item">
+            <div class="asm-item-lbl">Fall Risk</div>
+            <div class="asm-item-val" id="asm-val-fall">Low</div>
+          </div>
+          <div class="asm-item">
+            <div class="asm-item-lbl">Mobility Status</div>
+            <div class="asm-item-val" id="asm-val-mobility">Independent</div>
+          </div>
+          <div class="asm-item">
+            <div class="asm-item-lbl">Pain Level</div>
+            <div class="asm-item-val" id="asm-val-pain">0 / 10</div>
+          </div>
+          <div class="asm-item">
+            <div class="asm-item-lbl">Respiratory Symptoms</div>
+            <div class="asm-item-val" id="asm-val-resp">None</div>
+          </div>
+          <div class="asm-item">
+            <div class="asm-item-lbl">Edema / Swelling</div>
+            <div class="asm-item-val" id="asm-val-edema">None</div>
+          </div>
+          <div class="asm-item">
+            <div class="asm-item-lbl">Hydration Status</div>
+            <div class="asm-item-val" id="asm-val-hydration">Normal</div>
+          </div>
+          <div class="asm-item">
+            <div class="asm-item-lbl">Medication Adherence</div>
+            <div class="asm-item-val" id="asm-val-meds">Good</div>
+          </div>
+        </div>
+        <div class="asm-notes-box">
+          <strong>Nurse Observations:</strong> <span id="asm-val-notes">No specific notes recorded.</span>
+        </div>
       </div>
 
-    </div>
-  </div>
-
-  <script>
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxfaUyba2jRYmHlLlI24mRBneMlxoOd5BAv-8UfJmfsR-9bOLmdfmR9gX0M4mq38IwDeA/exec';
-
-    async function init() {
-      const token = new URLSearchParams(window.location.search).get('token');
-      if (!token) return showError('No token found in link.');
-
-      try {
-        const res = await fetch(APPS_SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: 'getReportLink', params: { token: token.trim() } })
-        });
-
-        const raw = await res.text();
-        let json;
-        try {
-          json = JSON.parse(raw);
-        } catch (err) {
-          return showError('Invalid server response: ' + raw.substring(0, 100));
-        }
-
-        if (!json.success || !json.data || !json.data.success) {
-          const errMsg = (json.data && json.data.error) ? json.data.error : (json.error || 'Invalid or expired report token.');
-          return showError(errMsg);
-        }
-
-        const report = json.data.report || {};
-        const careJournal = report.careJournal || {};
-        renderCareReport(careJournal, report.expiresAt, report.seniorId);
-      } catch (err) {
-        showError('Network error: ' + err.message);
-      }
-    }
-
-    function renderCareReport(data, expiresAt, seniorId) {
-      document.getElementById('loading').classList.add('hidden');
-      document.getElementById('error').classList.add('hidden');
-      const view = document.getElementById('report-view');
-      view.classList.remove('hidden');
-
-      if (expiresAt) {
-        document.getElementById('expiry-pill').textContent = 'Valid until: ' + new Date(expiresAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-      }
-
-      const name = data.seniorName || 'Senior Patient';
-      document.getElementById('pat-name').textContent = name;
-      document.getElementById('welcome-text').textContent = name;
-      document.getElementById('user-initials').textContent = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'NS';
-      document.getElementById('pat-id-tag').textContent = seniorId || (data.latestVitals ? data.latestVitals.senior_id : 'SENIOR');
-
-      const v = data.latestVitals || {};
-      const sys = v.bp_systolic || (v.bp ? v.bp.split('/')[0] : '--');
-      const dia = v.bp_diastolic || (v.bp ? v.bp.split('/')[1] : '--');
-      document.getElementById('val-bp').textContent = `${sys}/${dia}`;
-      document.getElementById('val-hr').innerHTML = `${v.heart_rate || '--'} <span style="font-size:15px; font-weight:600;">bpm</span>`;
-      document.getElementById('val-spo2').textContent = v.spo2 || '--';
-
-      const tempUnit = v.temperature_unit || 'C';
-      document.getElementById('val-temp').textContent = v.temperature ? `${v.temperature}°${tempUnit}` : '--°C';
-
-      const sugar = v.glucose_random || v.glucose_fasting || v.blood_sugar || '--';
-      document.getElementById('val-sugar').innerHTML = `${sugar} <span style="font-size:15px; font-weight:600;">mg/dL</span>`;
-      if (v.glucose_timing) document.getElementById('sugar-timing').textContent = v.glucose_timing;
-
-      document.getElementById('val-bmi').textContent = v.bmi || '--';
-      document.getElementById('val-weight').textContent = v.weight ? `${v.weight} kg` : '-- kg';
-
-      // Care Journal Timeline
-      const stream = document.getElementById('timeline-stream');
-      stream.innerHTML = '';
-      const timeline = data.timeline || [];
-
-      if (timeline.length === 0) {
-        stream.innerHTML = '<p style="color:#718096; font-size:12px;">No past entries recorded in this care journal.</p>';
-      } else {
-        timeline.forEach(evt => {
-          const div = document.createElement('div');
-          let roleClass = 'chat-nurse';
-          let icon = '👩‍⚕️';
-          if (evt.senderRole === 'doctor') { roleClass = 'chat-doctor'; icon = '🩺'; }
-          if (evt.senderRole === 'family') { roleClass = 'chat-family'; icon = '👨‍👩‍👦'; }
-
-          div.className = `chat-bubble ${roleClass}`;
-          div.innerHTML = `
-            <div style="font-size:22px; line-height:1;">${icon}</div>
-            <div style="flex:1;">
-              <div class="chat-meta">
-                <span><strong>${evt.sender} Says:</strong></span>
-                <span>${evt.date || ''}</span>
-              </div>
-              <div class="chat-title">${evt.title || ''}</div>
-              <div class="chat-text">${evt.message || ''}</div>
-              ${evt.flagged ? '<div class="alert-tag">⚠ Flagged for Review</div>' : ''}
-            </div>
-          `;
-          stream.appendChild(div);
-        });
-      }
-    }
-
-    function showError(msg) {
-      document.getElementById('loading').classList.add('hidden');
-      document.getElementById('report-view').classList.add('hidden');
-      const err = document.getElementById('error');
-      err.classList.remove('hidden');
-      document.getElementById('error-msg').textContent = msg;
-    }
-
-    init();
-  </script>
-</body>
-</html>
+      <!-- CHAT JOURNAL & TIMELINE -->
+      <div class="journal-box">
+        <h3 style="font-size:16px; font-weight:800; color:#1b4332;">Care Journal (Chronological History)</h3>
+        <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Continuity between Nurse visits, Doctor advice & Family requests:</p>
+        <div
