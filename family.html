@@ -5,65 +5,210 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Family Portal — Nityaseva</title>
   <link rel="stylesheet" href="css/style.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* SOS & Emergency Styling */
+    .emergency-banner {
+      background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+      border: 2px solid #feb2b2;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+    .emergency-text h3 {
+      margin: 0 0 4px 0;
+      color: #9b2c2c;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .emergency-text p {
+      margin: 0;
+      font-size: 13px;
+      color: #742a2a;
+      line-height: 1.4;
+    }
+    .sos-btn {
+      background: #e53e3e;
+      color: #ffffff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 14px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(229, 62, 62, 0.35);
+      animation: pulse-sos 2s infinite;
+      white-space: nowrap;
+    }
+    .sos-btn:hover { background: #c53030; }
+
+    /* Vitals Quick Grid */
+    .vitals-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .vital-badge-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+    .vital-badge-val {
+      font-size: 18px;
+      font-weight: 800;
+      color: #1e5238;
+    }
+    .vital-badge-lbl {
+      font-size: 11px;
+      color: #718096;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    /* Notice Pill */
+    .notice-box {
+      background: #ebf8ff;
+      border-left: 4px solid #3182ce;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #2b6cb0;
+      margin-bottom: 14px;
+    }
+
+    @keyframes pulse-sos {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+  </style>
 </head>
 <body>
   <header>
-    <h1>Nityaseva Family Portal</h1>
+    <h1>Nityaseva Family Care Portal</h1>
     <div class="header-user">
-      <span id="user-display">Loading...</span>
+      <span id="user-display">Family Member</span>
       <button id="btn-logout" class="secondary">Logout</button>
     </div>
   </header>
 
   <main>
-    <div class="card">
-      <h2>Senior Profile & Care Plan</h2>
-      <div id="senior-info">Loading senior details...</div>
+    <!-- EMERGENCY SOS NOTIFICATION BANNER -->
+    <div class="emergency-banner">
+      <div class="emergency-text">
+        <h3>🚨 Emergency Protocol / জরুরি সহায়তা</h3>
+        <p>
+          For an emergency, please call an ambulance at <strong>112</strong> immediately.<br>
+          Our field care team will be present at the hospital to provide complete bedside assistance.
+        </p>
+      </div>
+      <a href="tel:112" class="sos-btn">
+        <span>🆘</span> জরুরি সহায়তার জন্য যোগাযোগ (Call 112)
+      </a>
     </div>
 
+    <!-- SENIOR PROFILE & LATEST RECORDED VITALS -->
+    <div class="card">
+      <h2>Senior Profile & Latest Visit Health Status</h2>
+      <div id="senior-info" style="font-size: 14px; line-height: 1.5;">Loading senior details...</div>
+      
+      <div id="vitals-summary-container" class="hidden" style="margin-top: 14px;">
+        <div style="font-size: 12px; font-weight: 700; color: #4a5568;">LATEST RECORDED VITALS:</div>
+        <div class="vitals-summary-grid">
+          <div class="vital-badge-box"><div class="vital-badge-val" id="disp-bp">--/--</div><div class="vital-badge-lbl">Blood Pressure</div></div>
+          <div class="vital-badge-box"><div class="vital-badge-val" id="disp-hr">--</div><div class="vital-badge-lbl">Heart Rate</div></div>
+          <div class="vital-badge-box"><div class="vital-badge-val" id="disp-spo2">--%</div><div class="vital-badge-lbl">SpO2 (Oxygen)</div></div>
+          <div class="vital-badge-box"><div class="vital-badge-val" id="disp-sugar">--</div><div class="vital-badge-lbl">Blood Sugar</div></div>
+          <div class="vital-badge-box"><div class="vital-badge-val" id="disp-temp">--°C</div><div class="vital-badge-lbl">Temperature</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MONTHLY ENTITLEMENTS -->
     <div class="card">
       <h2>Monthly Entitlements (Visits & Consults)</h2>
       <div class="grid" id="entitlement-stats">
         <div class="stat-box">
           <div class="number" id="nurse-count">-</div>
-          <div class="label">Nurse Visits Remaining</div>
+          <div class="label">Nurse Home Visits Remaining</div>
         </div>
         <div class="stat-box">
           <div class="number" id="doctor-count">-</div>
-          <div class="label">Doctor Consults Remaining</div>
+          <div class="label">Doctor Teleconsults Remaining</div>
         </div>
       </div>
     </div>
 
+    <!-- BOOK APPOINTMENT WITH 24-HOUR NOTICE RULE -->
     <div class="card">
-      <h2>Book Appointment</h2>
+      <h2>Book Appointment (Nurse Visit / Doctor Consult)</h2>
+      <div class="notice-box">
+        <strong>⚠️ Advance Scheduling Rule:</strong> Please note that appointment slots must be booked <strong>at least 24 hours in advance</strong> to allow nurse and doctor assignment.
+      </div>
       <form id="appointment-form">
-        <div class="form-group">
-          <label>Service Type</label>
-          <select id="apt-type">
-            <option value="NurseVisit">Nurse Home Visit</option>
-            <option value="DoctorConsult">Doctor Teleconsult</option>
-          </select>
+        <div class="grid">
+          <div class="form-group">
+            <label>Service Type</label>
+            <select id="apt-type">
+              <option value="NurseVisit">Nurse Home Visit</option>
+              <option value="DoctorConsult">Doctor Teleconsult</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Preferred Date & Time (Min. 24h from now)</label>
+            <input type="datetime-local" id="apt-time" required>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Preferred Date & Time</label>
-          <input type="datetime-local" id="apt-time" required>
-        </div>
-        <button type="submit">Request Appointment</button>
+        <button type="submit">Request Care Appointment</button>
       </form>
     </div>
 
+    <!-- CLINICAL REPORTS & CARE SUMMARY (HEALTH VAULT) -->
     <div class="card">
-      <h2>Scheduled Visits & Security Codes</h2>
-      <p style="font-size: 13px; color: #718096;">Share Start Code on arrival, End Code when service completes.</p>
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #edf2f7; padding-bottom:10px; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+        <h2 style="margin:0; border:none; padding:0;">Diagnostic Reports & Care Summary</h2>
+        <button id="btn-view-summary" style="background:#2c6e49; padding:8px 14px; font-size:13px;">View Live Interactive Care Journal ↗</button>
+      </div>
+      <p style="font-size: 13px; color: #718096; margin-top:0;">Access your loved one's lab tests, prescriptions, and nurse visit summaries:</p>
+      <table id="family-reports-table">
+        <thead>
+          <tr>
+            <th>Report ID</th>
+            <th>Type</th>
+            <th>Date</th>
+            <th>Document</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="4">Loading medical reports...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SCHEDULED VISITS & SECURITY CODES -->
+    <div class="card">
+      <h2>Scheduled Visits & Security Verification</h2>
+      <p style="font-size: 13px; color: #718096;">
+        To ensure patient safety, share the <strong>Start Code</strong> with the practitioner upon arrival, and the <strong>End Code</strong> only when service is complete.
+      </p>
       <table id="work-orders-table">
         <thead>
           <tr>
-            <th>Work Order</th>
-            <th>Type</th>
+            <th>Work Order ID</th>
+            <th>Service</th>
             <th>Status</th>
-            <th>Scheduled</th>
+            <th>Scheduled Time</th>
           </tr>
         </thead>
         <tbody>
