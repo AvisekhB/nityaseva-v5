@@ -12,7 +12,6 @@ async function init() {
   document.getElementById('btn-logout').addEventListener('click', signOut);
 
   setupBmiCalculator();
-
   await loadNurseWorkOrders();
 }
 
@@ -99,22 +98,45 @@ function openVisitWorkspace(wo) {
   const stepDoc = document.getElementById('step-doctor');
   const stepEnd = document.getElementById('step-end');
 
-  // Clear numeric inputs when workspace opens
+  // Clear inputs
   const inputStart = document.getElementById('input-start-code');
   const inputEnd = document.getElementById('input-end-code');
   if (inputStart) inputStart.value = '';
   if (inputEnd) inputEnd.value = '';
 
-  if (wo.status === 'IN_PROGRESS') {
+  // STATE 1: ALREADY COMPLETED VISIT
+  if (wo.status === 'COMPLETE' || wo.status === 'CLOSE') {
     stepStart.className = 'step-card done';
     document.getElementById('badge-step-start').textContent = 'VERIFIED';
     document.getElementById('badge-step-start').className = 'badge badge-green';
 
     stepAsm.classList.remove('hidden');
-    stepAsm.className = 'step-card active';
-    stepDoc.classList.remove('hidden');
+    stepAsm.className = 'step-card done';
+    document.getElementById('badge-step-asm').textContent = 'COMPLETED';
+    document.getElementById('badge-step-asm').className = 'badge badge-green';
+
+    stepDoc.classList.add('hidden');
     stepEnd.classList.remove('hidden');
-  } else {
+    stepEnd.className = 'step-card done';
+    document.getElementById('badge-step-end').textContent = 'VISIT COMPLETED';
+    document.getElementById('badge-step-end').className = 'badge badge-green';
+  }
+  // STATE 2: CURRENTLY IN PROGRESS
+  else if (wo.status === 'IN_PROGRESS') {
+    stepStart.className = 'step-card done';
+    document.getElementById('badge-step-start').textContent = 'VERIFIED';
+    document.getElementById('badge-step-start').className = 'badge badge-green';
+
+    // Show Assessment Form first
+    stepAsm.classList.remove('hidden');
+    stepAsm.className = 'step-card active';
+
+    // Keep End Code locked until Assessment is saved
+    stepDoc.classList.add('hidden');
+    stepEnd.classList.add('hidden');
+  }
+  // STATE 3: SCHEDULED (NEEDS START CODE)
+  else {
     stepStart.className = 'step-card active';
     document.getElementById('badge-step-start').textContent = 'REQUIRED TO START';
     document.getElementById('badge-step-start').className = 'badge badge-yellow';
@@ -129,15 +151,15 @@ function openVisitWorkspace(wo) {
 
 // 1. Verify Start Code (NUMERIC ONLY)
 document.getElementById('btn-verify-start').addEventListener('click', async () => {
-  const rawInput = document.getElementById('input-start-code').value;
-  const code = rawInput.trim().replace(/\D/g, ''); // Extract digits only
-
-  if (!code) {
-    return alert('Please enter the numeric Start Code provided by the senior/family.');
+  if (activeWO && (activeWO.status === 'COMPLETE' || activeWO.status === 'CLOSE')) {
+    return alert('This visit has already been completed.');
   }
 
-  if (code.length !== 6) {
-    return alert('Invalid code format. Start Code must be exactly 6 digits.');
+  const rawInput = document.getElementById('input-start-code').value;
+  const code = rawInput.trim().replace(/\D/g, '');
+
+  if (!code || code.length !== 6) {
+    return alert('Please enter a valid 6-digit numeric Start Code.');
   }
 
   try {
@@ -159,7 +181,7 @@ document.getElementById('btn-verify-start').addEventListener('click', async () =
   }
 });
 
-// 2. Submit 20-Point Assessment (full spec-compliant payload)
+// 2. Submit 20-Point Assessment
 document.getElementById('assessment-form').addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -190,7 +212,7 @@ document.getElementById('assessment-form').addEventListener('submit', async (e) 
       glucose_random: document.getElementById('asm-glucose-random').value ? Number(document.getElementById('asm-glucose-random').value) : '',
       glucose_timing: document.getElementById('asm-glucose-timing').value.trim(),
 
-      // 8-10. Weight/Height/BMI
+      // 8-10. Measurements
       weight: document.getElementById('asm-weight').value ? Number(document.getElementById('asm-weight').value) : '',
       height: document.getElementById('asm-height').value ? Number(document.getElementById('asm-height').value) : '',
       bmi: document.getElementById('asm-bmi').value || '',
@@ -219,18 +241,25 @@ document.getElementById('assessment-form').addEventListener('submit', async (e) 
       // 20
       cognitive_observation: document.getElementById('asm-cognitive').value,
 
-      // Additional
+      // Notes
       nurse_notes: document.getElementById('asm-notes').value.trim()
     };
 
     const res = await callApi('saveAssessment', payload);
 
-    alert('20-Point Assessment saved to record!' + (res.flagged ? ' Note: Values flagged for clinical review.' : ''));
+    alert('✓ 20-Point Assessment saved to database!' + (res.flagged ? ' Note: Values flagged for clinical review.' : ''));
+    
+    // Mark Assessment Step complete
     document.getElementById('step-assessment').className = 'step-card done';
-    document.getElementById('badge-step-asm').textContent = 'COMPLETED';
+    document.getElementById('badge-step-asm').textContent = 'SAVED';
     document.getElementById('badge-step-asm').className = 'badge badge-green';
 
+    // Unlock Doctor Consult & End Code steps
+    document.getElementById('step-doctor').classList.remove('hidden');
     document.getElementById('step-doctor').className = 'step-card active';
+    document.getElementById('step-end').classList.remove('hidden');
+    document.getElementById('step-end').className = 'step-card active';
+
   } catch (err) {
     alert('Failed to save assessment: ' + err.message);
   }
@@ -244,7 +273,7 @@ document.getElementById('btn-mark-consult').addEventListener('click', async () =
       workOrderId: activeWO.work_order_id,
       notes: notes || 'Doctor teleconsult concluded'
     });
-    document.getElementById('consult-status-indicator').textContent = '✓ Consult completed and logged';
+    document.getElementById('consult-status-indicator').textContent = '✓ Consult logged';
     document.getElementById('consult-status-indicator').style.color = '#38a169';
   } catch (err) {
     alert('Could not update consult status: ' + err.message);
@@ -276,15 +305,15 @@ document.getElementById('btn-skip-consult').addEventListener('click', () => {
 
 // 4. Verify End Code (NUMERIC ONLY)
 document.getElementById('btn-verify-end').addEventListener('click', async () => {
-  const rawInput = document.getElementById('input-end-code').value;
-  const code = rawInput.trim().replace(/\D/g, ''); // Extract digits only
-
-  if (!code) {
-    return alert('Please enter the numeric End Code provided by the senior/family to complete this visit.');
+  if (activeWO && (activeWO.status === 'COMPLETE' || activeWO.status === 'CLOSE')) {
+    return alert('This visit has already been concluded.');
   }
 
-  if (code.length !== 6) {
-    return alert('Invalid code format. End Code must be exactly 6 digits.');
+  const rawInput = document.getElementById('input-end-code').value;
+  const code = rawInput.trim().replace(/\D/g, '');
+
+  if (!code || code.length !== 6) {
+    return alert('Please enter a valid 6-digit numeric End Code.');
   }
 
   try {
@@ -294,7 +323,7 @@ document.getElementById('btn-verify-end').addEventListener('click', async () => 
     });
 
     if (res.success) {
-      alert('End Code Verified! Work order marked COMPLETE. Care report logged.');
+      alert('End Code Verified! Work order marked COMPLETE.');
       document.getElementById('visit-workspace').classList.add('hidden');
       await loadNurseWorkOrders();
     } else {
