@@ -364,6 +364,7 @@
       border-radius: 16px;
       font-size: 13px;
       line-height: 1.45;
+      cursor: pointer;
       transition: all 0.2s ease;
     }
 
@@ -572,4 +573,182 @@
       <div class="journal-box">
         <h3 style="font-size:16px; font-weight:800; color:#1b4332;">Care Journal (Chronological History)</h3>
         <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Continuity between Nurse visits, Doctor advice & Family requests:</p>
-        <div
+        <div id="timeline-stream" class="timeline-stream"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxfaUyba2jRYmHlLlI24mRBneMlxoOd5BAv-8UfJmfsR-9bOLmdfmR9gX0M4mq38IwDeA/exec';
+
+    let globalCareJournal = null;
+
+    async function init() {
+      const token = new URLSearchParams(window.location.search).get('token');
+      if (!token) return showError('No access token found in link.');
+
+      try {
+        const res = await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'getReportLink', params: { token: token.trim() } })
+        });
+
+        const raw = await res.text();
+        let json;
+        try {
+          json = JSON.parse(raw);
+        } catch (err) {
+          return showError('Invalid server response: ' + raw.substring(0, 100));
+        }
+
+        if (!json.success || !json.data || !json.data.success) {
+          const errMsg = (json.data && json.data.error) ? json.data.error : (json.error || 'Invalid or expired report token.');
+          return showError(errMsg);
+        }
+
+        const report = json.data.report || {};
+        globalCareJournal = report.careJournal || {};
+        renderMasterView(globalCareJournal, report.expiresAt, report.seniorId);
+      } catch (err) {
+        showError('Network error: ' + err.message);
+      }
+    }
+
+    function renderMasterView(careJournal, expiresAt, seniorId) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('error').classList.add('hidden');
+      document.getElementById('report-view').classList.remove('hidden');
+
+      if (expiresAt) {
+        document.getElementById('expiry-pill').textContent = 'Valid until: ' + new Date(expiresAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      }
+
+      const name = careJournal.seniorName || 'Senior Patient';
+      document.getElementById('pat-name').textContent = name;
+      document.getElementById('welcome-text').textContent = name;
+      document.getElementById('user-initials').textContent = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'NS';
+      document.getElementById('pat-id-tag').textContent = seniorId || 'SENIOR';
+
+      const assessments = careJournal.allAssessments || [];
+      const picker = document.getElementById('visit-select');
+      const pickerBox = document.getElementById('visit-picker-container');
+
+      if (assessments.length > 1) {
+        pickerBox.classList.remove('hidden');
+        picker.innerHTML = assessments.map((a, i) => {
+          const d = a.created_at ? new Date(a.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : `Visit ${i + 1}`;
+          return `<option value="${a.assessment_id || i}">${d}</option>`;
+        }).join('');
+
+        picker.onchange = (e) => {
+          const selectedId = e.target.value;
+          const chosen = assessments.find((a, i) => (a.assessment_id || String(i)) === selectedId);
+          if (chosen) updateVitalsCard(chosen);
+        };
+      }
+
+      // Initial render with target/active assessment
+      const initial = careJournal.activeAssessment || (assessments.length > 0 ? assessments[0] : null);
+      if (initial) updateVitalsCard(initial);
+
+      renderTimeline(careJournal.timeline || [], initial ? initial.assessment_id : null);
+    }
+
+    function updateVitalsCard(v) {
+      if (!v) return;
+
+      const dateStr = v.created_at ? new Date(v.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Assessment';
+      document.getElementById('visit-date-badge').textContent = dateStr;
+
+      // Primary Cards
+      const sys = v.bp_systolic || (v.bp ? v.bp.split('/')[0] : '--');
+      const dia = v.bp_diastolic || (v.bp ? v.bp.split('/')[1] : '--');
+      document.getElementById('val-bp').textContent = `${sys}/${dia}`;
+      document.getElementById('val-hr').innerHTML = `${v.heart_rate || '--'} <span style="font-size:15px; font-weight:600;">bpm</span>`;
+      document.getElementById('val-spo2').textContent = v.spo2 || '--';
+
+      const tempUnit = v.temperature_unit || 'C';
+      document.getElementById('val-temp').textContent = v.temperature ? `${v.temperature}°${tempUnit}` : '--°C';
+
+      const sugar = v.glucose_random || v.glucose_fasting || v.blood_sugar || '--';
+      document.getElementById('val-sugar').innerHTML = `${sugar} <span style="font-size:15px; font-weight:600;">mg/dL</span>`;
+      if (v.glucose_timing) document.getElementById('sugar-timing').textContent = v.glucose_timing;
+
+      document.getElementById('val-bmi').textContent = v.bmi || '--';
+      document.getElementById('val-weight').textContent = v.weight ? `${v.weight} kg` : '-- kg';
+
+      // 20-Point Detailed Parameters
+      document.getElementById('asm-val-loc').textContent = v.level_of_consciousness || 'Alert';
+      document.getElementById('asm-val-fall').textContent = v.fall_risk || 'Low';
+      document.getElementById('asm-val-mobility').textContent = v.mobility_status || 'Independent';
+      document.getElementById('asm-val-pain').textContent = (v.pain_level !== undefined && v.pain_level !== '') ? `${v.pain_level} / 10` : '0 / 10';
+      document.getElementById('asm-val-resp').textContent = v.respiratory_symptoms || 'None';
+      document.getElementById('asm-val-edema').textContent = v.edema_severity || 'None';
+      document.getElementById('asm-val-hydration').textContent = v.hydration_status || 'Normal';
+      document.getElementById('asm-val-meds').textContent = v.medication_adherence || 'Good';
+      document.getElementById('asm-val-notes').textContent = v.nurse_notes || 'No specific nurse notes recorded for this assessment.';
+
+      // Highlight corresponding node in timeline
+      document.querySelectorAll('.chat-bubble').forEach(b => b.classList.remove('active-node'));
+      const activeEl = document.getElementById('node-' + (v.assessment_id || ''));
+      if (activeEl) activeEl.classList.add('active-node');
+    }
+
+    function renderTimeline(timeline, activeAsmId) {
+      const stream = document.getElementById('timeline-stream');
+      stream.innerHTML = '';
+
+      if (timeline.length === 0) {
+        stream.innerHTML = '<p style="color:#718096; font-size:12px;">No past entries recorded in this care journal.</p>';
+        return;
+      }
+
+      timeline.forEach(evt => {
+        const div = document.createElement('div');
+        let roleClass = 'chat-nurse';
+        let icon = '👩‍⚕️';
+        if (evt.senderRole === 'doctor') { roleClass = 'chat-doctor'; icon = '🩺'; }
+        if (evt.senderRole === 'family') { roleClass = 'chat-family'; icon = '👨‍👩‍👦'; }
+
+        div.id = 'node-' + (evt.id || '');
+        div.className = `chat-bubble ${roleClass} ${evt.id === activeAsmId ? 'active-node' : ''}`;
+        div.innerHTML = `
+          <div style="font-size:22px; line-height:1;">${icon}</div>
+          <div style="flex:1;">
+            <div class="chat-meta">
+              <span><strong>${evt.sender} Says:</strong></span>
+              <span>${evt.date || ''}</span>
+            </div>
+            <div class="chat-title">${evt.title || ''}</div>
+            <div class="chat-text">${evt.message || ''}</div>
+            ${evt.flagged ? '<div class="alert-tag">⚠ Flagged for Review</div>' : ''}
+          </div>
+        `;
+
+        if (evt.vitals) {
+          div.onclick = () => {
+            updateVitalsCard(evt.vitals);
+            const picker = document.getElementById('visit-select');
+            if (picker) picker.value = evt.vitals.assessment_id || '';
+            window.scrollTo({ top: 120, behavior: 'smooth' });
+          };
+        }
+
+        stream.appendChild(div);
+      });
+    }
+
+    function showError(msg) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('report-view').classList.add('hidden');
+      const err = document.getElementById('error');
+      err.classList.remove('hidden');
+      document.getElementById('error-msg').textContent = msg;
+    }
+
+    init();
+  </script>
+</body>
+</html>
