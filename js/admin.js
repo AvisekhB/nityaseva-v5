@@ -104,7 +104,7 @@ function populateSeniorDropdowns(seniors) {
   const options = '<option value="">-- Choose Senior --</option>' +
     seniors.map(s => `<option value="${String(s.senior_id || '').trim()}">${s.full_name} (${String(s.senior_id || '').trim()})</option>`).join('');
 
-  ['wo-senior-id', 'sub-senior-id', 'report-senior-id'].forEach(id => {
+  ['wo-senior-id', 'sub-senior-id', 'report-senior-id', 'gen-report-senior'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = options;
   });
@@ -247,10 +247,79 @@ function renderEntitlements(ents) {
 function renderReports(reports) {
   const tbody = document.querySelector('#admin-reports-table tbody');
   if (!tbody) return;
+
   if (!reports || reports.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6">No diagnostic reports recorded yet.</td></tr>';
     return;
   }
+
+  // 1. Group reports by senior_id
+  const grouped = {};
+  reports.forEach(r => {
+    const sid = String(r.senior_id || '').trim();
+    if (!grouped[sid]) grouped[sid] = [];
+    grouped[sid].push(r);
+  });
+
+  // 2. Sort each senior's reports by date (newest first) and keep only the LAST 4
+  const finalReports = [];
+  Object.keys(grouped).forEach(sid => {
+    const seniorReports = grouped[sid].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    const last4 = seniorReports.slice(0, 4); // Keep last 4 only
+    finalReports.push(...last4);
+  });
+
+  // 3. Render table rows
+  tbody.innerHTML = finalReports.map(r => {
+    const isCareJournal = (r.file_url === 'INTERNAL_CARE_JOURNAL');
+    const docLink = isCareJournal
+      ? `<span class="badge badge-doctor-consult">Interactive Care Journal</span>`
+      : `<a href="${r.file_url}" target="_blank" rel="noopener">Open Document ↗</a>`;
+
+    return `
+      <tr>
+        <td><strong>${r.report_id}</strong></td>
+        <td><strong>${getSeniorName(r.senior_id)}</strong> <br><small style="color:#718096;">(${r.senior_id})</small></td>
+        <td><span class="badge ${isCareJournal ? 'badge-complete' : 'badge-nurse-visit'}">${r.type}</span></td>
+        <td>${docLink}</td>
+        <td>${r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN') : '-'}</td>
+        <td>
+          <button class="share-btn" data-id="${r.report_id}" data-senior="${r.senior_id}" data-type="${r.type}">Share 72h Link</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  // 4. Bind Share Link button actions
+  tbody.querySelectorAll('.share-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const reportId = btn.getAttribute('data-id');
+      const seniorId = btn.getAttribute('data-senior');
+      const type = btn.getAttribute('data-type');
+      try {
+        const res = await callApi('createReportLink', { reportId, expiryHours: 72 });
+        const shareUrl = `${window.location.origin}${window.location.pathname.replace('admin.html', '')}report.html?token=${res.token}`;
+        const input = prompt(`72-Hour Secure Link Created:\n\n${shareUrl}\n\nType 'copy' to copy to clipboard, or enter an email address to send directly:`);
+        if (!input) return;
+        if (input.toLowerCase() === 'copy') {
+          await navigator.clipboard.writeText(shareUrl);
+          alert('Link copied to clipboard!');
+        } else if (input.includes('@')) {
+          await callApi('shareReportByEmail', {
+            recipientEmail: input.trim(),
+            seniorName: getSeniorName(seniorId),
+            reportType: type,
+            secureUrl: shareUrl
+          });
+          alert('Report link emailed to ' + input.trim());
+        }
+      } catch (err) {
+        alert('Share error: ' + err.message);
+      }
+    };
+  });
+}
+
 
   tbody.innerHTML = [...reports].reverse().map(r => `
     <tr>
