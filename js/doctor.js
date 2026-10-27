@@ -97,7 +97,6 @@ function renderWorkOrders(orders) {
       }
     } catch (e) {}
 
-    // 👇 ADD THIS EXACT LINE RIGHT HERE:
     const tr = document.createElement('tr');
 
     tr.innerHTML = `
@@ -144,6 +143,12 @@ async function openClinicalWorkspace(seniorId, workOrder) {
   // Work Order verification steps
   const startStep = document.getElementById('doc-start-step');
   const endStep = document.getElementById('doc-end-step');
+
+  // Clear code inputs when opening workspace
+  const inputStart = document.getElementById('doc-input-start-code');
+  const inputEnd = document.getElementById('doc-input-end-code');
+  if (inputStart) inputStart.value = '';
+  if (inputEnd) inputEnd.value = '';
 
   if (workOrder) {
     if (workOrder.status === 'IN_PROGRESS') {
@@ -369,13 +374,21 @@ async function loadPatientClinicalSummary(seniorId) {
 }
 
 function wireWorkspaceActions() {
-  // 1. Verify Start Code (Teleconsult start)
+  // 1. Verify Start Code (Teleconsult start - NUMERIC ONLY)
   const btnStart = document.getElementById('doc-btn-verify-start');
   if (btnStart) {
     btnStart.addEventListener('click', async () => {
       const codeInput = document.getElementById('doc-input-start-code');
-      const code = codeInput ? codeInput.value.trim() : '';
-      if (!code) return alert('Please enter the Start Code provided by the patient.');
+      const raw = codeInput ? codeInput.value : '';
+      const code = raw.trim().replace(/\D/g, ''); // Extract numeric digits only
+
+      if (!code) {
+        return alert('Please enter the numeric Start Code provided by the patient.');
+      }
+
+      if (code.length !== 6) {
+        return alert('Invalid code format. Start Code must be exactly 6 digits.');
+      }
 
       try {
         const res = await callApi('verifyStartCode', {
@@ -446,13 +459,21 @@ function wireWorkspaceActions() {
     });
   }
 
-  // 3. Verify End Code (Consultation completion)
+  // 3. Verify End Code (Consultation completion - NUMERIC ONLY)
   const btnEnd = document.getElementById('doc-btn-verify-end');
   if (btnEnd) {
     btnEnd.addEventListener('click', async () => {
       const codeInput = document.getElementById('doc-input-end-code');
-      const code = codeInput ? codeInput.value.trim() : '';
-      if (!code) return alert('Please enter the End Code provided by the patient to complete the consultation.');
+      const raw = codeInput ? codeInput.value : '';
+      const code = raw.trim().replace(/\D/g, ''); // Extract numeric digits only
+
+      if (!code) {
+        return alert('Please enter the numeric End Code provided by the patient to complete the consultation.');
+      }
+
+      if (code.length !== 6) {
+        return alert('Invalid code format. End Code must be exactly 6 digits.');
+      }
 
       try {
         const res = await callApi('verifyEndCode', {
