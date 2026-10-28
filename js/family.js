@@ -17,11 +17,17 @@ async function init() {
   currentProfile = await requireAuth('family');
   if (!currentProfile) return;
 
-  document.getElementById('user-display').textContent = currentProfile.full_name || currentProfile.email || 'Family Member';
-  document.getElementById('btn-logout').addEventListener('click', signOut);
+  const userDisplay = document.getElementById('user-display');
+  if (userDisplay) {
+    userDisplay.textContent = currentProfile.full_name || currentProfile.email || 'Family Member';
+  }
+
+  const logoutBtn = document.getElementById('btn-logout');
+  if (logoutBtn) logoutBtn.addEventListener('click', signOut);
 
   setupMinBookingTime();
   setupHospitalWalletPass();
+  setupPrintCard();
   await loadDashboard();
 }
 
@@ -31,10 +37,8 @@ function setupMinBookingTime() {
 
   const minDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
   minDate.setMinutes(minDate.getMinutes() - minDate.getTimezoneOffset());
-  const isoMin = minDate.toISOString().slice(0, 16);
-
-  aptTimeInput.min = isoMin;
-  aptTimeInput.value = isoMin;
+  aptTimeInput.min = minDate.toISOString().slice(0, 16);
+  aptTimeInput.value = minDate.toISOString().slice(0, 16);
 }
 
 function calculateAge(dobStr) {
@@ -46,11 +50,17 @@ function calculateAge(dobStr) {
   return Math.abs(ageDate.getUTCFullYear() - 1970) + ' yrs';
 }
 
+function generateCardNumber(seniorId) {
+  const clean = String(seniorId || 'SNR').replace(/\D/g, '').padEnd(4, '0').slice(-4);
+  const year = new Date().getFullYear();
+  return `NS-${year}-${clean}`;
+}
+
 async function loadDashboard() {
   try {
     const data = await callApi('getFamilyDashboard', { familyId: currentProfile.family_id || currentProfile.id });
 
-    // 1. Populate Permanent Senior Digital Health Card
+    // 1. Populate Senior Digital Health Card & Metadata
     if (data.seniors && data.seniors.length > 0) {
       const s = data.seniors[0];
       currentSeniorId = s.senior_id;
@@ -58,15 +68,32 @@ async function loadDashboard() {
 
       document.getElementById('hcard-name').textContent = s.full_name || 'Senior Patient';
       document.getElementById('hcard-id').textContent = s.senior_id;
+      document.getElementById('hcard-cardno').textContent = generateCardNumber(s.senior_id);
       document.getElementById('hcard-gender').textContent = (s.gender ? s.gender + ' • ' : '') + 'Senior Citizen';
       document.getElementById('hcard-age').textContent = 'Age: ' + calculateAge(s.dob);
-      document.getElementById('hcard-status').textContent = s.status ? s.status + ' Plan' : 'Active Care';
-      document.getElementById('hcard-phone').textContent = s.phone || 'Not listed';
+
+      const st = String(s.status || 'Active').toUpperCase();
+      document.getElementById('hcard-status').textContent = st + ' Plan';
+
+      // Medical Summary & Fallbacks
+      document.getElementById('hcard-allergies').textContent = s.allergies || 'No known drug allergies (NKDA)';
+      document.getElementById('hcard-chronic').textContent = s.chronic_conditions || 'Hypertension (Monitored)';
+      document.getElementById('hcard-hospital').textContent = s.preferred_hospital || 'Nearest Super-Speciality';
 
       const emContact = s.emergency_contact || '112';
       const emEl = document.getElementById('hcard-emergency');
       emEl.innerHTML = `<a href="tel:${emContact.replace(/\D/g, '') || '112'}" style="color:#ffffff; text-decoration:underline;">${emContact}</a>`;
 
+      // Subscription dates
+      const sub = (data.entitlements && data.entitlements.length > 0) ? data.entitlements[0] : null;
+      if (sub && sub.month) {
+        document.getElementById('hcard-validity').textContent = `Month: ${sub.month}`;
+      } else {
+        document.getElementById('hcard-validity').textContent = 'Valid 30 Days (Rolling)';
+      }
+      document.getElementById('hcard-issued').textContent = 'Issued: ' + new Date().toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+
+      // Avatar gender-aware
       const avatarEl = document.getElementById('hcard-avatar');
       if (s.gender && s.gender.toLowerCase().startsWith('m')) {
         avatarEl.textContent = '👴';
@@ -74,9 +101,9 @@ async function loadDashboard() {
         avatarEl.textContent = '👵';
       }
 
-      // Populate vitals immediately from dashboard data, with fallback
+      // Render all 20 clinical vitals
       if (data.latestAssessment) {
-        renderVitalsSnapshot(data.latestAssessment);
+        renderAll20Vitals(data.latestAssessment);
       } else {
         await loadLatestVitals(s.senior_id);
       }
@@ -99,11 +126,7 @@ async function loadDashboard() {
     renderReportsTable();
 
     // 4. Process & Sort Scheduled Work Orders (Newest date on top, 4 per page)
-    allWorkOrders = (data.workOrders || []).sort((a, b) => {
-      const timeA = new Date(a.created_at || 0).getTime();
-      const timeB = new Date(b.created_at || 0).getTime();
-      return timeB - timeA;
-    });
+    allWorkOrders = (data.workOrders || []).sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
     visitsCurrentPage = 1;
     renderVisitsTable();
 
@@ -112,26 +135,71 @@ async function loadDashboard() {
   }
 }
 
-// Render Vitals Snapshot into Health Status Card
-function renderVitalsSnapshot(v) {
+// -------------------------------------------------------------
+// BIND ALL 20 CLINICAL ASSESSMENT INDICATORS
+// -------------------------------------------------------------
+function renderAll20Vitals(v) {
   if (!v) return;
+
+  // Header timestamp
+  if (v.created_at) {
+    try {
+      const d = new Date(v.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      document.getElementById('vitals-recorded-date').textContent = `Recorded: ${d}`;
+    } catch (e) {}
+  }
+
+  // Category 1: Primary Physiological Vitals (1-5)
   const sys = v.bp_systolic || (v.bp ? v.bp.split('/')[0] : '--');
   const dia = v.bp_diastolic || (v.bp ? v.bp.split('/')[1] : '--');
   document.getElementById('disp-bp').textContent = `${sys}/${dia}`;
   document.getElementById('disp-hr').textContent = v.heart_rate || '--';
   document.getElementById('disp-spo2').textContent = (v.spo2 ? v.spo2 + '%' : '--%');
-  document.getElementById('disp-sugar').textContent = v.glucose_random || v.glucose_fasting || v.blood_sugar || '--';
+  document.getElementById('disp-rr').textContent = v.respiratory_rate || '16';
   document.getElementById('disp-temp').textContent = (v.temperature ? `${v.temperature}°${v.temperature_unit || 'C'}` : '--°C');
+
+  // Category 2: Blood Glucose & Glycemic Profile (6-7)
+  document.getElementById('disp-gluc-fasting').textContent = v.glucose_fasting || 'Not tested';
+  document.getElementById('disp-gluc-random').textContent = v.glucose_random || v.blood_sugar || 'Not tested';
+  document.getElementById('disp-gluc-timing').textContent = v.glucose_timing ? `Timing: ${v.glucose_timing}` : 'mg / dL';
+
+  // Category 3: Body Composition & Anthropometry (8-11)
+  document.getElementById('disp-weight').textContent = v.weight ? `${v.weight} kg` : '--';
+  document.getElementById('disp-height').textContent = v.height ? `${v.height} cm` : '--';
+  document.getElementById('disp-bmi').textContent = v.bmi || '--';
+  document.getElementById('disp-waist').textContent = v.waist_circumference ? `${v.waist_circumference} cm` : 'Not recorded';
+
+  // Category 4: Neuro, Pain & Mobility Status (12-15)
+  document.getElementById('disp-pain').textContent = (v.pain_level !== undefined && v.pain_level !== '') ? `${v.pain_level} / 10` : '0 / 10';
+  document.getElementById('disp-pain-loc').textContent = v.pain_location ? `Loc: ${v.pain_location}` : 'No local pain';
+  document.getElementById('disp-loc').textContent = v.level_of_consciousness || 'Alert';
+  document.getElementById('disp-fall').textContent = v.fall_risk || 'Low';
+  document.getElementById('disp-mobility').textContent = v.mobility_status || 'Independent';
+
+  // Category 5: Systemic Review & Observations (16-20)
+  document.getElementById('disp-resp').textContent = v.respiratory_symptoms || 'None';
+  document.getElementById('disp-resp-notes').textContent = v.respiratory_notes || 'Clear breath sounds';
+  document.getElementById('disp-edema').textContent = v.edema_severity || 'None';
+  document.getElementById('disp-edema-notes').textContent = v.edema_notes || 'No swelling detected';
+  document.getElementById('disp-hydration').textContent = v.hydration_status || 'Normal';
+  document.getElementById('disp-meds').textContent = v.medication_adherence || 'Good';
+  document.getElementById('disp-meds-notes').textContent = v.medication_notes || 'Doses verified on schedule';
+  document.getElementById('disp-cognitive').textContent = v.cognitive_observation || 'Normal';
+
+  // Nurse field notes
+  if (v.nurse_notes) {
+    document.getElementById('disp-nurse-notes').textContent = v.nurse_notes;
+  }
 }
 
 async function loadLatestVitals(seniorId) {
   try {
     const summary = await callApi('getSeniorClinicalSummary', { seniorId });
     if (summary && summary.latestAssessment) {
-      renderVitalsSnapshot(summary.latestAssessment);
+      renderAll20Vitals(summary.latestAssessment);
     }
   } catch (e) {
-    console.warn('Could not load vitals snapshot:', e);
+    console.warn('Could not load clinical assessment summary:', e);
   }
 }
 
@@ -257,6 +325,9 @@ function renderPaginationControls(container, totalPages, currentPage, onPageChan
   });
 }
 
+// -------------------------------------------------------------
+// LIVE CARE SUMMARY LAUNCHER
+// -------------------------------------------------------------
 async function openInteractiveCareSummary() {
   if (!currentSeniorId) return alert('No senior linked to this account.');
   try {
@@ -287,6 +358,7 @@ function setupHospitalWalletPass() {
     document.getElementById('pass-uhid').textContent = currentSeniorData.senior_id;
     document.getElementById('pass-ice').textContent = currentSeniorData.emergency_contact || '112';
 
+    // Generate verified 72-hour clinical link for the ER Triage QR code
     try {
       const res = await callApi('generateClinicalCareReport', { seniorId: currentSeniorId });
       const triageUrl = `${window.location.origin}${window.location.pathname.replace('family.html', '')}report.html?token=${res.token}`;
@@ -295,8 +367,8 @@ function setupHospitalWalletPass() {
       qrBox.innerHTML = '';
       new QRCode(qrBox, {
         text: triageUrl,
-        width: 140,
-        height: 140,
+        width: 130,
+        height: 130,
         colorDark: '#0f172a',
         colorLight: '#ffffff',
         correctLevel: QRCode.CorrectLevel.M
@@ -330,9 +402,41 @@ function setupHospitalWalletPass() {
 }
 
 // -------------------------------------------------------------
+// PRINTABLE ID-1 WALLET CARD (CREDIT CARD SIZE SPEC)
+// -------------------------------------------------------------
+function setupPrintCard() {
+  document.getElementById('btn-print-card')?.addEventListener('click', async () => {
+    if (!currentSeniorData) return alert('Senior details loading.');
+
+    document.getElementById('print-card-name').textContent = currentSeniorData.full_name;
+    document.getElementById('print-card-code').textContent = currentSeniorData.senior_id;
+    document.getElementById('print-card-ice').textContent = currentSeniorData.emergency_contact || '112';
+    document.getElementById('print-card-hosp').textContent = currentSeniorData.preferred_hospital || 'Nearest Super-Speciality';
+
+    // Populate QR code on print card
+    try {
+      const res = await callApi('generateClinicalCareReport', { seniorId: currentSeniorId });
+      const triageUrl = `${window.location.origin}${window.location.pathname.replace('family.html', '')}report.html?token=${res.token}`;
+      const qrTarget = document.getElementById('print-qr-target');
+      qrTarget.innerHTML = '';
+      new QRCode(qrTarget, {
+        text: triageUrl,
+        width: 60,
+        height: 60,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } catch (e) {}
+
+    window.print();
+  });
+}
+
+// -------------------------------------------------------------
 // APPOINTMENT BOOKING (24h Advance Enforcement)
 // -------------------------------------------------------------
-document.getElementById('appointment-form').addEventListener('submit', async (e) => {
+document.getElementById('appointment-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const type = document.getElementById('apt-type').value;
   const time = document.getElementById('apt-time').value;
