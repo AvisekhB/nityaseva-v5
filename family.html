@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Family Portal — Nityaseva</title>
   <link rel="stylesheet" href="css/style.css">
+  <!-- Lightweight QR Code generator for Wallet Pass & Hospital Admission Scanning -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     /* Emergency SOS Styling */
     .emergency-banner {
@@ -50,6 +52,281 @@
     }
     .sos-btn:hover { background: #c53030; }
 
+    /* =========================================================
+       SENIOR HOSPITAL ADMISSION HEALTH CARD
+       ========================================================= */
+    .health-card {
+      background: linear-gradient(135deg, #132a13 0%, #1b4332 50%, #2d6a4f 100%);
+      color: #ffffff;
+      border-radius: 20px;
+      padding: 22px 24px;
+      margin-bottom: 22px;
+      box-shadow: 0 8px 24px rgba(27, 67, 50, 0.25);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .health-card::before {
+      content: '';
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      width: 170px;
+      height: 170px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 50%;
+    }
+    .health-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+    .health-card-top h3 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #d8f3dc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .health-card-chip {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .health-card-body {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .health-card-avatar {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: #ffffff;
+      color: #1b4332;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      border: 3px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+      flex-shrink: 0;
+    }
+    .health-card-meta {
+      flex: 1;
+      min-width: 200px;
+    }
+    .health-card-name {
+      font-size: 22px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+    .health-card-id {
+      font-size: 12px;
+      color: #d8f3dc;
+      font-family: monospace;
+      letter-spacing: 1px;
+    }
+    .health-card-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .hcard-tag {
+      background: rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .tag-blood {
+      background: #e63946 !important;
+      font-weight: 800;
+    }
+    .health-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .hcard-item small {
+      display: block;
+      font-size: 10px;
+      color: #b7e4c7;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .hcard-item span {
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .health-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.25);
+      font-size: 12px;
+      color: #d8f3dc;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .btn-wallet-action {
+      background: #000000;
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      transition: all 0.2s ease;
+    }
+    .btn-wallet-action:hover {
+      background: #111111;
+      transform: translateY(-1px);
+    }
+
+    /* =========================================================
+       HOSPITAL ADMISSION WALLET PASS MODAL
+       ========================================================= */
+    .wallet-modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 16px;
+      backdrop-filter: blur(4px);
+    }
+    .wallet-pass-card {
+      background: #ffffff;
+      border-radius: 24px;
+      max-width: 400px;
+      width: 100%;
+      padding: 24px 20px;
+      text-align: center;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.3);
+      position: relative;
+      animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wallet-pass-header {
+      background: #1b4332;
+      color: #fff;
+      border-radius: 16px;
+      padding: 14px 16px;
+      text-align: left;
+      margin-bottom: 14px;
+    }
+    .wallet-pass-header small {
+      font-size: 10px;
+      letter-spacing: 1px;
+      color: #95d5b2;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .wallet-pass-header h4 {
+      margin: 4px 0 0 0;
+      font-size: 17px;
+      font-weight: 800;
+    }
+    .admission-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      text-align: left;
+      font-size: 12px;
+      background: #f8fafc;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 14px;
+    }
+    .adm-item strong {
+      display: block;
+      font-size: 10px;
+      color: #64748b;
+      text-transform: uppercase;
+    }
+    .adm-item span {
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .qr-container-box {
+      background: #ffffff;
+      padding: 12px;
+      border-radius: 16px;
+      border: 2px dashed #cbd5e1;
+      display: inline-block;
+      margin: 4px auto 12px;
+    }
+    #hospital-qr-code {
+      width: 140px;
+      height: 140px;
+      margin: 0 auto;
+    }
+    .wallet-btn-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .btn-apple-wallet {
+      background: #000000;
+      color: #ffffff;
+      padding: 11px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 13px;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+    .btn-google-wallet {
+      background: #ffffff;
+      color: #1f2937;
+      border: 1px solid #cbd5e1;
+      padding: 11px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
     /* Vitals Quick Grid */
     .vitals-summary-grid {
       display: grid;
@@ -87,7 +364,7 @@
       margin-bottom: 14px;
     }
 
-    /* 4-Row Pagination Controls */
+    /* Pagination */
     .pagination-container {
       display: flex;
       justify-content: center;
@@ -113,23 +390,17 @@
       justify-content: center;
       transition: all 0.15s ease;
     }
-    .page-btn:hover:not(:disabled) {
-      background: #edf2f7;
-      border-color: #a0aec0;
-    }
-    .page-btn.active {
-      background: #1e5238;
-      border-color: #1e5238;
-      color: #ffffff;
-    }
-    .page-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
+    .page-btn:hover:not(:disabled) { background: #edf2f7; border-color: #a0aec0; }
+    .page-btn.active { background: #1e5238; border-color: #1e5238; color: #ffffff; }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
     @keyframes pulse-sos {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.03); }
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.92); }
+      to { opacity: 1; transform: scale(1); }
     }
   </style>
 </head>
@@ -157,13 +428,58 @@
       </a>
     </div>
 
-    <!-- SENIOR PROFILE & LATEST RECORDED VITALS -->
+    <!-- =========================================================
+         SENIOR HOSPITAL ADMISSION DIGITAL HEALTH CARD
+         ========================================================= -->
+    <div class="health-card" id="senior-health-card">
+      <div class="health-card-top">
+        <h3>🛡️ Hospital Admission Medical ID</h3>
+        <span class="health-card-chip" id="hcard-plan">Standard Care</span>
+      </div>
+      <div class="health-card-body">
+        <div class="health-card-avatar" id="hcard-avatar">👵</div>
+        <div class="health-card-meta">
+          <div class="health-card-name" id="hcard-name">Loading Senior Profile...</div>
+          <div class="health-card-id">UHID: <span id="hcard-id">------</span></div>
+          <div class="health-card-tags">
+            <span class="hcard-tag tag-blood" id="hcard-blood">Blood: B+</span>
+            <span class="hcard-tag" id="hcard-gender">Senior Citizen</span>
+            <span class="hcard-tag" id="hcard-age">Age: --</span>
+            <span class="hcard-tag" id="hcard-status">Active Care Plan</span>
+          </div>
+        </div>
+      </div>
+      <div class="health-card-grid">
+        <div class="hcard-item">
+          <small>Critical Alerts / Allergies</small>
+          <span style="color:#ffd166;">NKDA • Hypertension</span>
+        </div>
+        <div class="hcard-item">
+          <small>Primary ICE Contact</small>
+          <span id="hcard-emergency"><a href="tel:112" style="color:#ffffff; text-decoration:underline;">112 (Ambulance)</a></span>
+        </div>
+        <div class="hcard-item">
+          <small>Senior Phone</small>
+          <span id="hcard-phone">--</span>
+        </div>
+        <div class="hcard-item">
+          <small>Hospital Bedside Support</small>
+          <span>Nityaseva 24x7</span>
+        </div>
+      </div>
+      <div class="health-card-footer">
+        <span>Hospital Triage & Admission Desk Ready</span>
+        <button class="btn-wallet-action" id="btn-open-wallet">
+          <span>📲</span> Add to Apple / Google Wallet
+        </button>
+      </div>
+    </div>
+
+    <!-- LATEST RECORDED VISIT VITALS -->
     <div class="card">
-      <h2>Senior Profile & Latest Visit Health Status</h2>
-      <div id="senior-info" style="font-size: 14px; line-height: 1.5;">Loading senior details...</div>
-      
-      <div id="vitals-summary-container" class="hidden" style="margin-top: 14px;">
-        <div style="font-size: 12px; font-weight: 700; color: #4a5568;">LATEST RECORDED VITALS:</div>
+      <h2>Latest Visit Health Status</h2>
+      <div id="vitals-summary-container">
+        <div style="font-size: 12px; font-weight: 700; color: #4a5568;">LATEST CLINICAL VITALS:</div>
         <div class="vitals-summary-grid">
           <div class="vital-badge-box"><div class="vital-badge-val" id="disp-bp">--/--</div><div class="vital-badge-lbl">Blood Pressure</div></div>
           <div class="vital-badge-box"><div class="vital-badge-val" id="disp-hr">--</div><div class="vital-badge-lbl">Heart Rate</div></div>
@@ -257,6 +573,75 @@
         </tbody>
       </table>
       <div id="visits-pagination" class="pagination-container"></div>
+    </div>
+
+    <!-- =========================================================
+         HOSPITAL ADMISSION WALLET PASS MODAL (WITH LIVE ER QR CODE)
+         ========================================================= -->
+    <div id="wallet-modal" class="wallet-modal-overlay hidden">
+      <div class="wallet-pass-card">
+        
+        <div class="wallet-pass-header">
+          <small>HOSPITAL EMERGENCY MEDICAL ID</small>
+          <h4 id="pass-patient-name">Senior Patient</h4>
+          <div style="font-size:11px; opacity:0.85; margin-top:2px;">Nityaseva Health Card • Triage Level 1</div>
+        </div>
+
+        <div class="admission-grid">
+          <div class="adm-item">
+            <strong>Patient UHID</strong>
+            <span id="pass-uhid">------</span>
+          </div>
+          <div class="adm-item">
+            <strong>Blood Group</strong>
+            <span style="color:#dc2626;" id="pass-blood">B+</span>
+          </div>
+          <div class="adm-item">
+            <strong>Emergency Contact</strong>
+            <span id="pass-ice">112</span>
+          </div>
+          <div class="adm-item">
+            <strong>Coverage / Plan</strong>
+            <span id="pass-plan">Standard Care</span>
+          </div>
+        </div>
+
+        <div style="font-size:11px; color:#475569; font-weight:700; margin-bottom:6px;">
+          SCAN FOR ADMITTING DOCTOR / EMERGENCY ROOM TRIAGE:
+        </div>
+
+        <!-- LIVE GENERATED HOSPITAL ADMISSION QR CODE -->
+        <div class="qr-container-box">
+          <div id="hospital-qr-code"></div>
+        </div>
+
+        <div style="font-size:10px; color:#94a3b8; margin-bottom:12px;">
+          Instant access to verified nurse vitals, allergies & doctor notes
+        </div>
+
+        <div class="wallet-btn-stack">
+          <button class="btn-apple-wallet" id="btn-save-apple">
+            <svg width="16" height="16" viewBox="0 0 170 170" fill="currentColor">
+              <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.04-7.69-7.85-12-14.42-6.19-9.35-10.98-19.9-14.38-31.64-3.41-11.74-5.12-22.95-5.12-33.63 0-14.88 3.82-27.23 11.45-37.05 7.63-9.82 17.2-14.79 28.72-14.92 4.48 0 9.61 1.25 15.39 3.75 5.78 2.5 9.77 3.79 11.97 3.87 2.01 0 6.13-1.35 12.35-4.04 6.22-2.7 11.66-3.95 16.32-3.75 12.73.65 22.84 5.34 30.34 14.07-11.13 6.74-16.58 16.03-16.34 27.87.24 9.14 3.71 16.89 10.41 23.24 6.7 6.36 14.72 10.14 24.06 11.34-2.18 6.74-4.89 13.5-8.14 20.29zM119.22 31.84c0-7.39 2.65-14.38 7.95-20.98 5.3-6.6 11.92-10.63 19.86-12.08.24 1.12.36 2.19.36 3.21 0 7.39-2.82 14.54-8.46 21.46-5.64 6.92-12.21 10.74-19.71 11.46-.24-1.04-.36-2.06-.36-3.07z"/>
+            </svg>
+            Add to Apple Wallet (.pkpass)
+          </button>
+          
+          <button class="btn-google-wallet" id="btn-save-google">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+            </svg>
+            Save to Google Wallet
+          </button>
+        </div>
+
+        <button id="btn-close-wallet" style="margin-top:14px; background:transparent; color:#64748b; border:none; font-size:12px; font-weight:700; cursor:pointer;">
+          ✕ Close Pass
+        </button>
+      </div>
     </div>
   </main>
 
