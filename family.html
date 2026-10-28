@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Family Portal — Nityaseva</title>
   <link rel="stylesheet" href="css/style.css">
-  <!-- Lightweight QR Code generator for Wallet Pass & Hospital Admission Scanning -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     /* Emergency SOS Styling */
@@ -52,16 +51,14 @@
     }
     .sos-btn:hover { background: #c53030; }
 
-    /* =========================================================
-       SENIOR HOSPITAL ADMISSION HEALTH CARD
-       ========================================================= */
+    /* Digital Health Card */
     .health-card {
-      background: linear-gradient(135deg, #132a13 0%, #1b4332 50%, #2d6a4f 100%);
+      background: linear-gradient(135deg, #0f2419 0%, #1b4332 50%, #2d6a4f 100%);
       color: #ffffff;
       border-radius: 20px;
       padding: 22px 24px;
       margin-bottom: 22px;
-      box-shadow: 0 8px 24px rgba(27, 67, 50, 0.25);
+      box-shadow: 0 10px 28px rgba(15, 36, 25, 0.35);
       position: relative;
       overflow: hidden;
       border: 1px solid rgba(255, 255, 255, 0.15);
@@ -73,16 +70,16 @@
       right: -50px;
       width: 170px;
       height: 170px;
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.05);
       border-radius: 50%;
     }
     .health-card-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.18);
       padding-bottom: 12px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
     .health-card-top h3 {
       margin: 0;
@@ -95,6 +92,11 @@
       align-items: center;
       gap: 8px;
     }
+    .health-card-top .card-badges {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
     .health-card-chip {
       background: rgba(255, 255, 255, 0.2);
       color: #ffffff;
@@ -102,17 +104,16 @@
       border-radius: 8px;
       font-size: 11px;
       font-weight: 700;
-      letter-spacing: 0.5px;
     }
     .health-card-body {
       display: flex;
-      gap: 18px;
+      gap: 16px;
       align-items: center;
       flex-wrap: wrap;
     }
     .health-card-avatar {
-      width: 68px;
-      height: 68px;
+      width: 66px;
+      height: 66px;
       border-radius: 50%;
       background: #ffffff;
       color: #1b4332;
@@ -132,19 +133,19 @@
       font-size: 22px;
       font-weight: 800;
       color: #ffffff;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
-    .health-card-id {
-      font-size: 12px;
-      color: #d8f3dc;
+    .health-card-subids {
+      font-size: 11px;
+      color: #b7e4c7;
       font-family: monospace;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
     }
     .health-card-tags {
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
-      margin-top: 8px;
     }
     .hcard-tag {
       background: rgba(255, 255, 255, 0.18);
@@ -155,27 +156,28 @@
       font-weight: 600;
     }
     .tag-blood {
-      background: #e63946 !important;
+      background: #dc2626 !important;
+      color: #fff !important;
       font-weight: 800;
     }
     .health-card-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 12px;
-      margin-top: 16px;
-      padding-top: 14px;
-      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      gap: 10px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.18);
     }
     .hcard-item small {
       display: block;
       font-size: 10px;
-      color: #b7e4c7;
+      color: #95d5b2;
       text-transform: uppercase;
       font-weight: 700;
       letter-spacing: 0.5px;
     }
     .hcard-item span {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
       color: #ffffff;
     }
@@ -183,37 +185,144 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-top: 16px;
-      padding-top: 12px;
-      border-top: 1px dashed rgba(255, 255, 255, 0.25);
-      font-size: 12px;
-      color: #d8f3dc;
+      margin-top: 14px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.2);
+      font-size: 11px;
+      color: #b7e4c7;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 8px;
     }
     .btn-wallet-action {
       background: #000000;
       color: #ffffff;
       border: 1px solid rgba(255, 255, 255, 0.35);
-      padding: 8px 16px;
-      border-radius: 10px;
+      padding: 7px 14px;
+      border-radius: 8px;
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       transition: all 0.2s ease;
     }
     .btn-wallet-action:hover {
       background: #111111;
       transform: translateY(-1px);
     }
+    .btn-print-mini {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
 
-    /* =========================================================
-       HOSPITAL ADMISSION WALLET PASS MODAL
-       ========================================================= */
+    /* 20-Point Assessment Dashboard Styles */
+    .vitals-category-card {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .vitals-category-header {
+      font-size: 13px;
+      font-weight: 800;
+      color: #1e5238;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #edf2f7;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .vitals-grid-4col {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+    }
+    .vital-cell {
+      background: #f8fafc;
+      border: 1px solid #edf2f7;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+    .vital-cell-val {
+      font-size: 18px;
+      font-weight: 800;
+      color: #1e5238;
+    }
+    .vital-cell-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      color: #718096;
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+    .vital-cell-sub {
+      font-size: 10px;
+      color: #a0aec0;
+      margin-top: 1px;
+    }
+    .nurse-notes-highlight {
+      background: #f0fdf4;
+      border-left: 4px solid #38a169;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #22543d;
+      margin-top: 10px;
+      line-height: 1.45;
+    }
+
+    .notice-box {
+      background: #ebf8ff;
+      border-left: 4px solid #3182ce;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #2b6cb0;
+      margin-bottom: 14px;
+    }
+
+    /* Pagination */
+    .pagination-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      margin-top: 14px;
+      padding-top: 10px;
+      border-top: 1px dashed #e2e8f0;
+    }
+    .page-btn {
+      background: #ffffff;
+      border: 1px solid #cbd5e0;
+      color: #2d3748;
+      min-width: 32px;
+      height: 32px;
+      padding: 0 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .page-btn:hover:not(:disabled) { background: #edf2f7; border-color: #a0aec0; }
+    .page-btn.active { background: #1e5238; border-color: #1e5238; color: #ffffff; }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Wallet Modal */
     .wallet-modal-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -233,8 +342,6 @@
       padding: 24px 20px;
       text-align: center;
       box-shadow: 0 16px 40px rgba(0,0,0,0.3);
-      position: relative;
-      animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .wallet-pass-header {
       background: #1b4332;
@@ -280,15 +387,15 @@
     }
     .qr-container-box {
       background: #ffffff;
-      padding: 12px;
-      border-radius: 16px;
+      padding: 10px;
+      border-radius: 14px;
       border: 2px dashed #cbd5e1;
       display: inline-block;
-      margin: 4px auto 12px;
+      margin: 4px auto 10px;
     }
     #hospital-qr-code {
-      width: 140px;
-      height: 140px;
+      width: 130px;
+      height: 130px;
       margin: 0 auto;
     }
     .wallet-btn-stack {
@@ -301,7 +408,7 @@
       background: #000000;
       color: #ffffff;
       padding: 11px;
-      border-radius: 12px;
+      border-radius: 10px;
       font-weight: 700;
       font-size: 13px;
       border: none;
@@ -316,7 +423,7 @@
       color: #1f2937;
       border: 1px solid #cbd5e1;
       padding: 11px;
-      border-radius: 12px;
+      border-radius: 10px;
       font-weight: 700;
       font-size: 13px;
       display: flex;
@@ -324,83 +431,28 @@
       justify-content: center;
       gap: 8px;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
 
-    /* Vitals Quick Grid */
-    .vitals-summary-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 10px;
-      margin-top: 12px;
+    /* Print Preview Modal (Standard ISO/IEC 7810 ID-1 Card) */
+    @media print {
+      body * { visibility: hidden; }
+      #printable-id-card, #printable-id-card * { visibility: visible; }
+      #printable-id-card {
+        position: absolute;
+        left: 0; top: 0;
+        width: 85.6mm;
+        height: 53.98mm;
+        border: 1px solid #000;
+        border-radius: 3.18mm;
+        padding: 4mm;
+        color: #000 !important;
+        background: #fff !important;
+      }
     }
-    .vital-badge-box {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 10px;
-      text-align: center;
-    }
-    .vital-badge-val {
-      font-size: 18px;
-      font-weight: 800;
-      color: #1e5238;
-    }
-    .vital-badge-lbl {
-      font-size: 11px;
-      color: #718096;
-      text-transform: uppercase;
-      font-weight: 700;
-      margin-top: 2px;
-    }
-
-    .notice-box {
-      background: #ebf8ff;
-      border-left: 4px solid #3182ce;
-      padding: 10px 14px;
-      border-radius: 6px;
-      font-size: 13px;
-      color: #2b6cb0;
-      margin-bottom: 14px;
-    }
-
-    /* Pagination */
-    .pagination-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 6px;
-      margin-top: 14px;
-      padding-top: 10px;
-      border-top: 1px dashed #e2e8f0;
-    }
-    .page-btn {
-      background: #ffffff;
-      border: 1px solid #cbd5e0;
-      color: #2d3748;
-      min-width: 32px;
-      height: 32px;
-      padding: 0 8px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.15s ease;
-    }
-    .page-btn:hover:not(:disabled) { background: #edf2f7; border-color: #a0aec0; }
-    .page-btn.active { background: #1e5238; border-color: #1e5238; color: #ffffff; }
-    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
     @keyframes pulse-sos {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.03); }
-    }
-    @keyframes popIn {
-      from { opacity: 0; transform: scale(0.92); }
-      to { opacity: 1; transform: scale(1); }
     }
   </style>
 </head>
@@ -419,8 +471,8 @@
       <div class="emergency-text">
         <h3>🚨 Emergency Protocol / জরুরি সহায়তা</h3>
         <p>
-          For an emergency, please call an ambulance at <strong>112</strong> immediately.<br>
-          Our field care team will be present at the hospital to provide complete bedside assistance.
+          For an emergency, call ambulance at <strong>112</strong> immediately.<br>
+          Nityaseva Care Team provides hospital bedside assistance upon arrival.
         </p>
       </div>
       <a href="tel:112" class="sos-btn">
@@ -429,63 +481,229 @@
     </div>
 
     <!-- =========================================================
-         SENIOR HOSPITAL ADMISSION DIGITAL HEALTH CARD
+         SPEC-COMPLIANT SENIOR DIGITAL HEALTH CARD
          ========================================================= -->
     <div class="health-card" id="senior-health-card">
       <div class="health-card-top">
-        <h3>🛡️ Hospital Admission Medical ID</h3>
-        <span class="health-card-chip" id="hcard-plan">Standard Care</span>
+        <h3>🛡️ Senior Emergency Health Card</h3>
+        <div class="card-badges">
+          <span class="health-card-chip" id="hcard-status">Active Plan</span>
+          <span class="health-card-chip" id="hcard-plan">Standard Care</span>
+        </div>
       </div>
+
       <div class="health-card-body">
         <div class="health-card-avatar" id="hcard-avatar">👵</div>
         <div class="health-card-meta">
           <div class="health-card-name" id="hcard-name">Loading Senior Profile...</div>
-          <div class="health-card-id">UHID: <span id="hcard-id">------</span></div>
+          <div class="health-card-subids">
+            Member Code: <strong id="hcard-id">------</strong> | Card No: <strong id="hcard-cardno">NS-2026-XXXX</strong>
+          </div>
           <div class="health-card-tags">
             <span class="hcard-tag tag-blood" id="hcard-blood">Blood: B+</span>
             <span class="hcard-tag" id="hcard-gender">Senior Citizen</span>
             <span class="hcard-tag" id="hcard-age">Age: --</span>
-            <span class="hcard-tag" id="hcard-status">Active Care Plan</span>
+            <span class="hcard-tag" id="hcard-validity">Valid: 2026-10-01 to 2026-10-31</span>
           </div>
         </div>
       </div>
+
+      <!-- Medical Summary, Emergency Contacts & Privacy-Safe Fields -->
       <div class="health-card-grid">
         <div class="hcard-item">
-          <small>Critical Alerts / Allergies</small>
-          <span style="color:#ffd166;">NKDA • Hypertension</span>
+          <small>Known Allergies</small>
+          <span id="hcard-allergies" style="color:#fecaca;">No known drug allergies (NKDA)</span>
         </div>
         <div class="hcard-item">
-          <small>Primary ICE Contact</small>
-          <span id="hcard-emergency"><a href="tel:112" style="color:#ffffff; text-decoration:underline;">112 (Ambulance)</a></span>
+          <small>Chronic Conditions</small>
+          <span id="hcard-chronic">Hypertension (Monitored)</span>
         </div>
         <div class="hcard-item">
-          <small>Senior Phone</small>
-          <span id="hcard-phone">--</span>
+          <small>Primary Emergency Contact (ICE)</small>
+          <span id="hcard-emergency"><a href="tel:112" style="color:#ffffff; text-decoration:underline;">112</a></span>
         </div>
         <div class="hcard-item">
-          <small>Hospital Bedside Support</small>
-          <span>Nityaseva 24x7</span>
+          <small>Preferred Hospital</small>
+          <span id="hcard-hospital">Nearest Super-Speciality</span>
         </div>
       </div>
+
+      <!-- Card Metadata & Actions -->
       <div class="health-card-footer">
-        <span>Hospital Triage & Admission Desk Ready</span>
-        <button class="btn-wallet-action" id="btn-open-wallet">
-          <span>📲</span> Add to Apple / Google Wallet
-        </button>
+        <div>
+          <span>ISO 27269 / HL7 Emergency Standard</span> | 
+          <small id="hcard-issued">Issued: Oct 2026</small>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-print-mini" id="btn-print-card">🖨️ Print Card</button>
+          <button class="btn-wallet-action" id="btn-open-wallet">
+            <span>📲</span> Add to Wallet (QR Pass)
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- LATEST RECORDED VISIT VITALS -->
+    <!-- =========================================================
+         COMPLETE 20-POINT CLINICAL VITALS DASHBOARD
+         ========================================================= -->
     <div class="card">
-      <h2>Latest Visit Health Status</h2>
-      <div id="vitals-summary-container">
-        <div style="font-size: 12px; font-weight: 700; color: #4a5568;">LATEST CLINICAL VITALS:</div>
-        <div class="vitals-summary-grid">
-          <div class="vital-badge-box"><div class="vital-badge-val" id="disp-bp">--/--</div><div class="vital-badge-lbl">Blood Pressure</div></div>
-          <div class="vital-badge-box"><div class="vital-badge-val" id="disp-hr">--</div><div class="vital-badge-lbl">Heart Rate</div></div>
-          <div class="vital-badge-box"><div class="vital-badge-val" id="disp-spo2">--%</div><div class="vital-badge-lbl">SpO2 (Oxygen)</div></div>
-          <div class="vital-badge-box"><div class="vital-badge-val" id="disp-sugar">--</div><div class="vital-badge-lbl">Blood Sugar</div></div>
-          <div class="vital-badge-box"><div class="vital-badge-val" id="disp-temp">--°C</div><div class="vital-badge-lbl">Temperature</div></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #edf2f7; padding-bottom:10px; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+        <h2 style="margin:0; border:none; padding:0;">Complete 20-Point Health Assessment</h2>
+        <small id="vitals-recorded-date" style="color:#718096; font-weight:700;">Latest Nurse Visit</small>
+      </div>
+
+      <!-- Category 1: Primary Physiological Vitals (1-5) -->
+      <div class="vitals-category-card">
+        <div class="vitals-category-header">
+          <span>1. Primary Physiological Vitals</span>
+          <small>Clinical Standard</small>
+        </div>
+        <div class="vitals-grid-4col">
+          <div class="vital-cell">
+            <div class="vital-cell-val" id="disp-bp">120/80</div>
+            <div class="vital-cell-lbl">1. Blood Pressure</div>
+            <div class="vital-cell-sub">Systolic / Diastolic</div>
+          </div>
+          <div class="vital-cell">
+            <div class="vital-cell-val" id="disp-hr">72</div>
+            <div class="vital-cell-lbl">2. Heart Rate (Pulse)</div>
+            <div class="vital-cell-sub">bpm</div>
+          </div>
+          <div class="vital-cell">
+            <div class="vital-cell-val" id="disp-spo2">98%</div>
+            <div class="vital-cell-lbl">3. SpO₂ Oxygen</div>
+            <div class="vital-cell-sub">Saturation</div>
+          </div>
+          <div class="vital-cell">
+            <div class="vital-cell-val" id="disp-rr">16</div>
+            <div class="vital-cell-lbl">4. Respiration Rate</div>
+            <div class="vital-cell-sub">breaths / min</div>
+          </div>
+          <div class="vital-cell">
+            <div class="vital-cell-val" id="disp-temp">98.4°F</div>
+            <div class="vital-cell-lbl">5. Temperature</div>
+            <div class="vital-cell-sub">Oral / Forehead</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category 2: Blood Glucose & Glycemic Profile (6-7) -->
+      <div class="vitals-category-card">
+        <div class="vitals-category-header">
+          <span>2. Blood Glucose Profile</span>
+          <small>Glucometer Reading</small>
+        </div>
+        <div class="vitals-grid-4col">
+          <div class="vital-cell">
+            <div class="vital-cell-val" id="disp-gluc-fasting">--</div>
+            <div class="vital-cell-lbl">6. Fasting Glucose</div>
+            <div class="vital-cell-sub">mg / dL</div>
+          </div>
+          <div class="vital-cell">
+            <div class="vital-cell-val" id="disp-gluc-random">--</div>
+            <div class="vital-cell-lbl">7. Random / Post-Meal</div>
+            <div class="vital-cell-sub" id="disp-gluc-timing">mg / dL</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category 3: Body Composition & Anthropometry (8-11) -->
+      <div class="vitals-category-card">
+        <div class="vitals-category-header">
+          <span>3. Body Composition & Anthropometry</span>
+          <small>Nutritional Health</small>
+        </div>
+        <div class="vitals-grid-4col">
+          <div class="vital-cell">
+            <div class="vital-cell-val" id="disp-weight">--</div>
+            <div class="vital-cell-lbl">8. Body Weight</div>
+            <div class="vital-cell-sub">kg</div>
+          </div>
+          <div class="vital-cell">
+            <div class="vital-cell-val" id="disp-height">--</div>
+            <div class="vital-cell-lbl">9. Height</div>
+            <div class="vital-cell-sub">cm</div>
+          </div>
+          <div class="vital-cell">
+            <div class="vital-cell-val" id="disp-bmi">--</div>
+            <div class="vital-cell-lbl">10. Body Mass Index</div>
+            <div class="vital-cell-sub">BMI kg/m²</div>
+          </div>
+          <div class="vital-cell">
+            <div class="vital-cell-val" id="disp-waist">--</div>
+            <div class="vital-cell-lbl">11. Waist Circumference</div>
+            <div class="vital-cell-sub">cm</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category 4: Neuro, Pain & Functional Mobility (12-15) -->
+      <div class="vitals-category-card">
+        <div class="vitals-category-header">
+          <span>4. Neurological, Pain & Mobility Status</span>
+          <small>Geriatric Scale</small>
+        </div>
+        <div class="vitals-grid-4col">
+          <div class="vital-cell">
+            <div class="vital-cell-val" id="disp-pain">0 / 10</div>
+            <div class="vital-cell-lbl">12. Pain Score</div>
+            <div class="vital-cell-sub" id="disp-pain-loc">None</div>
+          </div>
+          <div class="vital-cell">
+            <div class="vital-cell-val" id="disp-loc">Alert</div>
+            <div class="vital-cell-lbl">13. Consciousness</div>
+            <div class="vital-cell-sub">Orientation</div>
+          </div>
+          <div class="vital-cell">
+            <div class="vital-cell-val" id="disp-fall">Low</div>
+            <div class="vital-cell-lbl">14. Fall Risk</div>
+            <div class="vital-cell-sub">Safety Grade</div>
+          </div>
+          <div class="vital-cell">
+            <div class="vital-cell-val" id="disp-mobility">Independent</div>
+            <div class="vital-cell-lbl">15. Functional Mobility</div>
+            <div class="vital-cell-sub">Ambulation</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category 5: Respiratory, Edema, Systemic & Mental Health (16-20) -->
+      <div class="vitals-category-card">
+        <div class="vitals-category-header">
+          <span>5. Systemic Review & Nurse Findings</span>
+          <small>Clinical Observations</small>
+        </div>
+        <div class="vitals-grid-4col">
+          <div class="vital-cell">
+            <div class="vital-cell-val" id="disp-resp">None</div>
+            <div class="vital-cell-lbl">16. Respiratory Symptoms</div>
+            <div class="vital-cell-sub" id="disp-resp-notes">Clear</div>
+          </div>
+          <div class="vital-cell">
+            <div class="vital-cell-val" id="disp-edema">None</div>
+            <div class="vital-cell-lbl">17. Peripheral Edema</div>
+            <div class="vital-cell-sub" id="disp-edema-notes">No Swelling</div>
+          </div>
+          <div class="vital-cell">
+            <div class="vital-cell-val" id="disp-hydration">Normal</div>
+            <div class="vital-cell-lbl">18. Hydration Status</div>
+            <div class="vital-cell-sub">Fluid Balance</div>
+          </div>
+          <div class="vital-cell">
+            <div class="vital-cell-val" id="disp-meds">Good</div>
+            <div class="vital-cell-lbl">19. Medication Adherence</div>
+            <div class="vital-cell-sub" id="disp-meds-notes">Scheduled</div>
+          </div>
+          <div class="vital-cell">
+            <div class="vital-cell-val" id="disp-cognitive">Normal</div>
+            <div class="vital-cell-lbl">20. Cognitive Observation</div>
+            <div class="vital-cell-sub">Mental Affect</div>
+          </div>
+        </div>
+
+        <div class="nurse-notes-highlight">
+          <strong>Nurse Field Observations:</strong> 
+          <span id="disp-nurse-notes">Patient in stable spirits. All vital limits recorded within comfortable parameters.</span>
         </div>
       </div>
     </div>
@@ -509,7 +727,7 @@
     <div class="card">
       <h2>Book Appointment (Nurse Visit / Doctor Consult)</h2>
       <div class="notice-box">
-        <strong>⚠️ Advance Scheduling Rule:</strong> Please note that appointment slots must be booked <strong>at least 24 hours in advance</strong> to allow nurse and doctor assignment.
+        <strong>⚠️ Advance Scheduling Rule:</strong> Appointment slots must be booked <strong>at least 24 hours in advance</strong> to allow nurse route scheduling and doctor assignment.
       </div>
       <form id="appointment-form">
         <div class="grid">
@@ -521,7 +739,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Preferred Date & Time (Min. 24h from now)</label>
+            <label>Preferred Date & Time (Min. 24h in advance)</label>
             <input type="datetime-local" id="apt-time" required>
           </div>
         </div>
@@ -557,7 +775,7 @@
     <div class="card">
       <h2>Scheduled Visits & Security Verification</h2>
       <p style="font-size: 13px; color: #718096;">
-        To ensure patient safety, share the <strong>Start Code</strong> with the practitioner upon arrival, and the <strong>End Code</strong> only when service is complete (4 per page):
+        Share the <strong>Start Code</strong> with the practitioner upon arrival, and the <strong>End Code</strong> only when service is complete (4 per page):
       </p>
       <table id="work-orders-table">
         <thead>
@@ -589,7 +807,7 @@
 
         <div class="admission-grid">
           <div class="adm-item">
-            <strong>Patient UHID</strong>
+            <strong>Member Code</strong>
             <span id="pass-uhid">------</span>
           </div>
           <div class="adm-item">
@@ -607,7 +825,7 @@
         </div>
 
         <div style="font-size:11px; color:#475569; font-weight:700; margin-bottom:6px;">
-          SCAN FOR ADMITTING DOCTOR / EMERGENCY ROOM TRIAGE:
+          SCAN FOR ADMITTING PHYSICIAN / EMERGENCY TRIAGE:
         </div>
 
         <!-- LIVE GENERATED HOSPITAL ADMISSION QR CODE -->
@@ -616,7 +834,8 @@
         </div>
 
         <div style="font-size:10px; color:#94a3b8; margin-bottom:12px;">
-          Instant access to verified nurse vitals, allergies & doctor notes
+          72-Hour Ephemeral Token
+ Link • PII Safe • ISO 27269 Ready
         </div>
 
         <div class="wallet-btn-stack">
@@ -643,6 +862,30 @@
         </button>
       </div>
     </div>
+
+    <!-- =========================================================
+         PHYSICAL PRINTABLE WALLET CARD (ISO/IEC 7810 ID-1 SPEC)
+         ========================================================= -->
+    <div id="printable-id-card" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1.5px solid #1b4332; padding-bottom:3px;">
+        <span style="font-size:9pt; font-weight:bold; color:#1b4332;">NITYASEVA HEALTH EMERGENCY CARD</span>
+        <span style="font-size:7pt; color:#555;" id="print-card-plan">Active Plan</span>
+      </div>
+      <div style="display:flex; gap:3mm; margin-top:2mm; align-items:center;">
+        <div style="font-size:18pt;">👵</div>
+        <div style="font-size:7.5pt; line-height:1.2;">
+          <strong style="font-size:9pt;" id="print-card-name">Senior Name</strong><br>
+          Code: <span id="print-card-code">SNR-XXXX</span> | Blood: <strong style="color:red;" id="print-card-blood">B+</strong><br>
+          Emergency ICE: <strong id="print-card-ice">112</strong><br>
+          Preferred Hospital: <span id="print-card-hosp">Nearest Super-Speciality</span>
+        </div>
+        <div id="print-qr-target" style="margin-left:auto;"></div>
+      </div>
+      <div style="font-size:5.5pt; color:#666; margin-top:2mm; border-top:1px dashed #ccc; padding-top:1mm;">
+        Scan QR code for immediate ER triage vitals & allergy profile. 24x7 Bedside Assistance: 112 / Care Desk.
+      </div>
+    </div>
+
   </main>
 
   <script type="module" src="js/family.js"></script>
