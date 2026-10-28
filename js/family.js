@@ -61,7 +61,6 @@ async function loadDashboard() {
       document.getElementById('hcard-gender').textContent = (s.gender ? s.gender + ' • ' : '') + 'Senior Citizen';
       document.getElementById('hcard-age').textContent = 'Age: ' + calculateAge(s.dob);
       document.getElementById('hcard-status').textContent = s.status ? s.status + ' Plan' : 'Active Care';
-
       document.getElementById('hcard-phone').textContent = s.phone || 'Not listed';
 
       const emContact = s.emergency_contact || '112';
@@ -75,7 +74,12 @@ async function loadDashboard() {
         avatarEl.textContent = '👵';
       }
 
-      await loadLatestVitals(s.senior_id);
+      // Populate vitals immediately from dashboard data, with fallback
+      if (data.latestAssessment) {
+        renderVitalsSnapshot(data.latestAssessment);
+      } else {
+        await loadLatestVitals(s.senior_id);
+      }
     } else {
       document.getElementById('hcard-name').textContent = 'No Senior Profile Linked';
     }
@@ -105,6 +109,29 @@ async function loadDashboard() {
 
   } catch (err) {
     alert('Failed to load dashboard: ' + err.message);
+  }
+}
+
+// Render Vitals Snapshot into Health Status Card
+function renderVitalsSnapshot(v) {
+  if (!v) return;
+  const sys = v.bp_systolic || (v.bp ? v.bp.split('/')[0] : '--');
+  const dia = v.bp_diastolic || (v.bp ? v.bp.split('/')[1] : '--');
+  document.getElementById('disp-bp').textContent = `${sys}/${dia}`;
+  document.getElementById('disp-hr').textContent = v.heart_rate || '--';
+  document.getElementById('disp-spo2').textContent = (v.spo2 ? v.spo2 + '%' : '--%');
+  document.getElementById('disp-sugar').textContent = v.glucose_random || v.glucose_fasting || v.blood_sugar || '--';
+  document.getElementById('disp-temp').textContent = (v.temperature ? `${v.temperature}°${v.temperature_unit || 'C'}` : '--°C');
+}
+
+async function loadLatestVitals(seniorId) {
+  try {
+    const summary = await callApi('getSeniorClinicalSummary', { seniorId });
+    if (summary && summary.latestAssessment) {
+      renderVitalsSnapshot(summary.latestAssessment);
+    }
+  } catch (e) {
+    console.warn('Could not load vitals snapshot:', e);
   }
 }
 
@@ -230,28 +257,6 @@ function renderPaginationControls(container, totalPages, currentPage, onPageChan
   });
 }
 
-// -------------------------------------------------------------
-// VITALS SNAPSHOT & CARE SUMMARY DISPATCH
-// -------------------------------------------------------------
-async function loadLatestVitals(seniorId) {
-  try {
-    const summary = await callApi('getSeniorClinicalSummary', { seniorId });
-    const v = summary.latestAssessment;
-    if (v) {
-      document.getElementById('vitals-summary-container').classList.remove('hidden');
-      const sys = v.bp_systolic || (v.bp ? v.bp.split('/')[0] : '--');
-      const dia = v.bp_diastolic || (v.bp ? v.bp.split('/')[1] : '--');
-      document.getElementById('disp-bp').textContent = `${sys}/${dia}`;
-      document.getElementById('disp-hr').textContent = v.heart_rate || '--';
-      document.getElementById('disp-spo2').textContent = (v.spo2 ? v.spo2 + '%' : '--%');
-      document.getElementById('disp-sugar').textContent = v.glucose_random || v.glucose_fasting || v.blood_sugar || '--';
-      document.getElementById('disp-temp').textContent = (v.temperature ? `${v.temperature}°${v.temperature_unit || 'C'}` : '--°C');
-    }
-  } catch (e) {
-    console.warn('Could not load vitals snapshot:', e);
-  }
-}
-
 async function openInteractiveCareSummary() {
   if (!currentSeniorId) return alert('No senior linked to this account.');
   try {
@@ -282,7 +287,6 @@ function setupHospitalWalletPass() {
     document.getElementById('pass-uhid').textContent = currentSeniorData.senior_id;
     document.getElementById('pass-ice').textContent = currentSeniorData.emergency_contact || '112';
 
-    // Generate verified 72-hour clinical link for the ER Triage QR code
     try {
       const res = await callApi('generateClinicalCareReport', { seniorId: currentSeniorId });
       const triageUrl = `${window.location.origin}${window.location.pathname.replace('family.html', '')}report.html?token=${res.token}`;
@@ -304,7 +308,6 @@ function setupHospitalWalletPass() {
 
   btnClose?.addEventListener('click', () => modal.classList.add('hidden'));
 
-  // 1. Apple Wallet action
   document.getElementById('btn-save-apple')?.addEventListener('click', () => {
     alert(
       `🍏 Apple Wallet Pass Added!\n\n` +
@@ -315,7 +318,6 @@ function setupHospitalWalletPass() {
     );
   });
 
-  // 2. Google Wallet action
   document.getElementById('btn-save-google')?.addEventListener('click', () => {
     alert(
       `🌐 Google Wallet Pass Added!\n\n` +
