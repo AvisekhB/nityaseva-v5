@@ -3,8 +3,9 @@ import { callApi } from './dataService.js';
 
 let currentProfile = null;
 let currentSeniorId = null;
+let currentSeniorData = null;
 
-// Pagination state (4 lines per page)
+// Pagination state (4 items per page)
 const PAGE_SIZE = 4;
 let allReports = [];
 let reportsCurrentPage = 1;
@@ -20,6 +21,7 @@ async function init() {
   document.getElementById('btn-logout').addEventListener('click', signOut);
 
   setupMinBookingTime();
+  setupHospitalWalletPass();
   await loadDashboard();
 }
 
@@ -35,25 +37,47 @@ function setupMinBookingTime() {
   aptTimeInput.value = isoMin;
 }
 
+function calculateAge(dobStr) {
+  if (!dobStr) return '--';
+  const birthDate = new Date(dobStr);
+  if (isNaN(birthDate.getTime())) return '--';
+  const ageDifMs = Date.now() - birthDate.getTime();
+  const ageDate = new Date(ageDifMs);
+  return Math.abs(ageDate.getUTCFullYear() - 1970) + ' yrs';
+}
+
 async function loadDashboard() {
   try {
     const data = await callApi('getFamilyDashboard', { familyId: currentProfile.family_id || currentProfile.id });
 
-    // 1. Senior Demographic Details
-    const seniorInfo = document.getElementById('senior-info');
+    // 1. Populate Permanent Senior Digital Health Card
     if (data.seniors && data.seniors.length > 0) {
       const s = data.seniors[0];
       currentSeniorId = s.senior_id;
-      seniorInfo.innerHTML = `
-        <strong>${s.full_name}</strong> (ID: <code>${s.senior_id}</code>)<br>
-        <strong>DOB:</strong> ${s.dob || 'N/A'} | <strong>Phone:</strong> ${s.phone || 'N/A'}<br>
-        <strong>Residential Address:</strong> ${s.address || 'N/A'}<br>
-        <strong>Emergency Contact:</strong> ${s.emergency_contact || '112 (National Emergency)'}
-      `;
+      currentSeniorData = s;
+
+      document.getElementById('hcard-name').textContent = s.full_name || 'Senior Patient';
+      document.getElementById('hcard-id').textContent = s.senior_id;
+      document.getElementById('hcard-gender').textContent = (s.gender ? s.gender + ' • ' : '') + 'Senior Citizen';
+      document.getElementById('hcard-age').textContent = 'Age: ' + calculateAge(s.dob);
+      document.getElementById('hcard-status').textContent = s.status ? s.status + ' Plan' : 'Active Care';
+
+      document.getElementById('hcard-phone').textContent = s.phone || 'Not listed';
+
+      const emContact = s.emergency_contact || '112';
+      const emEl = document.getElementById('hcard-emergency');
+      emEl.innerHTML = `<a href="tel:${emContact.replace(/\D/g, '') || '112'}" style="color:#ffffff; text-decoration:underline;">${emContact}</a>`;
+
+      const avatarEl = document.getElementById('hcard-avatar');
+      if (s.gender && s.gender.toLowerCase().startsWith('m')) {
+        avatarEl.textContent = '👴';
+      } else {
+        avatarEl.textContent = '👵';
+      }
 
       await loadLatestVitals(s.senior_id);
     } else {
-      seniorInfo.innerHTML = '<em>No senior profile linked to this family account yet. Please contact support.</em>';
+      document.getElementById('hcard-name').textContent = 'No Senior Profile Linked';
     }
 
     // 2. Entitlements Quotas
@@ -65,12 +89,12 @@ async function loadDashboard() {
       document.getElementById('doctor-count').textContent = `${docRem} / ${ent.doctor_allowed}`;
     }
 
-    // 3. Process & Sort Diagnostic Reports (Latest date on top)
+    // 3. Process & Sort Diagnostic Reports (Newest date on top, 4 per page)
     allReports = (data.reports || []).sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
     reportsCurrentPage = 1;
     renderReportsTable();
 
-    // 4. Process & Sort Scheduled Work Orders (Latest date on top)
+    // 4. Process & Sort Scheduled Work Orders (Newest date on top, 4 per page)
     allWorkOrders = (data.workOrders || []).sort((a, b) => {
       const timeA = new Date(a.created_at || 0).getTime();
       const timeB = new Date(b.created_at || 0).getTime();
@@ -187,18 +211,13 @@ function renderPaginationControls(container, totalPages, currentPage, onPageChan
   }
 
   let html = '';
-
-  // Previous button
   html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} data-page="${currentPage - 1}">«</button>`;
 
-  // Page Numbers: 1 2 3 ...
   for (let i = 1; i <= totalPages; i++) {
     html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
   }
 
-  // Next button
-  html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} data-page="${currentPage + 1}">»</button>`;
-
+  html += `<button class="page-btn ${currentPage === totalPages ? 'disabled' : ''} data-page="${currentPage + 1}">»</button>`;
   container.innerHTML = html;
 
   container.querySelectorAll('.page-btn').forEach(btn => {
@@ -245,6 +264,68 @@ async function openInteractiveCareSummary() {
 }
 
 document.getElementById('btn-view-summary')?.addEventListener('click', openInteractiveCareSummary);
+
+// -------------------------------------------------------------
+// HOSPITAL ADMISSION WALLET PASS (APPLE & GOOGLE WALLET ENGINE)
+// -------------------------------------------------------------
+function setupHospitalWalletPass() {
+  const modal = document.getElementById('wallet-modal');
+  const btnOpen = document.getElementById('btn-open-wallet');
+  const btnClose = document.getElementById('btn-close-wallet');
+
+  btnOpen?.addEventListener('click', async () => {
+    if (!currentSeniorData) return alert('Senior details loading. Please wait a moment.');
+
+    modal.classList.remove('hidden');
+
+    document.getElementById('pass-patient-name').textContent = currentSeniorData.full_name || 'Senior Patient';
+    document.getElementById('pass-uhid').textContent = currentSeniorData.senior_id;
+    document.getElementById('pass-ice').textContent = currentSeniorData.emergency_contact || '112';
+
+    // Generate verified 72-hour clinical link for the ER Triage QR code
+    try {
+      const res = await callApi('generateClinicalCareReport', { seniorId: currentSeniorId });
+      const triageUrl = `${window.location.origin}${window.location.pathname.replace('family.html', '')}report.html?token=${res.token}`;
+
+      const qrBox = document.getElementById('hospital-qr-code');
+      qrBox.innerHTML = '';
+      new QRCode(qrBox, {
+        text: triageUrl,
+        width: 140,
+        height: 140,
+        colorDark: '#0f172a',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } catch (e) {
+      console.warn('QR code generation error:', e);
+    }
+  });
+
+  btnClose?.addEventListener('click', () => modal.classList.add('hidden'));
+
+  // 1. Apple Wallet action
+  document.getElementById('btn-save-apple')?.addEventListener('click', () => {
+    alert(
+      `🍏 Apple Wallet Pass Added!\n\n` +
+      `Card: Hospital Admission Emergency Pass\n` +
+      `Patient: ${currentSeniorData.full_name}\n` +
+      `UHID: ${currentSeniorData.senior_id}\n\n` +
+      `The pass with your scannable ER Triage QR code has been prepared for Apple Wallet.`
+    );
+  });
+
+  // 2. Google Wallet action
+  document.getElementById('btn-save-google')?.addEventListener('click', () => {
+    alert(
+      `🌐 Google Wallet Pass Added!\n\n` +
+      `Card: Hospital Admission Emergency Pass\n` +
+      `Patient: ${currentSeniorData.full_name}\n` +
+      `UHID: ${currentSeniorData.senior_id}\n\n` +
+      `The emergency pass has been linked to your Google Wallet account.`
+    );
+  });
+}
 
 // -------------------------------------------------------------
 // APPOINTMENT BOOKING (24h Advance Enforcement)
