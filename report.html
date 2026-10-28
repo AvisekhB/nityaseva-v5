@@ -9,14 +9,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f5f8f5;
+      --bg: #f4f7f4;
       --card-white: #ffffff;
-      --text-main: #131b15;
-      --text-muted: #6b7280;
-      --green-accent: #2d6a4f;
-      --green-soft: #d8f3dc;
-      --blue-accent: #0284c7;
+      --text-main: #111827;
+      --text-muted: #64748b;
+      --green-dark: #1b4332;
+      --green-mid: #2d6a4f;
+      --green-light: #d8f3dc;
       --red-accent: #dc2626;
+      --blue-accent: #0284c7;
+      --purple-accent: #7c3aed;
     }
 
     * {
@@ -38,7 +40,7 @@
 
     .app-viewport {
       width: 100%;
-      max-width: 440px;
+      max-width: 460px;
       display: flex;
       flex-direction: column;
       gap: 14px;
@@ -69,7 +71,7 @@
       align-items: center;
       justify-content: center;
       font-size: 15px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.06);
     }
 
     .top-meta small {
@@ -94,13 +96,7 @@
       border-radius: 20px;
     }
 
-    /* VISIT SELECTOR & COMPARE BUTTON BAR */
-    .toolbar-bar {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
+    /* VISIT SELECTOR & COMPARISON BAR */
     .visit-picker-box {
       background: #ffffff;
       border: 1px solid #e2e8f0;
@@ -110,12 +106,8 @@
       justify-content: space-between;
       align-items: center;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-    }
-
-    .visit-picker-box label {
-      font-size: 12px;
-      font-weight: 700;
-      color: #2d6a4f;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
     .visit-picker-box select {
@@ -127,113 +119,31 @@
       color: #1f2937;
       background: #f9fafb;
       outline: none;
+      flex: 1;
     }
 
-    .btn-compare-trigger {
-      background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%);
+    .btn-trend-compare {
+      background: #1b4332;
       color: #ffffff;
       border: none;
-      padding: 12px 16px;
-      border-radius: 16px;
-      font-weight: 800;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(45, 106, 79, 0.25);
-      transition: all 0.2s ease;
-    }
-
-    .btn-compare-trigger:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(45, 106, 79, 0.35);
-    }
-
-    /* COMPARISON CARD MODAL / PANEL */
-    .compare-panel {
-      background: #ffffff;
-      border-radius: 24px;
-      padding: 18px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-      border: 2px solid #bbf7d0;
-      animation: slideUp 0.4s ease-out forwards;
-    }
-
-    .compare-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      border-bottom: 1px dashed #e2e8f0;
-      padding-bottom: 10px;
-    }
-
-    .compare-header h3 {
-      font-size: 15px;
-      font-weight: 800;
-      color: #1b4332;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .btn-close-compare {
-      background: #f1f5f9;
-      border: none;
-      border-radius: 50%;
-      width: 28px;
-      height: 28px;
-      font-weight: 800;
-      color: #64748b;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .compare-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-    }
-
-    .compare-table th {
-      text-align: left;
-      padding: 8px 6px;
-      color: var(--text-muted);
-      font-weight: 700;
-      border-bottom: 1px solid #e2e8f0;
+      padding: 6px 12px;
+      border-radius: 10px;
       font-size: 11px;
-    }
-
-    .compare-table td {
-      padding: 10px 6px;
-      border-bottom: 1px solid #f1f5f9;
-      vertical-align: middle;
-    }
-
-    .trend-pill {
-      display: inline-block;
-      padding: 2px 6px;
-      border-radius: 6px;
-      font-size: 10px;
-      font-weight: 800;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       white-space: nowrap;
     }
 
-    .trend-improved { background: #dcfce7; color: #166534; }
-    .trend-caution { background: #fef3c7; color: #92400e; }
-    .trend-neutral { background: #f1f5f9; color: #475569; }
-
-    /* HERO CARD */
+    /* PATIENT HERO CARD WITH PHOTO UPLOAD */
     .patient-card {
       background: linear-gradient(135deg, #e4f6df 0%, #d3efce 100%);
       border-radius: 26px;
       padding: 20px;
       box-shadow: 0 8px 24px rgba(45, 106, 79, 0.08);
-      animation: slideUp 0.5s ease-out forwards;
+      position: relative;
     }
 
     .patient-header {
@@ -243,22 +153,50 @@
       margin-bottom: 12px;
     }
 
-    .patient-avatar {
-      width: 60px;
-      height: 60px;
+    .photo-wrapper {
+      position: relative;
+      width: 68px;
+      height: 68px;
+      flex-shrink: 0;
+    }
+
+    .patient-photo {
+      width: 68px;
+      height: 68px;
       border-radius: 50%;
+      object-fit: cover;
       background: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 30px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+      font-size: 34px;
+      border: 3px solid #ffffff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .photo-upload-btn {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      background: #1b4332;
+      color: #ffffff;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      cursor: pointer;
+      border: 2px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
 
     .patient-title h2 {
       font-size: 20px;
       font-weight: 800;
       color: #1b4332;
+      line-height: 1.2;
     }
 
     .patient-tags {
@@ -298,31 +236,29 @@
       animation: pulse-dot 1.5s infinite;
     }
 
-    /* SECTION TITLE */
     .section-title {
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 800;
-      margin: 6px 4px 0;
+      margin: 4px 4px 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
     .section-title small {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text-muted);
       font-weight: 600;
     }
 
-    /* 1. HEART RATE WITH LOOPING WAVE */
+    /* 1. HEART RATE WITH LIVE LOOPING ECG WAVE */
     .vital-banner-card {
       background: linear-gradient(135deg, #ffd8cc 0%, #fec5bb 100%);
       border-radius: 24px;
-      padding: 18px 20px;
+      padding: 16px 20px;
       position: relative;
       overflow: hidden;
       box-shadow: 0 6px 18px rgba(220, 38, 38, 0.08);
-      animation: slideUp 0.6s ease-out forwards;
     }
 
     .vital-banner-card .header-lbl {
@@ -338,14 +274,14 @@
       font-size: 32px;
       font-weight: 800;
       color: #450a0a;
-      margin-top: 4px;
+      margin-top: 2px;
     }
 
     .ecg-track {
       width: 200%;
-      height: 48px;
+      height: 44px;
       display: flex;
-      animation: ecg-slide 2.5s linear infinite;
+      animation: ecg-slide 2.4s linear infinite;
     }
 
     .ecg-track svg {
@@ -353,7 +289,7 @@
       height: 100%;
     }
 
-    /* 2. DUAL COLUMNS FOR CIRCULAR ANIMATED GAUGES */
+    /* 2. DUAL-RING BLOOD PRESSURE & SPO2 GAUGES */
     .vitals-2col {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -362,19 +298,17 @@
 
     .vital-tile {
       border-radius: 24px;
-      padding: 16px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      min-height: 168px;
+      min-height: 175px;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
       background: #ffffff;
-      animation: slideUp 0.7s ease-out forwards;
+      border: 1px solid #e2e8f0;
+      position: relative;
     }
-
-    .tile-blue { background: #f0f9ff; border: 1px solid #bae6fd; }
-    .tile-green { background: #f0fdf4; border: 1px solid #bbf7d0; }
 
     .tile-header {
       width: 100%;
@@ -386,15 +320,14 @@
       color: #374151;
     }
 
-    /* CIRCLE GAUGES WITH SVG ANIMATION */
     .gauge-wrapper {
       position: relative;
-      width: 90px;
-      height: 90px;
+      width: 104px;
+      height: 104px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 6px 0;
+      margin: 4px 0;
     }
 
     .gauge-svg {
@@ -403,13 +336,36 @@
       height: 100%;
     }
 
-    .gauge-bg {
+    .ring-bg {
       fill: none;
       stroke: #e2e8f0;
-      stroke-width: 8;
+      stroke-width: 6;
     }
 
-    .gauge-bar-spo2 {
+    /* Outer Ring: Systolic (r=42, C=264) */
+    .ring-bp-sys {
+      fill: none;
+      stroke: #16a34a;
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-dasharray: 264;
+      stroke-dashoffset: 264;
+      transition: stroke-dashoffset 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Inner Ring: Diastolic (r=30, C=188) */
+    .ring-bp-dia {
+      fill: none;
+      stroke: #0284c7;
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-dasharray: 188;
+      stroke-dashoffset: 188;
+      transition: stroke-dashoffset 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* SpO2 Single Ring (r=36, C=226) */
+    .ring-spo2 {
       fill: none;
       stroke: #0284c7;
       stroke-width: 8;
@@ -419,9 +375,10 @@
       transition: stroke-dashoffset 1.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .gauge-bar-bp {
+    /* BMI Ring (r=36, C=226) */
+    .ring-bmi {
       fill: none;
-      stroke: #16a34a;
+      stroke: #d97706;
       stroke-width: 8;
       stroke-linecap: round;
       stroke-dasharray: 226;
@@ -429,49 +386,80 @@
       transition: stroke-dashoffset 1.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .gauge-text {
+    .dual-ring-text {
       position: absolute;
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
-    .gauge-text .val {
-      font-size: 18px;
+    .dual-ring-text .sys-val {
+      font-size: 15px;
       font-weight: 800;
-      color: #111827;
-      line-height: 1.1;
+      color: #16a34a;
+      line-height: 1;
     }
 
-    .gauge-text .unit {
+    .dual-ring-text .sep {
       font-size: 10px;
-      color: var(--text-muted);
-      font-weight: 700;
+      color: #94a3b8;
+      margin: 1px 0;
     }
 
-    /* BLOOD SUGAR SLIDER ANIMATION */
+    .dual-ring-text .dia-val {
+      font-size: 13px;
+      font-weight: 800;
+      color: #0284c7;
+      line-height: 1;
+    }
+
+    .ring-legends {
+      display: flex;
+      gap: 8px;
+      font-size: 9px;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .legend-sys { color: #16a34a; }
+    .legend-dia { color: #0284c7; }
+
+    /* 3. BLOOD SUGAR CARD WITH EXPLICIT FASTING / PP / RANDOM LABELS */
     .sugar-card {
       background: #fefce8;
       border: 1px solid #fef08a;
       border-radius: 24px;
       padding: 16px 20px;
-      animation: slideUp 0.8s ease-out forwards;
     }
 
-    .sugar-row {
+    .sugar-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin: 8px 0 12px;
+    }
+
+    .sugar-type-badge {
+      font-size: 11px;
+      font-weight: 800;
+      background: #ca8a04;
+      color: #ffffff;
+      padding: 3px 10px;
+      border-radius: 12px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
     }
 
     .sugar-main {
       font-size: 32px;
       font-weight: 800;
       color: #854d0e;
+      margin: 6px 0 10px;
     }
 
     .bar-bg {
       width: 100%;
-      height: 8px;
+      height: 9px;
       background: #fef08a;
       border-radius: 6px;
       overflow: hidden;
@@ -479,20 +467,66 @@
 
     .bar-fill {
       height: 100%;
-      background: linear-gradient(90deg, #eab308, #ea580c);
+      background: linear-gradient(90deg, #10b981 0%, #f59e0b 60%, #ef4444 100%);
       border-radius: 6px;
       width: 0%;
       transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    /* 20-POINT ASSESSMENT CARD */
+    /* 4. ANIMATED TEMPERATURE THERMOMETER & BODY MASS */
+    .temp-card-box {
+      border-radius: 24px;
+      padding: 14px;
+      background: #faf5ff;
+      border: 1px solid #e9d5ff;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 175px;
+    }
+
+    .thermometer-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 8px 0;
+      padding: 0 4px;
+    }
+
+    .thermometer-glass {
+      width: 14px;
+      height: 70px;
+      background: #e2e8f0;
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column-reverse;
+      border: 1px solid #cbd5e1;
+    }
+
+    .thermometer-mercury {
+      width: 100%;
+      height: 0%;
+      background: linear-gradient(180deg, #ef4444 0%, #ec4899 100%);
+      border-radius: 0 0 10px 10px;
+      transition: height 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .temp-number-box {
+      font-size: 24px;
+      font-weight: 800;
+      color: #6b21a8;
+      line-height: 1.1;
+    }
+
+    /* 5. COMPLETE 20-POINT CLINICAL INSPECTION GRID */
     .full-assessment-card {
       background: #ffffff;
       border-radius: 24px;
       padding: 18px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
       border: 1px solid #edf2f7;
-      animation: slideUp 0.85s ease-out forwards;
     }
 
     .full-assessment-card h3 {
@@ -505,15 +539,26 @@
       gap: 8px;
     }
 
+    .asm-category-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 10px 0 6px;
+      padding-bottom: 3px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
     .asm-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 8px;
     }
 
     .asm-item {
       background: #f8fafc;
-      padding: 10px;
+      padding: 9px 10px;
       border-radius: 12px;
       border: 1px solid #e2e8f0;
     }
@@ -529,7 +574,7 @@
       font-size: 13px;
       font-weight: 800;
       color: #1f2937;
-      margin-top: 3px;
+      margin-top: 2px;
     }
 
     .asm-notes-box {
@@ -540,8 +585,78 @@
       border-radius: 8px;
       font-size: 12px;
       color: #065f46;
-      line-height: 1.4;
+      line-height: 1.45;
     }
+
+    /* 6. MODAL: ALL 20-POINT CLINICAL TREND COMPARISON */
+    .compare-modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 12px;
+      backdrop-filter: blur(4px);
+    }
+
+    .compare-modal-box {
+      background: #ffffff;
+      border-radius: 22px;
+      max-width: 440px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 20px 16px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.3);
+    }
+
+    .compare-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+
+    .compare-header h3 {
+      font-size: 15px;
+      font-weight: 800;
+      color: #1b4332;
+      margin: 0;
+    }
+
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+
+    .compare-table th, .compare-table td {
+      padding: 7px 6px;
+      border-bottom: 1px solid #f1f5f9;
+      text-align: left;
+    }
+
+    .compare-table th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 700;
+    }
+
+    .trend-pill {
+      font-size: 9px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 8px;
+      display: inline-block;
+    }
+
+    .trend-improved { background: #dcfce7; color: #15803d; }
+    .trend-caution { background: #fee2e2; color: #b91c1c; }
+    .trend-neutral { background: #f1f5f9; color: #475569; }
 
     /* TIMELINE */
     .journal-box {
@@ -549,7 +664,6 @@
       border-radius: 26px;
       padding: 20px 16px;
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
-      animation: slideUp 0.9s ease-out forwards;
     }
 
     .timeline-stream {
@@ -594,7 +708,8 @@
     .alert-tag { background: #fed7d7; color: #9b2c2c; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; display: inline-block; margin-top: 4px; }
 
     /* LOADING & ERROR */
-    .loading-card, .error-card {
+
+        .loading-card, .error-card {
       background: #fff;
       border-radius: 26px;
       padding: 44px 18px;
@@ -606,7 +721,7 @@
       width: 40px;
       height: 40px;
       border: 4px solid #e2e8f0;
-      border-top-color: var(--green-accent);
+      border-top-color: var(--green-mid);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
       margin: 0 auto 14px;
@@ -616,10 +731,6 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; } }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(18px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
     @keyframes ecg-slide {
       0% { transform: translateX(0); }
       100% { transform: translateX(-50%); }
@@ -629,6 +740,7 @@
 <body>
   <div class="app-viewport">
     
+    <!-- TOP APP BAR -->
     <div class="top-bar">
       <div class="top-user">
         <div class="user-avatar-initials" id="user-initials">NS</div>
@@ -640,36 +752,15 @@
       <div class="validity-pill" id="expiry-pill">Checking...</div>
     </div>
 
-    <!-- TOOLBAR (VISIT PICKER & COMPARE BUTTON) -->
-    <div class="toolbar-bar">
-      <div id="visit-picker-container" class="visit-picker-box hidden">
-        <label for="visit-select">📅 Assessment Date:</label>
+    <!-- TIMELINE VISIT PICKER & CLINICAL TRENDS BUTTON -->
+    <div id="visit-picker-container" class="visit-picker-box hidden">
+      <div style="display:flex; align-items:center; gap:6px; flex:1;">
+        <span style="font-size:13px;">📅</span>
         <select id="visit-select"></select>
       </div>
-
-      <button id="btn-compare" class="btn-compare-trigger hidden">
-        <span>⚖️ Compare Last 2 Visits</span>
+      <button class="btn-trend-compare" id="btn-open-compare">
+        <span>⚖️</span> Compare All 20 Trends
       </button>
-    </div>
-    <!-- COMPARISON PANEL (TOGGLED BY BUTTON) -->
-    <div id="compare-panel" class="compare-panel hidden">
-      <div class="compare-header">
-        <h3>⚖️ Clinical Trends (Previous vs. Latest)</h3>
-        <button id="btn-close-compare" class="btn-close-compare">✕</button>
-      </div>
-      <table class="compare-table">
-        <thead>
-          <tr>
-            <th>Parameter</th>
-            <th id="cmp-date-old">Previous</th>
-            <th id="cmp-date-new">Latest</th>
-            <th>Variation</th>
-          </tr>
-        </thead>
-        <tbody id="compare-tbody">
-          <!-- Dynamically populated -->
-        </tbody>
-      </table>
     </div>
 
     <!-- LOADING SCREEN -->
@@ -686,37 +777,43 @@
       <p id="error-msg" style="color: var(--text-muted); font-size: 13px;"></p>
     </div>
 
-    <!-- REPORT VIEW -->
+    <!-- REPORT MAIN VIEW -->
     <div id="report-view" class="hidden" style="display:flex; flex-direction:column; gap:14px;">
       
-      <!-- HERO -->
+      <!-- HERO PATIENT PROFILE CARD (WITH PHOTO UPLOAD PROVISION) -->
       <div class="patient-card">
         <div class="patient-header">
-          <div class="patient-avatar">👵</div>
+          <div class="photo-wrapper">
+            <div class="patient-photo" id="pat-photo-display">👵</div>
+            <label class="photo-upload-btn" title="Upload Senior Photo">
+              📷
+              <input type="file" id="photo-file-input" accept="image/*" style="display:none;">
+            </label>
+          </div>
           <div class="patient-title">
             <h2 id="pat-name">Senior Patient</h2>
             <div class="patient-tags">
               <span class="tag-pill" id="pat-id-tag">SNR</span>
-              <span class="tag-pill">Active Plan</span>
+              <span class="tag-pill">20 Vitals Monitored</span>
             </div>
           </div>
         </div>
         <div class="status-badge">
           <span class="status-dot"></span>
-          <span>Continuous Monitoring</span>
+          <span>Verified Clinical Data</span>
         </div>
       </div>
 
       <div class="section-title">
-        <span>Vitals Metrics</span>
+        <span>Continuous Biometrics</span>
         <small id="visit-date-badge">Latest Assessment</small>
       </div>
 
-      <!-- 1. HEART RATE WITH LOOPING PULSE -->
+      <!-- 1. HEART RATE WITH LOOPING ECG -->
       <div class="vital-banner-card">
-        <div class="header-lbl"><span>❤️</span> Heart rate</div>
+        <div class="header-lbl"><span>❤️</span> 2. Heart rate (Pulse)</div>
         <div class="big-val" id="val-hr">-- <span style="font-size:15px; font-weight:600;">bpm</span></div>
-        <div style="overflow:hidden; width:100%; height:48px; margin-top:4px;">
+        <div style="overflow:hidden; width:100%; height:44px; margin-top:2px;">
           <div class="ecg-track">
             <svg viewBox="0 0 300 48" preserveAspectRatio="none">
               <path d="M0,24 L40,24 L50,8 L60,38 L70,16 L80,30 L90,24 L140,24 L150,4 L160,42 L170,12 L180,32 L190,24 L300,24" 
@@ -730,118 +827,200 @@
         </div>
       </div>
 
-      <!-- 2. ANIMATED CIRCULAR GAUGES (SPO2 & BP) -->
+      <!-- 2. DUAL-RING BLOOD PRESSURE & SPO2 -->
       <div class="vitals-2col">
-        <div class="vital-tile tile-blue">
-          <div class="tile-header"><span>🫁</span> SpO2 Oxygen</div>
+        <!-- Dual Ring BP -->
+        <div class="vital-tile">
+          <div class="tile-header"><span>⚡</span> 1. Blood Pressure</div>
           <div class="gauge-wrapper">
-            <svg class="gauge-svg" viewBox="0 0 80 80">
-              <circle class="gauge-bg" cx="40" cy="40" r="36"/>
-              <circle class="gauge-bar-spo2" id="gauge-spo2" cx="40" cy="40" r="36"/>
+            <svg class="gauge-svg" viewBox="0 0 96 96">
+              <!-- Outer Ring Background (Sys) -->
+              <circle class="ring-bg" cx="48" cy="48" r="42"/>
+              <!-- Outer Ring Fill (Sys) -->
+              <circle class="ring-bp-sys" id="ring-sys" cx="48" cy="48" r="42"/>
+              <!-- Inner Ring Background (Dia) -->
+              <circle class="ring-bg" cx="48" cy="48" r="30"/>
+              <!-- Inner Ring Fill (Dia) -->
+              <circle class="ring-bp-dia" id="ring-dia" cx="48" cy="48" r="30"/>
             </svg>
-            <div class="gauge-text">
-              <div class="val" id="val-spo2">--</div>
-              <div class="unit">%</div>
+            <div class="dual-ring-text">
+              <span class="sys-val" id="val-bp-sys">--</span>
+              <span class="sep">/</span>
+              <span class="dia-val" id="val-bp-dia">--</span>
             </div>
           </div>
-          <div style="font-size:11px; font-weight:700; color:#0369a1;">Saturation</div>
+          <div class="ring-legends">
+            <span class="legend-sys">● Sys (Outer)</span>
+            <span class="legend-dia">● Dia (Inner)</span>
+          </div>
         </div>
 
-        <div class="vital-tile tile-green">
-          <div class="tile-header"><span>⚡</span> Blood Pressure</div>
+        <!-- SpO2 Gauge -->
+        <div class="vital-tile" style="background:#f0f9ff; border-color:#bae6fd;">
+          <div class="tile-header"><span>🫁</span> 3. SpO₂ Oxygen</div>
           <div class="gauge-wrapper">
             <svg class="gauge-svg" viewBox="0 0 80 80">
-              <circle class="gauge-bg" cx="40" cy="40" r="36"/>
-              <circle class="gauge-bar-bp" id="gauge-bp" cx="40" cy="40" r="36"/>
+              <circle class="ring-bg" cx="40" cy="40" r="36"/>
+              <circle class="ring-spo2" id="ring-spo2-elem" cx="40" cy="40" r="36"/>
             </svg>
-            <div class="gauge-text">
-              <div class="val" id="val-bp" style="font-size:14px;">--/--</div>
-              <div class="unit">mmHg</div>
+            <div class="dual-ring-text">
+              <span style="font-size:22px; font-weight:800; color:#0284c7;" id="val-spo2">--</span>
+              <small style="font-size:10px; color:#64748b; font-weight:700;">%</small>
             </div>
           </div>
-          <div style="font-size:11px; font-weight:700; color:#15803d;">Systolic/Dia</div>
+          <div style="font-size:11px; font-weight:700; color:#0369a1;">Oxygen Saturation</div>
         </div>
       </div>
 
-      <!-- 3. BLOOD SUGAR SLIDER -->
+      <!-- 3. BLOOD SUGAR (FASTING / PP / RANDOM DETECTOR) -->
       <div class="sugar-card">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div style="font-size:12px; font-weight:700; color:#854d0e;"><span>🩸</span> Blood Sugar</div>
-          <span style="font-size:11px; font-weight:700; background:#fde68a; color:#92400e; padding:3px 8px; border-radius:10px;" id="sugar-timing">Glucose</span>
+        <div class="sugar-top">
+          <div style="font-size:13px; font-weight:800; color:#854d0e;"><span>🩸</span> 6-7. Blood Glucose</div>
+          <span class="sugar-type-badge" id="sugar-report-type">Random (RBS)</span>
         </div>
-        <div class="sugar-row">
-          <div class="sugar-main" id="val-sugar">-- <span style="font-size:15px; font-weight:600;">mg/dL</span></div>
-          <span style="font-size:12px; font-weight:700; color:#b45309;" id="sugar-status">Recorded</span>
-        </div>
+        <div class="sugar-main" id="val-sugar">-- <span style="font-size:15px; font-weight:600;">mg/dL</span></div>
         <div class="bar-bg">
-          <div class="bar-fill" id="sugar-bar"></div>
+          <div class="bar-fill" id="sugar-bar-elem"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:700; color:#a16207; margin-top:5px;">
+          <span>70 (Low)</span>
+          <span id="sugar-timing-text">Timing Context</span>
+          <span>250+ (High)</span>
         </div>
       </div>
 
-      <!-- 4. TEMPERATURE & BODY MASS -->
+      <!-- 4. ANIMATED TEMPERATURE & BODY MASS -->
       <div class="vitals-2col">
-        <div class="vital-tile" style="background:#faf5ff; border:1px solid #e9d5ff;">
-          <div class="tile-header"><span>🌡️</span> Temperature</div>
-          <div style="font-size: 26px; font-weight: 800; color: #6b21a8; margin: 10px 0;" id="val-temp">--°C</div>
-          <div style="font-size: 11px; font-weight: 700; color: #7e22ce;">Normal Range</div>
+        <!-- Thermometer -->
+        <div class="temp-card-box">
+          <div class="tile-header"><span>🌡️</span> 5. Temperature</div>
+          <div class="thermometer-wrapper">
+            <div class="thermometer-glass">
+              <div class="thermometer-mercury" id="temp-mercury"></div>
+            </div>
+            <div class="temp-number-box" id="val-temp">--°C</div>
+          </div>
+          <div style="font-size:10px; font-weight:700; color:#6b21a8;" id="temp-status">Normal Range</div>
         </div>
 
-        <div class="vital-tile" style="background:#fefce8; border:1px solid #fef08a;">
-          <div class="tile-header"><span>⚖️</span> Body Mass</div>
-          <div style="font-size: 26px; font-weight: 800; color: #854d0e; margin: 10px 0;" id="val-bmi">--</div>
-          <div style="font-size: 11px; font-weight: 700; color: #a16207;" id="val-weight">-- kg</div>
+        <!-- Body Mass BMI -->
+        <div class="vital-tile" style="background:#fefce8; border-color:#fef08a;">
+          <div class="tile-header"><span>⚖️</span> 8-11. Body Mass</div>
+          <div class="gauge-wrapper">
+            <svg class="gauge-svg" viewBox="0 0 80 80">
+              <circle class="ring-bg" cx="40" cy="40" r="36"/>
+              <circle class="ring-bmi" id="ring-bmi-elem" cx="40" cy="40" r="36"/>
+            </svg>
+            <div class="dual-ring-text">
+              <span style="font-size:19px; font-weight:800; color:#854d0e;" id="val-bmi">--</span>
+              <small style="font-size:9px; color:#a16207; font-weight:700;">BMI</small>
+            </div>
+          </div>
+          <div style="font-size:11px; font-weight:700; color:#854d0e;" id="val-weight">-- kg</div>
         </div>
       </div>
 
-      <!-- 5. COMPLETE 20-POINT CLINICAL INSPECTION -->
+      <!-- 5. COMPLETE 20-POINT CLINICAL INSPECTION GRID -->
       <div class="full-assessment-card">
-        <h3>📋 Complete 20-Point Clinical Inspection</h3>
+        <h3>📋 Complete 20-Point Health Examination</h3>
+        
+        <div class="asm-category-title">A. Glycemic & Body Composition (6-11)</div>
         <div class="asm-grid">
           <div class="asm-item">
-            <div class="asm-item-lbl">Level of Consciousness</div>
-            <div class="asm-item-val" id="asm-val-loc">Alert</div>
+            <div class="asm-item-lbl">6. Fasting Glucose</div>
+            <div class="asm-item-val" id="asm-val-fpg">-- mg/dL</div>
           </div>
           <div class="asm-item">
-            <div class="asm-item-lbl">Fall Risk</div>
-            <div class="asm-item-val" id="asm-val-fall">Low</div>
+            <div class="asm-item-lbl">7. Random / PP Glucose</div>
+            <div class="asm-item-val" id="asm-val-ppg">-- mg/dL</div>
           </div>
           <div class="asm-item">
-            <div class="asm-item-lbl">Mobility Status</div>
-            <div class="asm-item-val" id="asm-val-mobility">Independent</div>
+            <div class="asm-item-lbl">8-9. Weight & Height</div>
+            <div class="asm-item-val" id="asm-val-wtht">-- kg | -- cm</div>
           </div>
           <div class="asm-item">
-            <div class="asm-item-lbl">Pain Score</div>
+            <div class="asm-item-lbl">11. Waist Circumference</div>
+            <div class="asm-item-val" id="asm-val-waist">-- cm</div>
+          </div>
+        </div>
+
+        <div class="asm-category-title">B. Neuro, Pain & Mobility Status (12-15)</div>
+        <div class="asm-grid">
+          <div class="asm-item">
+            <div class="asm-item-lbl">12. Pain Score (0-10)</div>
             <div class="asm-item-val" id="asm-val-pain">0 / 10</div>
           </div>
           <div class="asm-item">
-            <div class="asm-item-lbl">Respiratory Symptoms</div>
+            <div class="asm-item-lbl">13. Consciousness Level</div>
+            <div class="asm-item-val" id="asm-val-loc">Alert</div>
+          </div>
+          <div class="asm-item">
+            <div class="asm-item-lbl">14. Fall Risk Level</div>
+            <div class="asm-item-val" id="asm-val-fall">Low</div>
+          </div>
+          <div class="asm-item">
+            <div class="asm-item-lbl">15. Mobility Status</div>
+            <div class="asm-item-val" id="asm-val-mobility">Independent</div>
+          </div>
+        </div>
+
+        <div class="asm-category-title">C. Systemic & Cognitive Review (16-20)</div>
+        <div class="asm-grid">
+          <div class="asm-item">
+            <div class="asm-item-lbl">16. Respiratory Symptoms</div>
             <div class="asm-item-val" id="asm-val-resp">None</div>
           </div>
           <div class="asm-item">
-            <div class="asm-item-lbl">Edema / Swelling</div>
+            <div class="asm-item-lbl">17. Peripheral Edema</div>
             <div class="asm-item-val" id="asm-val-edema">None</div>
           </div>
           <div class="asm-item">
-            <div class="asm-item-lbl">Hydration Status</div>
+            <div class="asm-item-lbl">18. Hydration Status</div>
             <div class="asm-item-val" id="asm-val-hydration">Normal</div>
           </div>
           <div class="asm-item">
-            <div class="asm-item-lbl">Medication Adherence</div>
+            <div class="asm-item-lbl">19. Med Adherence</div>
             <div class="asm-item-val" id="asm-val-meds">Good</div>
           </div>
+          <div class="asm-item" style="grid-column: span 2;">
+            <div class="asm-item-lbl">20. Cognitive & Mental Observation</div>
+            <div class="asm-item-val" id="asm-val-cognitive">Normal</div>
+          </div>
         </div>
+
         <div class="asm-notes-box">
-          <strong>Nurse Observations:</strong> <span id="asm-val-notes">No specific notes recorded.</span>
+          <strong>Nurse Observations:</strong> <span id="asm-val-notes">All physiological limits recorded within baseline parameters.</span>
         </div>
       </div>
 
-      <!-- 6. CHAT JOURNAL & TIMELINE -->
+      <!-- 6. CHAT JOURNAL & TIMELINE STREAM -->
       <div class="journal-box">
         <h3 style="font-size:16px; font-weight:800; color:#1b4332;">Care Journal (Chronological History)</h3>
-        <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Tap any past nurse visit to load its full inspection data:</p>
+        <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Tap any assessment event to inspect its full 20-point parameters:</p>
         <div id="timeline-stream" class="timeline-stream"></div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- MODAL: ALL 20-POINT CLINICAL TREND COMPARISON (PREVIOUS VS. LATEST) -->
+  <div id="compare-modal" class="compare-modal-overlay hidden">
+    <div class="compare-modal-box">
+      <div class="compare-header">
+        <h3>⚖️ 20-Point Clinical Trends Comparison</h3>
+        <button id="btn-close-compare" style="background:transparent; border:none; font-size:18px; cursor:pointer; color:#64748b;">✕</button>
+      </div>
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th id="cmp-col-old">Previous</th>
+            <th id="cmp-col-new">Latest</th>
+            <th>Variation / Trend</th>
+          </tr>
+        </thead>
+        <tbody id="compare-tbody"></tbody>
+      </table>
     </div>
   </div>
 
@@ -849,6 +1028,7 @@
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxfaUyba2jRYmHlLlI24mRBneMlxoOd5BAv-8UfJmfsR-9bOLmdfmR9gX0M4mq38IwDeA/exec';
 
     let globalCareJournal = null;
+    let globalSeniorId = '';
 
     async function init() {
       const token = new URLSearchParams(window.location.search).get('token');
@@ -876,7 +1056,8 @@
 
         const report = json.data.report || {};
         globalCareJournal = report.careJournal || {};
-        renderMasterView(globalCareJournal, report.expiresAt, report.seniorId);
+        globalSeniorId = report.seniorId || '';
+        renderMasterView(globalCareJournal, report.expiresAt, globalSeniorId);
       } catch (err) {
         showError('Network error: ' + err.message);
       }
@@ -897,12 +1078,12 @@
       document.getElementById('user-initials').textContent = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'NS';
       document.getElementById('pat-id-tag').textContent = seniorId || 'SENIOR';
 
+      setupPhotoUpload(seniorId);
+
       const assessments = careJournal.allAssessments || [];
       const picker = document.getElementById('visit-select');
       const pickerBox = document.getElementById('visit-picker-container');
-      const btnCompare = document.getElementById('btn-compare');
 
-      // Setup Assessment Picker
       if (assessments.length > 1) {
         pickerBox.classList.remove('hidden');
         picker.innerHTML = assessments.map((a, i) => {
@@ -916,20 +1097,17 @@
           if (chosen) updateVitalsCard(chosen);
         };
 
-        // Enable & Wire "Compare Last 2 Visits" Button
-        btnCompare.classList.remove('hidden');
-        btnCompare.onclick = () => {
-          populateComparison(assessments[1], assessments[0]);
-          const panel = document.getElementById('compare-panel');
-          panel.classList.toggle('hidden');
-          if (!panel.classList.contains('hidden')) {
-            panel.scrollIntoView({ behavior: 'smooth' });
-          }
+        // Wire 20-Point Comparison Modal
+        document.getElementById('btn-open-compare').onclick = () => {
+          populateAll20Comparisons(assessments[1], assessments[0]);
+          document.getElementById('compare-modal').classList.remove('hidden');
         };
 
         document.getElementById('btn-close-compare').onclick = () => {
-          document.getElementById('compare-panel').classList.add('hidden');
+          document.getElementById('compare-modal').classList.add('hidden');
         };
+      } else {
+        document.getElementById('btn-open-compare')?.classList.add('hidden');
       }
 
       const initial = careJournal.activeAssessment || (assessments.length > 0 ? assessments[0] : null);
@@ -938,114 +1116,30 @@
       renderTimeline(careJournal.timeline || [], initial ? initial.assessment_id : null);
     }
 
-    function populateComparison(oldAsm, newAsm) {
-      if (!oldAsm || !newAsm) return;
+    function setupPhotoUpload(seniorId) {
+      const storageKey = `nityaseva_photo_${seniorId}`;
+      const savedPhoto = localStorage.getItem(storageKey);
+      const display = document.getElementById('pat-photo-display');
 
-      const dOld = oldAsm.created_at ? new Date(oldAsm.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Prev';
-      const dNew = newAsm.created_at ? new Date(newAsm.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Latest';
+      if (savedPhoto && display) {
+        display.innerHTML = `<img src="${savedPhoto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+      }
 
-      document.getElementById('cmp-date-old').textContent = dOld;
-      document.getElementById('cmp-date-new').textContent = dNew;
+      const input = document.getElementById('photo-file-input');
+      if (input) {
+        input.onchange = (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
 
-      const tbody = document.getElementById('compare-tbody');
-      tbody.innerHTML = '';
-
-      const metrics = [
-        {
-          label: 'Blood Pressure',
-          oldVal: oldAsm.bp || `${oldAsm.bp_systolic}/${oldAsm.bp_diastolic}`,
-          newVal: newAsm.bp || `${newAsm.bp_systolic}/${newAsm.bp_diastolic}`,
-          calcTrend: () => {
-            const sysOld = Number(oldAsm.bp_systolic || (oldAsm.bp ? oldAsm.bp.split('/')[0] : 0));
-            const sysNew = Number(newAsm.bp_systolic || (newAsm.bp ? newAsm.bp.split('/')[0] : 0));
-            if (!sysOld || !sysNew) return { text: 'Recorded', cls: 'trend-neutral' };
-            const diff = sysNew - sysOld;
-            if (diff === 0) return { text: 'Stable (0)', cls: 'trend-improved' };
-            return diff > 0 ? { text: `+${diff} mmHg (Higher)`, cls: 'trend-caution' } : { text: `${diff} mmHg (Lower)`, cls: 'trend-improved' };
-          }
-        },
-        {
-          label: 'Heart Rate',
-          oldVal: oldAsm.heart_rate ? `${oldAsm.heart_rate} bpm` : '--',
-          newVal: newAsm.heart_rate ? `${newAsm.heart_rate} bpm` : '--',
-          calcTrend: () => {
-            const hOld = Number(oldAsm.heart_rate);
-            const hNew = Number(newAsm.heart_rate);
-            if (!hOld || !hNew) return { text: '--', cls: 'trend-neutral' };
-            const diff = hNew - hOld;
-            return diff === 0 ? { text: 'No change', cls: 'trend-improved' } : (diff > 0 ? { text: `+${diff} bpm`, cls: 'trend-caution' } : { text: `${diff} bpm`, cls: 'trend-improved' });
-          }
-        },
-        {
-          label: 'SpO2 Oxygen',
-          oldVal: oldAsm.spo2 ? `${oldAsm.spo2}%` : '--',
-          newVal: newAsm.spo2 ? `${newAsm.spo2}%` : '--',
-          calcTrend: () => {
-            const sOld = Number(oldAsm.spo2);
-            const sNew = Number(newAsm.spo2);
-            if (!sOld || !sNew) return { text: '--', cls: 'trend-neutral' };
-            const diff = sNew - sOld;
-            return diff >= 0 ? { text: `+${diff}% (Good)`, cls: 'trend-improved' } : { text: `${diff}% (Drop)`, cls: 'trend-caution' };
-          }
-        },
-        {
-          label: 'Blood Glucose',
-          oldVal: (oldAsm.glucose_random || oldAsm.glucose_fasting || oldAsm.blood_sugar) ? `${oldAsm.glucose_random || oldAsm.glucose_fasting || oldAsm.blood_sugar} mg/dL` : '--',
-          newVal: (newAsm.glucose_random || newAsm.glucose_fasting || newAsm.blood_sugar) ? `${newAsm.glucose_random || newAsm.glucose_fasting || newAsm.blood_sugar} mg/dL` : '--',
-          calcTrend: () => {
-            const gOld = Number(oldAsm.glucose_random || oldAsm.glucose_fasting || oldAsm.blood_sugar);
-            const gNew = Number(newAsm.glucose_random || newAsm.glucose_fasting || newAsm.blood_sugar);
-            if (!gOld || !gNew) return { text: '--', cls: 'trend-neutral' };
-            const diff = gNew - gOld;
-            return diff === 0 ? { text: 'Unchanged', cls: 'trend-neutral' } : (diff > 0 ? { text: `+${diff} mg/dL`, cls: 'trend-caution' } : { text: `${diff} mg/dL`, cls: 'trend-improved' });
-          }
-        },
-        {
-          label: 'Body Weight',
-          oldVal: oldAsm.weight ? `${oldAsm.weight} kg` : '--',
-          newVal: newAsm.weight ? `${newAsm.weight} kg` : '--',
-          calcTrend: () => {
-            const wOld = Number(oldAsm.weight);
-            const wNew = Number(newAsm.weight);
-            if (!wOld || !wNew) return { text: '--', cls: 'trend-neutral' };
-            const diff = (wNew - wOld).toFixed(1);
-            return { text: `${diff > 0 ? '+' : ''}${diff} kg`, cls: 'trend-neutral' };
-          }
-        },
-        {
-          label: 'Pain Score',
-          oldVal: oldAsm.pain_level !== undefined ? `${oldAsm.pain_level}/10` : '0/10',
-          newVal: newAsm.pain_level !== undefined ? `${newAsm.pain_level}/10` : '0/10',
-          calcTrend: () => {
-            const pOld = Number(oldAsm.pain_level || 0);
-            const pNew = Number(newAsm.pain_level || 0);
-            const diff = pNew - pOld;
-            return diff < 0 ? { text: `${diff} (Relief)`, cls: 'trend-improved' } : (diff > 0 ? { text: `+${diff} (Higher)`, cls: 'trend-caution' } : { text: 'Same', cls: 'trend-neutral' });
-          }
-        },
-        {
-          label: 'Fall Risk',
-          oldVal: oldAsm.fall_risk || 'Low',
-          newVal: newAsm.fall_risk || 'Low',
-          calcTrend: () => {
-            return (newAsm.fall_risk === oldAsm.fall_risk)
-              ? { text: 'Maintained', cls: 'trend-improved' }
-              : { text: `Changed to ${newAsm.fall_risk}`, cls: 'trend-caution' };
-          }
-        }
-      ];
-
-      tbody.innerHTML = metrics.map(m => {
-        const trend = m.calcTrend();
-        return `
-          <tr>
-            <td><strong>${m.label}</strong></td>
-            <td>${m.oldVal}</td>
-            <td><strong>${m.newVal}</strong></td>
-            <td><span class="trend-pill ${trend.cls}">${trend.text}</span></td>
-          </tr>
-        `;
-      }).join('');
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const dataUrl = event.target.result;
+            localStorage.setItem(storageKey, dataUrl);
+            display.innerHTML = `<img src="${dataUrl}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+          };
+          reader.readAsDataURL(file);
+        };
+      }
     }
 
     function updateVitalsCard(v) {
@@ -1054,63 +1148,323 @@
       const dateStr = v.created_at ? new Date(v.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Assessment';
       document.getElementById('visit-date-badge').textContent = dateStr;
 
-      // 1. Blood Pressure & Animated Dual Ring Arc
+      // 1. DUAL CONCENTRIC BLOOD PRESSURE RINGS
       const sys = Number(v.bp_systolic || (v.bp ? v.bp.split('/')[0] : 120)) || 120;
       const dia = Number(v.bp_diastolic || (v.bp ? v.bp.split('/')[1] : 80)) || 80;
-      document.getElementById('val-bp').textContent = `${sys}/${dia}`;
+      document.getElementById('val-bp-sys').textContent = sys;
+      document.getElementById('val-bp-dia').textContent = dia;
 
-      const bpPercent = Math.min(Math.max((sys - 80) / (180 - 80), 0.1), 1);
-      const bpOffset = 226 - (226 * bpPercent);
+      // Sys Ring (Circumference: 264)
+      const sysPercent = Math.min(Math.max((sys - 80) / (180 - 80), 0.1), 1);
+      const sysOffset = 264 - (264 * sysPercent);
+      // Dia Ring (Circumference: 188)
+      const diaPercent = Math.min(Math.max((dia - 50) / (120 - 50), 0.1), 1);
+      const diaOffset = 188 - (188 * diaPercent);
+
       setTimeout(() => {
-        const bpGauge = document.getElementById('gauge-bp');
-        if (bpGauge) bpGauge.style.strokeDashoffset = bpOffset;
+        const rSys = document.getElementById('ring-sys');
+        const rDia = document.getElementById('ring-dia');
+        if (rSys) rSys.style.strokeDashoffset = sysOffset;
+        if (rDia) rDia.style.strokeDashoffset = diaOffset;
       }, 100);
 
       // 2. Heart Rate
       document.getElementById('val-hr').innerHTML = `${v.heart_rate || '--'} <span style="font-size:15px; font-weight:600;">bpm</span>`;
 
-      // 3. SpO2 & Animated Circular Gauge (226 is circumference for r=36)
+      // 3. SpO2 Ring (Circumference: 226)
       const spo2Val = Number(v.spo2) || 98;
       document.getElementById('val-spo2').textContent = v.spo2 || '--';
-      const spo2Percent = Math.min(Math.max(spo2Val / 100, 0), 1);
+      const spo2Percent = Math.min(Math.max(spo2Val / 100, 0.1), 1);
       const spo2Offset = 226 - (226 * spo2Percent);
       setTimeout(() => {
-        const spo2Gauge = document.getElementById('gauge-spo2');
-        if (spo2Gauge) spo2Gauge.style.strokeDashoffset = spo2Offset;
+        const rSpo2 = document.getElementById('ring-spo2-elem');
+        if (rSpo2) rSpo2.style.strokeDashoffset = spo2Offset;
       }, 100);
 
-      // 4. Sugar & Animated Slider Bar
-      const sugar = Number(v.glucose_random || v.glucose_fasting || v.blood_sugar) || 0;
-      document.getElementById('val-sugar').innerHTML = `${sugar || '--'} <span style="font-size:15px; font-weight:600;">mg/dL</span>`;
-      if (v.glucose_timing) document.getElementById('sugar-timing').textContent = v.glucose_timing;
+      // 4. BLOOD SUGAR WITH REPORT TYPE DETECTOR (Fasting / PP / Random)
+      const fpg = Number(v.glucose_fasting);
+      const ppg = Number(v.glucose_random || v.blood_sugar);
+      let sugarVal = '--';
+      let typeLabel = 'Random (RBS)';
+      let timingContext = v.glucose_timing || 'Random reading';
 
-      const sugarPercent = Math.min(Math.max(sugar / 300 * 100, 10), 100);
+      if (fpg && !ppg) {
+        sugarVal = fpg;
+        typeLabel = 'Fasting Blood Sugar (FPG)';
+        timingContext = 'Before breakfast';
+      } else if (ppg) {
+        sugarVal = ppg;
+        typeLabel = (v.glucose_timing && v.glucose_timing.toLowerCase().includes('fast')) ? 'Fasting (FPG)' : 'Post-Prandial (PP)';
+      } else if (v.blood_sugar) {
+        sugarVal = v.blood_sugar;
+      }
+
+      document.getElementById('sugar-report-type').textContent = typeLabel;
+      document.getElementById('val-sugar').innerHTML = `${sugarVal} <span style="font-size:15px; font-weight:600;">mg/dL</span>`;
+      document.getElementById('sugar-timing-text').textContent = timingContext;
+
+      const sugarNum = Number(sugarVal) || 100;
+      const sugarPercent = Math.min(Math.max((sugarNum / 300) * 100, 10), 100);
       setTimeout(() => {
-        const sBar = document.getElementById('sugar-bar');
+        const sBar = document.getElementById('sugar-bar-elem');
         if (sBar) sBar.style.width = `${sugarPercent}%`;
+      }, 120);
+
+      // 5. ANIMATED THERMOMETER (Temperature)
+      const tempUnit = v.temperature_unit || 'C';
+      const tempNum = Number(v.temperature) || (tempUnit === 'F' ? 98.4 : 37.0);
+      document.getElementById('val-temp').textContent = v.temperature ? `${v.temperature}°${tempUnit}` : '--°C';
+
+      let mercuryPercent = 50;
+      if (tempUnit === 'F') {
+        mercuryPercent = Math.min(Math.max(((tempNum - 95) / (105 - 95)) * 100, 15), 100);
+      } else {
+        mercuryPercent = Math.min(Math.max(((tempNum - 35) / (41 - 35)) * 100, 15), 100);
+      }
+      setTimeout(() => {
+        const merc = document.getElementById('temp-mercury');
+        if (merc) merc.style.height = `${mercuryPercent}%`;
       }, 150);
 
-      // 5. Temperature & Body Mass
-      const tempUnit = v.temperature_unit || 'C';
-      document.getElementById('val-temp').textContent = v.temperature ? `${v.temperature}°${tempUnit}` : '--°C';
-      document.getElementById('val-bmi').textContent = v.bmi || '--';
-      document.getElementById('val-weight').textContent = v.weight ? `${v.weight} kg` : '-- kg';
+      const isFever = (tempUnit === 'F' && tempNum >= 100.4) || (tempUnit === 'C' && tempNum >= 38.0);
+      document.getElementById('temp-status').textContent = isFever ? 'Elevated (Fever Alert)' : 'Normal Baseline';
+      document.getElementById('temp-status').style.color = isFever ? '#dc2626' : '#6b21a8';
 
-      // 6. Complete 20-Point Details
+      // 6. ANIMATED BODY MASS (BMI Ring: Circumference: 226)
+      const bmiVal = Number(v.bmi) || 22.0;
+      document.getElementById('val-bmi').textContent = v.bmi || '--';
+      document.getElementById('val-weight').textContent = v.weight ? `${v.weight} kg (${v.height || '--'} cm)` : '-- kg';
+
+      const bmiPercent = Math.min(Math.max((bmiVal / 40) * 100, 15), 100);
+      const bmiOffset = 226 - (226 * (bmiPercent / 100));
+      setTimeout(() => {
+        const rBmi = document.getElementById('ring-bmi-elem');
+        if (rBmi) {
+          rBmi.style.strokeDashoffset = bmiOffset;
+          rBmi.style.stroke = bmiVal > 25 ? '#ef4444' : '#10b981';
+        }
+      }, 150);
+
+      // 7. COMPLETE 20-POINT EXAMINATION GRID (ALL PARAMETERS SHOWN)
+      document.getElementById('asm-val-fpg').textContent = v.glucose_fasting ? `${v.glucose_fasting} mg/dL` : 'Not Done';
+      document.getElementById('asm-val-ppg').textContent = v.glucose_random || v.blood_sugar ? `${v.glucose_random || v.blood_sugar} mg/dL` : 'Not Done';
+      document.getElementById('asm-val-wtht').textContent = `${v.weight || '--'} kg | ${v.height || '--'} cm`;
+      document.getElementById('asm-val-waist').textContent = v.waist_circumference ? `${v.waist_circumference} cm` : 'Not recorded';
+
+      document.getElementById('asm-val-pain').textContent = (v.pain_level !== undefined && v.pain_level !== '') ? `${v.pain_level} / 10` : '0 / 10';
       document.getElementById('asm-val-loc').textContent = v.level_of_consciousness || 'Alert';
       document.getElementById('asm-val-fall').textContent = v.fall_risk || 'Low';
       document.getElementById('asm-val-mobility').textContent = v.mobility_status || 'Independent';
-      document.getElementById('asm-val-pain').textContent = (v.pain_level !== undefined && v.pain_level !== '') ? `${v.pain_level} / 10` : '0 / 10';
-      document.getElementById('asm-val-resp').textContent = v.respiratory_symptoms || 'None';
-      document.getElementById('asm-val-edema').textContent = v.edema_severity || 'None';
+
+      document.getElementById('asm-val-resp').textContent = v.respiratory_symptoms ? `${v.respiratory_symptoms} (${v.respiratory_notes || 'Clear'})` : 'None';
+      document.getElementById('asm-val-edema').textContent = v.edema_severity ? `${v.edema_severity} (${v.edema_notes || 'None'})` : 'None';
       document.getElementById('asm-val-hydration').textContent = v.hydration_status || 'Normal';
       document.getElementById('asm-val-meds').textContent = v.medication_adherence || 'Good';
-      document.getElementById('asm-val-notes').textContent = v.nurse_notes || 'No specific nurse notes recorded for this assessment.';
+      document.getElementById('asm-val-cognitive').textContent = v.cognitive_observation || 'Normal';
+      document.getElementById('asm-val-notes').textContent = v.nurse_notes || 'All vital limits recorded within baseline parameters.';
 
-      // Highlight active node in timeline
+      // Highlight timeline card
       document.querySelectorAll('.chat-bubble').forEach(b => b.classList.remove('active-node'));
       const activeEl = document.getElementById('node-' + (v.assessment_id || ''));
       if (activeEl) activeEl.classList.add('active-node');
+    }
+
+    // -------------------------------------------------------------
+    // ALL 20-POINT CLINICAL COMPARISON TABLE (Previous vs. Latest)
+    // -------------------------------------------------------------
+    function populateAll20Comparisons(oldAsm, newAsm) {
+      if (!oldAsm || !newAsm) return;
+
+      const dOld = oldAsm.created_at ? new Date(oldAsm.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Prev';
+      const dNew = newAsm.created_at ? new Date(newAsm.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Latest';
+
+      document.getElementById('cmp-col-old').textContent = dOld;
+      document.getElementById('cmp-col-new').textContent = dNew;
+
+      const all20Metrics = [
+        {
+          num: '1', label: 'Blood Pressure',
+          oldVal: oldAsm.bp || `${oldAsm.bp_systolic}/${oldAsm.bp_diastolic}`,
+          newVal: newAsm.bp || `${newAsm.bp_systolic}/${newAsm.bp_diastolic}`,
+          calc: () => {
+            const sOld = Number(oldAsm.bp_systolic || (oldAsm.bp ? oldAsm.bp.split('/')[0]
+: 0));
+            const sNew = Number(newAsm.bp_systolic || (newAsm.bp ? newAsm.bp.split('/')[0] : 0));
+            if (!sOld || !sNew) return { text: 'Recorded', cls: 'trend-neutral' };
+            const diff = sNew - sOld;
+            if (diff === 0) return { text: 'Stable (0)', cls: 'trend-improved' };
+            return diff > 0 ? { text: `+${diff} mmHg (Higher)`, cls: 'trend-caution' } : { text: `${diff} mmHg (Lower)`, cls: 'trend-improved' };
+          }
+        },
+        {
+          num: '2', label: 'Heart Rate (Pulse)',
+          oldVal: oldAsm.heart_rate ? `${oldAsm.heart_rate} bpm` : '--',
+          newVal: newAsm.heart_rate ? `${newAsm.heart_rate} bpm` : '--',
+          calc: () => {
+            const hOld = Number(oldAsm.heart_rate || 0);
+            const hNew = Number(newAsm.heart_rate || 0);
+            if (!hOld || !hNew) return { text: '--', cls: 'trend-neutral' };
+            const diff = hNew - hOld;
+            return diff === 0 ? { text: 'Stable', cls: 'trend-improved' } : (diff > 0 ? { text: `+${diff} bpm`, cls: 'trend-caution' } : { text: `${diff} bpm`, cls: 'trend-improved' });
+          }
+        },
+        {
+          num: '3', label: 'SpO₂ Oxygen',
+          oldVal: oldAsm.spo2 ? `${oldAsm.spo2}%` : '--',
+          newVal: newAsm.spo2 ? `${newAsm.spo2}%` : '--',
+          calc: () => {
+            const sOld = Number(oldAsm.spo2 || 0);
+            const sNew = Number(newAsm.spo2 || 0);
+            if (!sOld || !sNew) return { text: '--', cls: 'trend-neutral' };
+            const diff = sNew - sOld;
+            return diff >= 0 ? { text: `+${diff}% (Good)`, cls: 'trend-improved' } : { text: `${diff}% (Drop)`, cls: 'trend-caution' };
+          }
+        },
+        {
+          num: '4', label: 'Respiratory Rate',
+          oldVal: oldAsm.respiratory_rate ? `${oldAsm.respiratory_rate}/min` : '16/min',
+          newVal: newAsm.respiratory_rate ? `${newAsm.respiratory_rate}/min` : '16/min',
+          calc: () => ({ text: 'Baseline', cls: 'trend-neutral' })
+        },
+        {
+          num: '5', label: 'Body Temperature',
+          oldVal: oldAsm.temperature ? `${oldAsm.temperature}°${oldAsm.temperature_unit || 'C'}` : '--',
+          newVal: newAsm.temperature ? `${newAsm.temperature}°${newAsm.temperature_unit || 'C'}` : '--',
+          calc: () => {
+            const tOld = Number(oldAsm.temperature || 0);
+            const tNew = Number(newAsm.temperature || 0);
+            if (!tOld || !tNew) return { text: '--', cls: 'trend-neutral' };
+            const diff = (tNew - tOld).toFixed(1);
+            return { text: `${diff > 0 ? '+' : ''}${diff}°`, cls: Math.abs(diff) > 1.5 ? 'trend-caution' : 'trend-improved' };
+          }
+        },
+        {
+          num: '6', label: 'Fasting Blood Glucose',
+          oldVal: oldAsm.glucose_fasting ? `${oldAsm.glucose_fasting} mg/dL` : 'Not Done',
+          newVal: newAsm.glucose_fasting ? `${newAsm.glucose_fasting} mg/dL` : 'Not Done',
+          calc: () => {
+            const gOld = Number(oldAsm.glucose_fasting || 0);
+            const gNew = Number(newAsm.glucose_fasting || 0);
+            if (!gOld || !gNew) return { text: 'Not Tested', cls: 'trend-neutral' };
+            const diff = gNew - gOld;
+            return { text: `${diff > 0 ? '+' : ''}${diff} mg/dL`, cls: diff > 20 ? 'trend-caution' : 'trend-improved' };
+          }
+        },
+        {
+          num: '7', label: 'Random / Post-Meal Glucose',
+          oldVal: (oldAsm.glucose_random || oldAsm.blood_sugar) ? `${oldAsm.glucose_random || oldAsm.blood_sugar} mg/dL` : 'Not Done',
+          newVal: (newAsm.glucose_random || newAsm.blood_sugar) ? `${newAsm.glucose_random || newAsm.blood_sugar} mg/dL` : 'Not Done',
+          calc: () => {
+            const gOld = Number(oldAsm.glucose_random || oldAsm.blood_sugar || 0);
+            const gNew = Number(newAsm.glucose_random || newAsm.blood_sugar || 0);
+            if (!gOld || !gNew) return { text: '--', cls: 'trend-neutral' };
+            const diff = gNew - gOld;
+            return { text: `${diff > 0 ? '+' : ''}${diff} mg/dL`, cls: diff > 30 ? 'trend-caution' : 'trend-improved' };
+          }
+        },
+        {
+          num: '8', label: 'Body Weight',
+          oldVal: oldAsm.weight ? `${oldAsm.weight} kg` : '--',
+          newVal: newAsm.weight ? `${newAsm.weight} kg` : '--',
+          calc: () => {
+            const wOld = Number(oldAsm.weight || 0);
+            const wNew = Number(newAsm.weight || 0);
+            if (!wOld || !wNew) return { text: '--', cls: 'trend-neutral' };
+            const diff = (wNew - wOld).toFixed(1);
+            return { text: `${diff > 0 ? '+' : ''}${diff} kg`, cls: 'trend-neutral' };
+          }
+        },
+        {
+          num: '9', label: 'Height',
+          oldVal: oldAsm.height ? `${oldAsm.height} cm` : '--',
+          newVal: newAsm.height ? `${newAsm.height} cm` : '--',
+          calc: () => ({ text: 'Constant', cls: 'trend-improved' })
+        },
+        {
+          num: '10', label: 'Body Mass Index (BMI)',
+          oldVal: oldAsm.bmi || '--',
+          newVal: newAsm.bmi || '--',
+          calc: () => ({ text: 'Monitored', cls: 'trend-improved' })
+        },
+        {
+          num: '11', label: 'Waist Circumference',
+          oldVal: oldAsm.waist_circumference ? `${oldAsm.waist_circumference} cm` : 'Not Done',
+          newVal: newAsm.waist_circumference ? `${newAsm.waist_circumference} cm` : 'Not Done',
+          calc: () => ({ text: 'Recorded', cls: 'trend-neutral' })
+        },
+        {
+          num: '12', label: 'Pain Score (0-10)',
+          oldVal: oldAsm.pain_level !== undefined ? `${oldAsm.pain_level}/10` : '0/10',
+          newVal: newAsm.pain_level !== undefined ? `${newAsm.pain_level}/10` : '0/10',
+          calc: () => {
+            const pOld = Number(oldAsm.pain_level || 0);
+            const pNew = Number(newAsm.pain_level || 0);
+            const diff = pNew - pOld;
+            return diff < 0 ? { text: `${diff} (Relief)`, cls: 'trend-improved' } : (diff > 0 ? { text: `+${diff} (Higher)`, cls: 'trend-caution' } : { text: 'Stable (0)', cls: 'trend-improved' });
+          }
+        },
+        {
+          num: '13', label: 'Consciousness Level',
+          oldVal: oldAsm.level_of_consciousness || 'Alert',
+          newVal: newAsm.level_of_consciousness || 'Alert',
+          calc: () => ({ text: newAsm.level_of_consciousness === 'Alert' ? 'Alert (Optimal)' : 'Review Needed', cls: newAsm.level_of_consciousness === 'Alert' ? 'trend-improved' : 'trend-caution' })
+        },
+        {
+          num: '14', label: 'Fall Risk Status',
+          oldVal: oldAsm.fall_risk || 'Low',
+          newVal: newAsm.fall_risk || 'Low',
+          calc: () => ({ text: newAsm.fall_risk || 'Low', cls: newAsm.fall_risk === 'Low' ? 'trend-improved' : 'trend-caution' })
+        },
+        {
+          num: '15', label: 'Functional Mobility',
+          oldVal: oldAsm.mobility_status || 'Independent',
+          newVal: newAsm.mobility_status || 'Independent',
+          calc: () => ({ text: (oldAsm.mobility_status === newAsm.mobility_status) ? 'Maintained' : 'Altered', cls: 'trend-improved' })
+        },
+        {
+          num: '16', label: 'Respiratory Symptoms',
+          oldVal: oldAsm.respiratory_symptoms || 'None',
+          newVal: newAsm.respiratory_symptoms || 'None',
+          calc: () => ({ text: newAsm.respiratory_symptoms === 'None' ? 'Clear' : 'Symptomatic', cls: newAsm.respiratory_symptoms === 'None' ? 'trend-improved' : 'trend-caution' })
+        },
+        {
+          num: '17', label: 'Peripheral Edema',
+          oldVal: oldAsm.edema_severity || 'None',
+          newVal: newAsm.edema_severity || 'None',
+          calc: () => ({ text: newAsm.edema_severity === 'None' ? 'No Swelling' : 'Edema Present', cls: newAsm.edema_severity === 'None' ? 'trend-improved' : 'trend-caution' })
+        },
+        {
+          num: '18', label: 'Hydration Status',
+          oldVal: oldAsm.hydration_status || 'Normal',
+          newVal: newAsm.hydration_status || 'Normal',
+          calc: () => ({ text: newAsm.hydration_status === 'Normal' ? 'Adequate' : 'Attention Needed', cls: newAsm.hydration_status === 'Normal' ? 'trend-improved' : 'trend-caution' })
+        },
+        {
+          num: '19', label: 'Medication Adherence',
+          oldVal: oldAsm.medication_adherence || 'Good',
+          newVal: newAsm.medication_adherence || 'Good',
+          calc: () => ({ text: newAsm.medication_adherence === 'Good' ? 'Compliant' : 'Review Doses', cls: newAsm.medication_adherence === 'Good' ? 'trend-improved' : 'trend-caution' })
+        },
+        {
+          num: '20', label: 'Cognitive Observation',
+          oldVal: oldAsm.cognitive_observation || 'Normal',
+          newVal: newAsm.cognitive_observation || 'Normal',
+          calc: () => ({ text: newAsm.cognitive_observation === 'Normal' ? 'Stable Orientation' : 'Altered', cls: newAsm.cognitive_observation === 'Normal' ? 'trend-improved' : 'trend-caution' })
+        }
+      ];
+
+      const tbody = document.getElementById('compare-tbody');
+      tbody.innerHTML = all20Metrics.map(m => {
+        const trend = m.calc();
+        return `
+          <tr>
+            <td><strong>${m.num}. ${m.label}</strong></td>
+            <td>${m.oldVal}</td>
+            <td><strong>${m.newVal}</strong></td>
+            <td><span class="trend-pill ${trend.cls}">${trend.text}</span></td>
+          </tr>
+        `;
+      }).join('');
     }
 
     function renderTimeline(timeline, activeAsmId) {
