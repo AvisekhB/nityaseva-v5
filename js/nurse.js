@@ -15,6 +15,30 @@ async function init() {
   await loadNurseWorkOrders();
 }
 
+// Helper: Captures device GPS coordinates with timeout resilience
+function getDeviceLocation() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve(null);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        resolve({
+          lat: pos.coords.latitude.toFixed(6),
+          lng: pos.coords.longitude.toFixed(6),
+          accuracy: Math.round(pos.coords.accuracy)
+        });
+      },
+      (err) => {
+        console.warn('GPS location access denied or unavailable:', err.message);
+        resolve(null);
+      },
+      { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
+    );
+  });
+}
+
 function setupBmiCalculator() {
   const weightInput = document.getElementById('asm-weight');
   const heightInput = document.getElementById('asm-height');
@@ -124,13 +148,11 @@ function openVisitWorkspace(wo) {
   const stepDoc = document.getElementById('step-doctor');
   const stepEnd = document.getElementById('step-end');
 
-  // Clear inputs
   const inputStart = document.getElementById('input-start-code');
   const inputEnd = document.getElementById('input-end-code');
   if (inputStart) inputStart.value = '';
   if (inputEnd) inputEnd.value = '';
 
-  // STATE 1: ALREADY COMPLETED VISIT
   if (wo.status === 'COMPLETE' || wo.status === 'CLOSE') {
     stepStart.className = 'step-card done';
     document.getElementById('badge-step-start').textContent = 'VERIFIED';
@@ -146,23 +168,17 @@ function openVisitWorkspace(wo) {
     stepEnd.className = 'step-card done';
     document.getElementById('badge-step-end').textContent = 'VISIT COMPLETED';
     document.getElementById('badge-step-end').className = 'badge badge-green';
-  }
-  // STATE 2: CURRENTLY IN PROGRESS
-  else if (wo.status === 'IN_PROGRESS') {
+  } else if (wo.status === 'IN_PROGRESS') {
     stepStart.className = 'step-card done';
     document.getElementById('badge-step-start').textContent = 'VERIFIED';
     document.getElementById('badge-step-start').className = 'badge badge-green';
 
-    // Show Assessment Form first
     stepAsm.classList.remove('hidden');
     stepAsm.className = 'step-card active';
 
-    // Keep End Code locked until Assessment is saved
     stepDoc.classList.add('hidden');
     stepEnd.classList.add('hidden');
-  }
-  // STATE 3: SCHEDULED (NEEDS START CODE)
-  else {
+  } else {
     stepStart.className = 'step-card active';
     document.getElementById('badge-step-start').textContent = 'REQUIRED TO START';
     document.getElementById('badge-step-start').className = 'badge badge-yellow';
@@ -175,7 +191,7 @@ function openVisitWorkspace(wo) {
   workspace.scrollIntoView({ behavior: 'smooth' });
 }
 
-// 1. Verify Start Code (NUMERIC ONLY)
+// 1. Verify Start Code (NUMERIC ONLY + GEO LOCATION)
 document.getElementById('btn-verify-start').addEventListener('click', async () => {
   if (activeWO && (activeWO.status === 'COMPLETE' || activeWO.status === 'CLOSE')) {
     return alert('This visit has already been completed.');
@@ -188,14 +204,21 @@ document.getElementById('btn-verify-start').addEventListener('click', async () =
     return alert('Please enter a valid 6-digit numeric Start Code.');
   }
 
+  const btn = document.getElementById('btn-verify-start');
+  btn.disabled = true;
+  btn.textContent = 'Verifying & Acquiring GPS...';
+
   try {
+    const geo = await getDeviceLocation();
+
     const res = await callApi('verifyStartCode', {
       workOrderId: activeWO.work_order_id,
-      code: code
+      code: code,
+      geo: geo
     });
 
     if (res.success) {
-      alert('Start Code Verified! Work order is now IN_PROGRESS.');
+      alert('Start Code Verified! Work order is now IN_PROGRESS.' + (geo ? `\nLocation logged: (${geo.lat}, ${geo.lng})` : ''));
       activeWO.status = 'IN_PROGRESS';
       openVisitWorkspace(activeWO);
       await loadNurseWorkOrders();
@@ -204,14 +227,24 @@ document.getElementById('btn-verify-start').addEventListener('click', async () =
     }
   } catch (err) {
     alert('Verification error: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Authorize & Start Visit';
   }
 });
 
-// 2. Submit 20-Point Assessment
+// 2. Submit 20-Point Assessment (+ GEO LOCATION & TIMESTAMP)
 document.getElementById('assessment-form').addEventListener('submit', async (e) => {
   e.preventDefault();
 
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting & Logging GPS...';
+  }
+
   try {
+    const geo = await getDeviceLocation();
     const bpSys = document.getElementById('asm-bp-sys').value;
     const bpDia = document.getElementById('asm-bp-dia').value;
 
@@ -267,20 +300,21 @@ document.getElementById('assessment-form').addEventListener('submit', async (e) 
       // 20
       cognitive_observation: document.getElementById('asm-cognitive').value,
 
-      // Notes
-      nurse_notes: document.getElementById('asm-notes').value.trim()
+      // Additional Notes
+      nurse_notes: document.getElementById('asm-notes').value.trim(),
+
+      // Device GPS object
+      geo: geo
     };
 
     const res = await callApi('saveAssessment', payload);
 
     alert('✓ 20-Point Assessment saved to database!' + (res.flagged ? ' Note: Values flagged for clinical review.' : ''));
     
-    // Mark Assessment Step complete
     document.getElementById('step-assessment').className = 'step-card done';
     document.getElementById('badge-step-asm').textContent = 'SAVED';
     document.getElementById('badge-step-asm').className = 'badge badge-green';
 
-    // Unlock Doctor Consult & End Code steps
     document.getElementById('step-doctor').classList.remove('hidden');
     document.getElementById('step-doctor').className = 'step-card active';
     document.getElementById('step-end').classList.remove('hidden');
@@ -288,6 +322,11 @@ document.getElementById('assessment-form').addEventListener('submit', async (e) 
 
   } catch (err) {
     alert('Failed to save assessment: ' + err.message);
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Save 20-Point Assessment';
+    }
   }
 });
 
@@ -296,6 +335,7 @@ document.getElementById('btn-mark-consult').addEventListener('click', async () =
   const notes = prompt('Enter brief summary of doctor consultation:');
   try {
     await callApi('markDoctorConsultDone', {
+      workOrderId:
       workOrderId: activeWO.work_order_id,
       notes: notes || 'Doctor teleconsult concluded'
     });
@@ -325,6 +365,7 @@ document.getElementById('btn-escalate-doctor').addEventListener('click', async (
 
 document.getElementById('btn-skip-consult').addEventListener('click', () => {
   document.getElementById('step-doctor').className = 'step-card done';
+  document.getElementById('step-end').classList.remove('hidden');
   document.getElementById('step-end').className = 'step-card active';
   document.getElementById('input-end-code').focus();
 });
@@ -342,6 +383,10 @@ document.getElementById('btn-verify-end').addEventListener('click', async () => 
     return alert('Please enter a valid 6-digit numeric End Code.');
   }
 
+  const btn = document.getElementById('btn-verify-end');
+  btn.disabled = true;
+  btn.textContent = 'Verifying End Code...';
+
   try {
     const res = await callApi('verifyEndCode', {
       workOrderId: activeWO.work_order_id,
@@ -357,6 +402,9 @@ document.getElementById('btn-verify-end').addEventListener('click', async () => 
     }
   } catch (err) {
     alert('Verification error: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Verify End Code & Complete Visit';
   }
 });
 
