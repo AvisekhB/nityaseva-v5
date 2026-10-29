@@ -493,7 +493,12 @@
       </div>
 
       <div class="health-card-body">
-        <div class="health-card-avatar" id="hcard-avatar">👵</div>
+        <div class="health-card-avatar-wrapper" id="avatar-upload-trigger" title="Tap to upload photo">
+  <div class="health-card-avatar" id="hcard-avatar">👵</div>
+  <div class="avatar-upload-badge">📷</div>
+</div>
+<input type="file" id="senior-photo-input" accept="image/*" capture="environment" style="display:none;">
+
         <div class="health-card-meta">
           <div class="health-card-name" id="hcard-name">Loading Senior Profile...</div>
           <div class="health-card-subids">
