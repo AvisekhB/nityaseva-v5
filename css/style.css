@@ -214,6 +214,34 @@ table th {
   color: #22543d;
 }
 
+
+.health-card-avatar-wrapper {
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.health-card-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.avatar-upload-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: #1b4332;
+  color: #fff;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
 /* ============================================================
    NEW ADDITIONS BELOW — Searchable Dropdown, Table Toolbars,
    Sub-Tabs, and Service-Type Specific Badge Colors
