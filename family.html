@@ -6,6 +6,7 @@
   <title>Family Portal — Nityaseva</title>
   <link rel="stylesheet" href="css/style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     /* Emergency SOS Styling */
     .emergency-banner {
@@ -51,7 +52,27 @@
     }
     .sos-btn:hover { background: #c53030; }
 
-    /* Digital Health Card */
+    /* Floating Sticky SOS Button for Mobile */
+    .floating-sos {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #e53e3e;
+      color: #ffffff;
+      padding: 12px 18px;
+      border-radius: 30px;
+      font-weight: 800;
+      font-size: 14px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 6px 18px rgba(229, 62, 62, 0.45);
+      z-index: 1000;
+      animation: pulse-sos 2s infinite;
+    }
+
+    /* Senior Digital Health Card */
     .health-card {
       background: linear-gradient(135deg, #0f2419 0%, #1b4332 50%, #2d6a4f 100%);
       color: #ffffff;
@@ -92,11 +113,6 @@
       align-items: center;
       gap: 8px;
     }
-    .health-card-top .card-badges {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-    }
     .health-card-chip {
       background: rgba(255, 255, 255, 0.2);
       color: #ffffff;
@@ -111,20 +127,48 @@
       align-items: center;
       flex-wrap: wrap;
     }
+
+    /* Senior Photo Upload Avatar */
+    .health-card-avatar-wrapper {
+      position: relative;
+      cursor: pointer;
+    }
     .health-card-avatar {
-      width: 66px;
-      height: 66px;
+      width: 74px;
+      height: 74px;
       border-radius: 50%;
       background: #ffffff;
       color: #1b4332;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 34px;
-      border: 3px solid rgba(255, 255, 255, 0.6);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-      flex-shrink: 0;
+      font-size: 36px;
+      border: 3px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      position: relative;
     }
+    .health-card-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .avatar-upload-badge {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      background: #1b4332;
+      color: #fff;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+    }
+
     .health-card-meta {
       flex: 1;
       min-width: 200px;
@@ -205,11 +249,6 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.2s ease;
-    }
-    .btn-wallet-action:hover {
-      background: #111111;
-      transform: translateY(-1px);
     }
     .btn-print-mini {
       background: rgba(255, 255, 255, 0.2);
@@ -320,7 +359,8 @@
     }
     .page-btn:hover:not(:disabled) { background: #edf2f7; border-color: #a0aec0; }
     .page-btn.active { background: #1e5238; border-color: #1e5238; color: #ffffff; }
-    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .page-btn:disabled { opacity:
+0.4; cursor: not-allowed; }
 
     /* Wallet Modal */
     .wallet-modal-overlay {
@@ -435,18 +475,22 @@
 
     /* Print Preview Modal (Standard ISO/IEC 7810 ID-1 Card) */
     @media print {
-      body * { visibility: hidden; }
-      #printable-id-card, #printable-id-card * { visibility: visible; }
+      body * { visibility: hidden !important; }
+      #printable-id-card, #printable-id-card * { visibility: visible !important; }
       #printable-id-card {
-        position: absolute;
-        left: 0; top: 0;
-        width: 85.6mm;
-        height: 53.98mm;
-        border: 1px solid #000;
-        border-radius: 3.18mm;
-        padding: 4mm;
-        color: #000 !important;
-        background: #fff !important;
+        display: block !important;
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 85.6mm !important;
+        height: 53.98mm !important;
+        border: 1px solid #1b4332 !important;
+        border-radius: 3.18mm !important;
+        padding: 4mm !important;
+        color: #000000 !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+        page-break-inside: avoid !important;
       }
     }
 
@@ -465,6 +509,11 @@
     </div>
   </header>
 
+  <!-- Sticky Floating Mobile SOS Button -->
+  <a href="tel:112" class="floating-sos">
+    <span>🆘</span> Call 112 (জরুরি)
+  </a>
+
   <main>
     <!-- EMERGENCY SOS NOTIFICATION BANNER -->
     <div class="emergency-banner">
@@ -480,6 +529,9 @@
       </a>
     </div>
 
+    <!-- Hidden Senior Photo Input -->
+    <input type="file" id="senior-photo-input" accept="image/*" style="display:none;">
+
     <!-- =========================================================
          SPEC-COMPLIANT SENIOR DIGITAL HEALTH CARD
          ========================================================= -->
@@ -493,12 +545,10 @@
       </div>
 
       <div class="health-card-body">
-        <div class="health-card-avatar-wrapper" id="avatar-upload-trigger" title="Tap to upload photo">
-  <div class="health-card-avatar" id="hcard-avatar">👵</div>
-  <div class="avatar-upload-badge">📷</div>
-</div>
-<input type="file" id="senior-photo-input" accept="image/*" capture="environment" style="display:none;">
-
+        <div class="health-card-avatar-wrapper" id="btn-upload-photo" title="Click to upload senior photo">
+          <div class="health-card-avatar" id="hcard-avatar">👵</div>
+          <div class="avatar-upload-badge">📷</div>
+        </div>
         <div class="health-card-meta">
           <div class="health-card-name" id="hcard-name">Loading Senior Profile...</div>
           <div class="health-card-subids">
@@ -508,7 +558,7 @@
             <span class="hcard-tag tag-blood" id="hcard-blood">Blood: B+</span>
             <span class="hcard-tag" id="hcard-gender">Senior Citizen</span>
             <span class="hcard-tag" id="hcard-age">Age: --</span>
-            <span class="hcard-tag" id="hcard-validity">Valid: 2026-10-01 to 2026-10-31</span>
+            <span class="hcard-tag" id="hcard-validity">Valid: Active</span>
           </div>
         </div>
       </div>
@@ -537,7 +587,7 @@
       <div class="health-card-footer">
         <div>
           <span>ISO 27269 / HL7 Emergency Standard</span> | 
-          <small id="hcard-issued">Issued: Oct 2026</small>
+          <small id="hcard-issued">Issued: Active</small>
         </div>
         <div style="display:flex; gap:8px;">
           <button class="btn-print-mini" id="btn-print-card">🖨️ Print Card</button>
@@ -565,17 +615,17 @@
         </div>
         <div class="vitals-grid-4col">
           <div class="vital-cell">
-            <div class="vital-cell-val" id="disp-bp">120/80</div>
+            <div class="vital-cell-val" id="disp-bp">--/--</div>
             <div class="vital-cell-lbl">1. Blood Pressure</div>
             <div class="vital-cell-sub">Systolic / Diastolic</div>
           </div>
           <div class="vital-cell">
-            <div class="vital-cell-val" id="disp-hr">72</div>
+            <div class="vital-cell-val" id="disp-hr">--</div>
             <div class="vital-cell-lbl">2. Heart Rate (Pulse)</div>
             <div class="vital-cell-sub">bpm</div>
           </div>
           <div class="vital-cell">
-            <div class="vital-cell-val" id="disp-spo2">98%</div>
+            <div class="vital-cell-val" id="disp-spo2">--%</div>
             <div class="vital-cell-lbl">3. SpO₂ Oxygen</div>
             <div class="vital-cell-sub">Saturation</div>
           </div>
@@ -585,7 +635,7 @@
             <div class="vital-cell-sub">breaths / min</div>
           </div>
           <div class="vital-cell">
-            <div class="vital-cell-val" id="disp-temp">98.4°F</div>
+            <div class="vital-cell-val" id="disp-temp">--°C</div>
             <div class="vital-cell-lbl">5. Temperature</div>
             <div class="vital-cell-sub">Oral / Forehead</div>
           </div>
@@ -839,8 +889,7 @@
         </div>
 
         <div style="font-size:10px; color:#94a3b8; margin-bottom:12px;">
-          72-Hour Ephemeral Token
- Link • PII Safe • ISO 27269 Ready
+          72-Hour Ephemeral Token Link • PII Safe • ISO 27269 Ready
         </div>
 
         <div class="wallet-btn-stack">
@@ -871,18 +920,20 @@
     <!-- =========================================================
          PHYSICAL PRINTABLE WALLET CARD (ISO/IEC 7810 ID-1 SPEC)
          ========================================================= -->
-    <div id="printable-id-card" style="display:none;">
+    <div id="printable-id-card">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1.5px solid #1b4332; padding-bottom:3px;">
         <span style="font-size:9pt; font-weight:bold; color:#1b4332;">NITYASEVA HEALTH EMERGENCY CARD</span>
         <span style="font-size:7pt; color:#555;" id="print-card-plan">Active Plan</span>
       </div>
       <div style="display:flex; gap:3mm; margin-top:2mm; align-items:center;">
-        <div style="font-size:18pt;">👵</div>
-        <div style="font-size:7.5pt; line-height:1.2;">
+        <div id="print-avatar-box" style="width:16mm; height:16mm; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#f0f0f0; border:1px solid #ccc; flex-shrink:0;">
+          <span style="font-size:18pt;" id="print-avatar-emoji">👵</span>
+        </div>
+        <div style="font-size:7.5pt; line-height:1.2; flex:1;">
           <strong style="font-size:9pt;" id="print-card-name">Senior Name</strong><br>
           Code: <span id="print-card-code">SNR-XXXX</span> | Blood: <strong style="color:red;" id="print-card-blood">B+</strong><br>
           Emergency ICE: <strong id="print-card-ice">112</strong><br>
-          Preferred Hospital: <span id="print-card-hosp">Nearest Super-Speciality</span>
+          Hospital: <span id="print-card-hosp">Nearest Super-Speciality</span>
         </div>
         <div id="print-qr-target" style="margin-left:auto;"></div>
       </div>
