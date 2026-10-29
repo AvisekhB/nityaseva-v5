@@ -54,6 +54,45 @@ function setupMinBookingTime() {
   aptTimeInput.min = minDate.toISOString().slice(0, 16);
   aptTimeInput.value = minDate.toISOString().slice(0, 16);
 }
+function setupPhotoUpload() {
+  const trigger = document.getElementById('avatar-upload-trigger');
+  const input = document.getElementById('senior-photo-input');
+  if (!trigger || !input) return;
+
+  trigger.addEventListener('click', () => input.click());
+
+  input.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file || !currentSeniorId) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = async () => {
+        // Compress to max 300x300 before upload
+        const canvas = document.createElement('canvas');
+        const MAX = 300;
+        let w = img.width, h = img.height;
+        if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } }
+        else { if (h > MAX) { w *= MAX / h; h = MAX; } }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const base64 = canvas.toDataURL('image/jpeg', 0.75);
+
+        const avatarEl = document.getElementById('hcard-avatar');
+        if (avatarEl) avatarEl.innerHTML = `<img src="${base64}" alt="Senior Photo">`;
+
+        try {
+          await callApi('updateSeniorPhoto', { seniorId: currentSeniorId, photoData: base64 });
+        } catch (err) {
+          alert('Photo upload failed: ' + err.message);
+        }
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 function calculateAge(dobStr) {
   if (!dobStr) return '--';
