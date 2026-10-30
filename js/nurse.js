@@ -7,6 +7,8 @@ let allWorkOrders = [];
 let activeWO = null;
 let timerInterval = null;
 let visitStartTime = null;
+let isVitalsSavedForActiveWO = false;
+
 
 // -------------------------------------------------------------
 // SAFE DOM HELPERS
@@ -269,6 +271,8 @@ function setupStartVisitFlow() {
 // MODAL SHEET 2: VISIT IN PROGRESS (COCKPIT)
 // -------------------------------------------------------------
 function openCockpit(wo) {
+  activeWO = wo;
+  isVitalsSavedForActiveWO = false; // reset for active visit
   setText('cockpit-senior-name', wo.senior_name || wo.senior_id);
   setText('cockpit-service-sub', `${wo.type === 'DoctorConsult' ? 'Doctor Teleconsult' : 'Home Visit'} • Today`);
   setText('family-request-notes', wo.notes || wo.care_notes || 'Routine wellness check & vitals monitoring.');
@@ -312,9 +316,17 @@ function stopLiveTimer() {
 // COCKPIT ACTION BUTTONS
 // -------------------------------------------------------------
 function setupCockpitActions() {
-  document.getElementById('btn-open-assessment')?.addEventListener('click', () => {
-    show('assessment-overlay');
+  // Intercept Conclude Visit button
+  document.getElementById('btn-open-end-code')?.addEventListener('click', () => {
+    // Check if vitals have been recorded
+    if (!isVitalsSavedForActiveWO) {
+      alert('⚠️ Mandatory Clinical Requirement:\n\nYou must fill in and save the 20-Point Vitals Assessment before you can enter the End Code and conclude this visit.');
+      show('assessment-overlay'); // Automatically opens the 20-point assessment form
+      return;
+    }
+    show('end-visit-overlay');
   });
+
   document.getElementById('btn-doctor-options')?.addEventListener('click', () => {
     show('doctor-overlay');
   });
@@ -415,7 +427,7 @@ function setupAssessmentForm() {
       };
 
       const res = await callApi('saveAssessment', payload);
-
+      isVitalsSavedForActiveWO = true; // <-- MARK AS SAVED
       alert('✓ 20-Point Assessment saved!' + (res.flagged ? ' Note: Values flagged for clinical review.' : ''));
       hide('assessment-overlay');
       e.target.reset();
@@ -480,9 +492,15 @@ function setupDoctorOptions() {
 // -------------------------------------------------------------
 function setupEndVisitFlow() {
   document.getElementById('btn-verify-end')?.addEventListener('click', async () => {
+    if (!isVitalsSavedForActiveWO) {
+      alert('⚠️ Please save the 20-Point Vitals Assessment first.');
+      hide('end-visit-overlay');
+      show('assessment-overlay');
+      return;
+    }
+
     const rawInput = document.getElementById('input-end-code')?.value || '';
     const code = rawInput.trim().replace(/\D/g, '');
-
     if (!code || code.length !== 6) {
       return alert('Please enter a valid 6-digit numeric End Code.');
     }
