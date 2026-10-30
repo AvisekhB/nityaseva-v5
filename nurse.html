@@ -2,583 +2,449 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Patient Care Summary — Nityaseva</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nurse Field Care — Nityaseva</title>
+  <link rel="stylesheet" href="css/style.css">
   <style>
-    :root {
-      --bg: #f8faf7;
-      --card-white: #ffffff;
-      --text-main: #131b15;
-      --text-muted: #738075;
-      --green-accent: #2d6a4f;
+    .step-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      background: #fafafa;
     }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      -webkit-tap-highlight-color: transparent;
+    .step-card.active {
+      border-left: 5px solid #1e5238;
+      background: #ffffff;
     }
-
-    body {
-      background-color: var(--bg);
-      color: var(--text-main);
+    .step-card.done {
+      border-left: 5px solid #38a169;
+      opacity: 0.85;
+    }
+    .step-header {
+      font-weight: 700;
+      color: #1e5238;
+      margin-bottom: 10px;
       display: flex;
-      justify-content: center;
-      padding: 16px 12px 60px;
-      min-height: 100vh;
+      justify-content: space-between;
+    }
+    .consult-box {
+      background: #ebf8ff;
+      border: 1px solid #bee3f8;
+      padding: 12px;
+      border-radius: 6px;
+      margin: 12px 0;
+    }
+    .section-divider {
+      margin-top: 18px;
+      padding-top: 10px;
+      border-top: 1px dashed #cbd5e0;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1e5238;
     }
 
-    .app-viewport {
-      width: 100%;
-      max-width: 440px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .top-bar {
+    /* ===== SOS EMERGENCY STYLING ===== */
+    .emergency-banner {
+      background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+      border: 2px solid #feb2b2;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 4px 6px;
-    }
-
-    .top-user {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .user-avatar-initials {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: #fbcfe8;
-      color: #9d174d;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 15px;
-    }
-
-    .top-meta small {
-      font-size: 11px;
-      color: var(--text-muted);
-      font-weight: 600;
-      display: block;
-    }
-
-    .top-meta h4 {
-      font-size: 16px;
-      font-weight: 800;
-    }
-
-    .validity-pill {
-      font-size: 11px;
-      font-weight: 700;
-      background: #ecfdf5;
-      color: #047857;
-      border: 1px solid #a7f3d0;
-      padding: 5px 10px;
-      border-radius: 20px;
-    }
-
-    .patient-card {
-      background: linear-gradient(135deg, #e4f6df 0%, #d3efce 100%);
-      border-radius: 26px;
-      padding: 20px;
-      box-shadow: 0 8px 24px rgba(45, 106, 79, 0.08);
-    }
-
-    .patient-header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 12px;
-    }
-
-    .patient-avatar {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 30px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
-    }
-
-    .patient-title h2 {
-      font-size: 20px;
-      font-weight: 800;
-      color: #1b4332;
-    }
-
-    .patient-tags {
-      display: flex;
       flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 4px;
+      gap: 14px;
     }
-
-    .tag-pill {
-      font-size: 11px;
-      font-weight: 700;
-      background: rgba(255, 255, 255, 0.7);
-      color: #2d6a4f;
-      padding: 3px 8px;
-      border-radius: 10px;
+    .emergency-text h3 {
+      margin: 0 0 4px 0;
+      color: #9b2c2c;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-
-    .status-badge {
+    .emergency-text p {
+      margin: 0;
+      font-size: 13px;
+      color: #742a2a;
+      line-height: 1.4;
+    }
+    .sos-btn {
+      background: #e53e3e;
+      color: #ffffff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 14px;
+      text-decoration: none;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      background: #1b4332;
-      color: #fff;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 5px 12px;
-      border-radius: 20px;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(229, 62, 62, 0.35);
+      animation: pulse-sos 2s infinite;
+      white-space: nowrap;
+      border: none;
+      cursor: pointer;
     }
+    .sos-btn:hover { background: #c53030; }
 
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #52b788;
-      box-shadow: 0 0 6px #52b788;
-      animation: pulse 1.5s infinite;
-    }
-
-    .fitness-banner {
-      background: #141714;
-      border-radius: 24px;
-      padding: 18px;
-      color: #fff;
+    .floating-sos {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #e53e3e;
+      color: #ffffff;
+      padding: 12px 18px;
+      border-radius: 30px;
+      font-weight: 800;
+      font-size: 14px;
+      text-decoration: none;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+      gap: 8px;
+      box-shadow: 0 6px 18px rgba(229, 62, 62, 0.45);
+      z-index: 1000;
+      animation: pulse-sos 2s infinite;
+      border: none;
+      cursor: pointer;
     }
 
-    .fitness-info small {
-      color: #74c69d;
-      font-weight: 800;
-      font-size: 10px;
-      letter-spacing: 1px;
+    @keyframes pulse-sos {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
     }
-
-    .fitness-info h3 {
-      font-size: 17px;
-      font-weight: 800;
-      margin: 3px 0 4px;
-    }
-
-    .fitness-info p {
-      font-size: 11px;
-      color: #a0aec0;
-    }
-
-    .fitness-pill {
-      display: inline-block;
-      background: #1e3a2b;
-      color: #95d5b2;
-      padding: 3px 8px;
-      border-radius: 8px;
-      font-size: 10px;
-      font-weight: 700;
-      margin-top: 6px;
-    }
-
-    .section-title {
-      font-size: 17px;
-      font-weight: 800;
-      margin: 6px 4px 0;
-    }
-
-    .vital-banner-card {
-      background: linear-gradient(135deg, #ffd8cc 0%, #fec5bb 100%);
-      border-radius: 22px;
-      padding: 16px 18px;
-    }
-
-    .vital-banner-card .header-lbl {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #7f1d1d;
-    }
-
-    .vital-banner-card .big-val {
-      font-size: 30px;
-      font-weight: 800;
-      color: #450a0a;
-      margin-top: 4px;
-    }
-
-    .vitals-2col {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .vital-tile {
-      border-radius: 22px;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      min-height: 130px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-    }
-
-    .tile-blue { background: #e0f2fe; }
-    .tile-green { background: #e8f5e9; }
-    .tile-yellow { background: #fef3c7; }
-    .tile-purple { background: #ede9fe; }
-
-    .tile-lbl {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #374151;
-    }
-
-    .circle-val {
-      font-size: 24px;
-      font-weight: 800;
-      color: #111827;
-      text-align: center;
-      margin: 8px 0;
-    }
-
-    .sugar-card {
-      background: #fef3c7;
-      border-radius: 22px;
-      padding: 16px 18px;
-    }
-
-    .sugar-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin: 8px 0 10px;
-    }
-
-    .sugar-main {
-      font-size: 30px;
-      font-weight: 800;
-      color: #78350f;
-    }
-
-    .journal-box {
-      background: #fff;
-      border-radius: 26px;
-      padding: 20px 16px;
-      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
-    }
-
-    .timeline-stream {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 12px;
-    }
-
-    .chat-bubble {
-      display: flex;
-      gap: 10px;
-      padding: 12px;
-      border-radius: 16px;
-      font-size: 13px;
-      line-height: 1.45;
-    }
-
-    .chat-nurse { background: #eff6ff; border-left: 4px solid #3b82f6; }
-    .chat-doctor { background: #faf5ff; border-left: 4px solid #a855f7; }
-    .chat-family { background: #f0fdf4; border-left: 4px solid #10b981; }
-
-    .chat-meta {
-      font-size: 11px;
-      color: var(--text-muted);
-      font-weight: 700;
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 2px;
-    }
-
-    .chat-title { font-weight: 800; color: #1f2937; margin-bottom: 2px; }
-    .chat-text { color: #4b5563; }
-    .alert-tag { background: #fed7d7; color: #9b2c2c; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; display: inline-block; margin-top: 4px; }
-
-    .loading-card, .error-card {
-      background: #fff;
-      border-radius: 26px;
-      padding: 44px 18px;
-      text-align: center;
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05);
-    }
-
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid #e2e8f0;
-      border-top-color: var(--green-accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 14px;
-    }
-
-    .hidden { display: none !important; }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.9); } }
   </style>
 </head>
 <body>
-  <div class="app-viewport">
-    
-    <div class="top-bar">
-      <div class="top-user">
-        <div class="user-avatar-initials" id="user-initials">NS</div>
-        <div class="top-meta">
-          <small>Clinical Portal</small>
-          <h4 id="welcome-text">Care Summary</h4>
-        </div>
+  <header>
+    <h1>Nityaseva Nurse Field Operations</h1>
+    <div class="header-user">
+      <span id="user-display">Nurse</span>
+      <button id="btn-logout" class="secondary">Logout</button>
+    </div>
+  </header>
+
+  <!-- Sticky Floating SOS Button -->
+  <button id="btn-floating-sos" class="floating-sos" type="button">
+    <span>🆘</span> SOS / Emergency
+  </button>
+
+  <main>
+    <!-- EMERGENCY SOS BANNER -->
+    <div class="emergency-banner">
+      <div class="emergency-text">
+        <h3>🚨 Field Emergency Protocol</h3>
+        <p>
+          If the senior shows signs of cardiac distress, stroke, fall injury, or any life-threatening
+          emergency, call ambulance <strong>112</strong> immediately and notify Nityaseva Control Room.
+        </p>
       </div>
-      <div class="validity-pill" id="expiry-pill">Checking...</div>
+      <button id="btn-sos-banner" class="sos-btn" type="button">
+        <span>🆘</span> Trigger Emergency SOS (Call 112)
+      </button>
     </div>
 
-    <!-- LOADING SCREEN -->
-    <div id="loading" class="loading-card">
-      <div class="spinner"></div>
-      <h3 style="font-weight: 800; margin-bottom: 4px;">Accessing Medical Vault</h3>
-      <p style="color: var(--text-muted); font-size: 13px;">Validating 72-hour cryptographic token...</p>
+    <!-- Assigned Work Orders -->
+    <div class="card">
+      <h2>Assigned Work Orders (Today's Care Route)</h2>
+      <table id="nurse-wo-table">
+        <thead>
+          <tr>
+            <th>WO ID</th>
+            <th>Senior Patient</th>
+            <th>Scheduled Time</th>
+            <th>Lifecycle Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="5">Loading assigned route...</td></tr>
+        </tbody>
+      </table>
     </div>
 
-    <!-- ERROR SCREEN -->
-    <div id="error" class="error-card hidden">
-      <div style="font-size: 44px; margin-bottom: 10px;">🔒</div>
-      <h3 style="color: #b91c1c; font-weight: 800; margin-bottom: 6px;">Access Denied / Expired</h3>
-      <p id="error-msg" style="color: var(--text-muted); font-size: 13px;"></p>
-    </div>
+    <!-- Active Field Execution Workspace (PRD §14) -->
+    <div id="visit-workspace" class="card hidden">
+      <h2>Field Visit Execution: <span id="active-wo-id"></span></h2>
+      <p style="font-size: 13px; color: #718096;">
+        Senior: <strong id="active-senior-name"></strong> | Status: <span id="active-lifecycle-badge" class="badge"></span>
+      </p>
 
-    <!-- REPORT VIEW -->
-    <div id="report-view" class="hidden" style="display:flex; flex-direction:column; gap:14px;">
-      
-      <div class="patient-card">
-        <div class="patient-header">
-          <div class="patient-avatar">👵</div>
-          <div class="patient-title">
-            <h2 id="pat-name">Senior Patient</h2>
-            <div class="patient-tags">
-              <span class="tag-pill" id="pat-id-tag">SNR</span>
-              <span class="tag-pill">Care Plan Active</span>
+      <!-- STEP 1: START CODE ENTRY -->
+      <div id="step-start" class="step-card active">
+        <div class="step-header">
+          <span>Step 1: On-Arrival Start Code Verification (PRD §12.7–10)</span>
+          <span id="badge-step-start" class="badge badge-yellow">REQUIRED TO START</span>
+        </div>
+        <p style="font-size: 13px;">Upon reaching the senior's residence, request the numeric <strong>Start Code</strong> provided in their confirmation email:</p>
+        <div class="form-group" style="max-width: 260px;">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="input-start-code" placeholder="Enter 6-digit Code" style="font-size: 20px; letter-spacing: 4px; text-align: center;">
+        </div>
+        <button id="btn-verify-start">Authorize & Start Visit</button>
+      </div>
+
+      <!-- STEP 2: 20-POINT CLINICAL ASSESSMENT -->
+      <div id="step-assessment" class="step-card hidden">
+        <div class="step-header">
+          <span>Step 2: 20-Point Clinical Assessment (PRD §15)</span>
+          <span id="badge-step-asm" class="badge badge-blue">IN PROGRESS</span>
+        </div>
+        <form id="assessment-form">
+
+          <!-- 1. Blood Pressure -->
+          <div class="grid">
+            <div class="form-group">
+              <label>1. Blood Pressure — Systolic (mmHg)</label>
+              <input type="number" id="asm-bp-sys" placeholder="e.g. 120" required>
+            </div>
+            <div class="form-group">
+              <label>1. Blood Pressure — Diastolic (mmHg)</label>
+              <input type="number" id="asm-bp-dia" placeholder="e.g. 80" required>
+            </div>
+            <div class="form-group">
+              <label>2. Heart Rate / Pulse (bpm)</label>
+              <input type="number" id="asm-hr" required>
             </div>
           </div>
+
+          <div class="grid">
+            <div class="form-group">
+              <label>3. SpO₂ — Oxygen Saturation (%)</label>
+              <input type="number" id="asm-spo2" required>
+            </div>
+            <div class="form-group">
+              <label>4. Respiratory Rate (breaths/min)</label>
+              <input type="number" id="asm-rr" value="16" required>
+            </div>
+            <div class="form-group">
+              <label>5. Body Temperature</label>
+              <div style="display:flex; gap:6px;">
+                <input type="number" step="0.1" id="asm-temp" required style="flex:1;">
+                <select id="asm-temp-unit" style="width: 72px;">
+                  <option value="C">°C</option>
+                  <option value="F">°F</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-divider">6–7. Blood Glucose</div>
+          <div class="grid">
+            <div class="form-group">
+              <label>6. Fasting Blood Glucose (mg/dL)</label>
+              <input type="number" id="asm-glucose-fasting" placeholder="Leave blank if not measured">
+            </div>
+            <div class="form-group">
+              <label>7. Random / Post-meal Glucose (mg/dL)</label>
+              <input type="number" id="asm-glucose-random" placeholder="Leave blank if not measured">
+            </div>
+            <div class="form-group">
+              <label>7a. Glucose Timing (if Random/Post-meal)</label>
+              <input type="text" id="asm-glucose-timing" placeholder="e.g. 2hrs after lunch">
+            </div>
+          </div>
+
+          <div class="section-divider">8–11. Body Measurements</div>
+          <div class="grid">
+            <div class="form-group">
+              <label>8. Weight (kg)</label>
+              <input type="number" step="0.1" id="asm-weight" placeholder="e.g. 65.5">
+            </div>
+            <div class="form-group">
+              <label>9. Height (cm)</label>
+              <input type="number" step="0.1" id="asm-height" placeholder="e.g. 160">
+            </div>
+            <div class="form-group">
+              <label>10. BMI (Auto-calculated)</label>
+              <input type="text" id="asm-bmi" readonly style="background:#f0f0f0; font-weight:700;">
+            </div>
+          </div>
+          <div class="grid">
+            <div class="form-group">
+              <label>11. Waist Circumference (cm)</label>
+              <input type="number" step="0.1" id="asm-waist" placeholder="Optional">
+            </div>
+          </div>
+
+          <div class="section-divider">12. Pain Assessment</div>
+          <div class="grid">
+            <div class="form-group">
+              <label>12. Pain Score (0–10)</label>
+              <input type="number" min="0" max="10" id="asm-pain" value="0">
+            </div>
+            <div class="form-group">
+              <label>12a. Pain Location / Type (if any)</label>
+              <input type="text" id="asm-pain-location" placeholder="e.g. Lower back, dull ache">
+            </div>
+          </div>
+
+          <div class="section-divider">13–15. Consciousness, Fall Risk & Mobility</div>
+          <div class="grid">
+            <div class="form-group">
+              <label>13. Level of Consciousness</label>
+              <select id="asm-loc">
+                <option value="Alert">Alert</option>
+                <option value="Drowsy">Drowsy</option>
+                <option value="Confused">Confused</option>
+                <option value="Unresponsive">Unresponsive</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>14. Fall Risk</label>
+              <select id="asm-fall">
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>15. Mobility Status</label>
+              <select id="asm-mobility">
+                <option value="Independent">Independent</option>
+                <option value="Assistance">Assistance Required</option>
+                <option value="Walker">Walker</option>
+                <option value="Wheelchair">Wheelchair</option>
+                <option value="Bed-bound">Bed-bound</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="section-divider">16–17. Respiratory & Edema</div>
+          <div class="grid">
+            <div class="form-group">
+              <label>16. Respiratory Symptoms</label>
+              <select id="asm-resp-symptoms">
+                <option value="None">None</option>
+                <option value="Cough">Cough</option>
+                <option value="Breathlessness">Breathlessness</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>16a. Respiratory Notes (if Other/concerning)</label>
+              <input type="text" id="asm-resp-notes" placeholder="Optional details">
+            </div>
+            <div class="form-group">
+              <label>17. Edema (Swelling)</label>
+              <select id="asm-edema">
+                <option value="None">None</option>
+                <option value="Mild">Mild</option>
+                <option value="Moderate">Moderate</option>
+                <option value="Severe">Severe</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="form-group">
+              <label>17a. Edema Location / Notes</label>
+              <input type="text" id="asm-edema-notes" placeholder="e.g. Both ankles">
+            </div>
+          </div>
+
+          <div class="section-divider">18–19. Hydration & Medication</div>
+          <div class="grid">
+            <div class="form-group">
+              <label>18. Hydration Status</label>
+              <select id="asm-hydration">
+                <option value="Normal">Normal</option>
+                <option value="At Risk">At Risk</option>
+                <option value="Dehydrated">Dehydrated</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>19. Medication Adherence</label>
+              <select id="asm-meds">
+                <option value="Good">Good</option>
+                <option value="Partial">Partial</option>
+                <option value="Poor">Poor</option>
+                <option value="Uncertain">Uncertain</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>19a. Missed Medicines / Reason (if Partial/Poor)</label>
+              <input type="text" id="asm-meds-notes" placeholder="Optional details">
+            </div>
+          </div>
+
+          <div class="section-divider">20. Mental / Cognitive Observation</div>
+          <div class="grid">
+            <div class="form-group">
+              <label>20. Mental / Cognitive Observation</label>
+              <select id="asm-cognitive">
+                <option value="Normal">Normal</option>
+                <option value="Confusion">Confusion</option>
+                <option value="Memory concern">Memory Concern</option>
+                <option value="Behaviour change">Behaviour Change</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 14px;">
+            <label>Additional Nurse Notes (Optional)</label>
+            <textarea id="asm-notes" rows="2" placeholder="Any other observations not covered above..."></textarea>
+          </div>
+
+          <button type="submit">Save 20-Point Assessment</button>
+        </form>
+      </div>
+
+      <!-- STEP 3: DOCTOR CONSULTATION CHECK -->
+      <div id="step-doctor" class="step-card hidden">
+        <div class="step-header">
+          <span>Step 3: Doctor Consultation & Clinical Escalation (PRD §16–17)</span>
+          <span id="badge-step-doc" class="badge badge-blue">CLINICAL CHECK</span>
         </div>
-        <div class="status-badge">
-          <span class="status-dot"></span>
-          <span>Vitals Monitored</span>
+        <p style="font-size: 13px;">Does this visit include a planned doctor consult, or do abnormal vitals require clinical escalation?</p>
+        
+        <div class="consult-box">
+          <label style="font-weight: 700;">Doctor Teleconsult Option:</label>
+          <p style="font-size: 12px; margin: 4px 0 10px 0;">If doctor appointment is scheduled with this visit, initiate teleconsult handoff and record completion:</p>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <button id="btn-mark-consult" type="button" class="secondary">Record Doctor Consult Completed</button>
+            <span id="consult-status-indicator" style="font-size: 12px; color: #2b6cb0;">Pending review</span>
+          </div>
+        </div>
+
+        <div style="margin-top: 10px;">
+          <button id="btn-escalate-doctor" type="button" class="danger">Request Urgent Doctor Escalation</button>
+          <button id="btn-skip-consult" type="button" class="secondary" style="margin-left: 8px;">No Doctor Required (Proceed to Completion)</button>
         </div>
       </div>
 
-      <div class="fitness-banner">
-        <div class="fitness-info">
-          <small>BODY COMPOSITION</small>
-          <h3>Clinical Vitals</h3>
-          <p>Weight • BMI • Consciousness • Pain Score</p>
-          <span class="fitness-pill" id="metrics-pill">20 metrics recorded</span>
+      <!-- STEP 4: END CODE VERIFICATION -->
+      <div id="step-end" class="step-card hidden">
+        <div class="step-header">
+          <span>Step 4: End Code Visit Completion (PRD §12.11–15)</span>
+          <span id="badge-step-end" class="badge badge-yellow">FINAL AUTHORIZATION</span>
         </div>
-        <div style="font-size:36px;">🧘</div>
+        <p style="font-size: 13px;">Service complete. Request the numeric <strong>End Code</strong> from the senior or family to verify completion:</p>
+        <div class="form-group" style="max-width: 260px;">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="input-end-code" placeholder="Enter 6-digit Code" style="font-size: 20px; letter-spacing: 4px; text-align: center;">
+        </div>
+        <button id="btn-verify-end">Verify End Code & Complete Visit</button>
       </div>
+    </div>
+  </main>
 
-      <div class="section-title">Live Vitals</div>
-
-      <!-- HEART RATE -->
-      <div class="vital-banner-card">
-        <div class="header-lbl"><span>❤️</span> Heart rate</div>
-        <div class="big-val" id="val-hr">-- <span style="font-size:15px; font-weight:600;">bpm</span></div>
-        <svg viewBox="0 0 300 44" style="width:100%; height:44px; margin-top:4px;" preserveAspectRatio="none">
-          <path d="M0,22 L40,22 L50,8 L60,36 L70,16 L80,28 L90,22 L140,22 L150,4 L160,40 L170,12 L180,30 L190,22 L300,22" 
-                fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+  <!-- SOS EMERGENCY MODAL -->
+  <div id="sos-modal" class="hidden" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:9999; display:flex; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#fff; border-radius:20px; max-width:380px; width:100%; padding:26px 22px; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,0.3);">
+      <div style="font-size:46px;
+margin-bottom:8px;">🚨</div>
+      <h3 style="color:#c53030; font-size:18px; margin-bottom:6px;">Confirm Emergency SOS</h3>
+      <p style="font-size:13px; color:#4a5568; margin-bottom:16px; line-height:1.5;">
+        This will immediately notify the Nityaseva Control Room with your current GPS location and the active senior's details. For life-threatening emergencies, also call <strong>112</strong> directly.
+      </p>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <a href="tel:112" style="background:#e53e3e; color:#fff; padding:12px; border-radius:10px; font-weight:800; text-decoration:none;">📞 Call 112 Now</a>
+        <button id="btn-confirm-sos" style="background:#1b4332; color:#fff; padding:12px; border-radius:10px; font-weight:800; border:none; cursor:pointer;">🚨 Alert Control Room (With GPS)</button>
+        <button id="btn-cancel-sos" style="background:transparent; color:#718096; border:none; font-size:13px; font-weight:700; cursor:pointer; padding:6px;">Cancel</button>
       </div>
-
-      <!-- SPO2 & BP -->
-      <div class="vitals-2col">
-        <div class="vital-tile tile-blue">
-          <div class="tile-lbl"><span>🫁</span> SpO2</div>
-          <div class="circle-val"><span id="val-spo2">--</span>%</div>
-          <div style="font-size:11px; font-weight:700; color:#0369a1; text-align:center;">Oxygen Level</div>
-        </div>
-
-        <div class="vital-tile tile-green">
-          <div class="tile-lbl"><span>⚡</span> Blood Pressure</div>
-          <div class="circle-val" style="font-size:20px;" id="val-bp">--/--</div>
-          <div style="font-size:11px; font-weight:700; color:#15803d; text-align:center;">Systolic / Diastolic</div>
-        </div>
-      </div>
-
-      <!-- SUGAR -->
-      <div class="sugar-card">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div class="tile-lbl"><span>🩸</span> Blood sugar</div>
-          <span style="font-size:11px; font-weight:700; background:#fde68a; color:#92400e; padding:3px 8px; border-radius:10px;" id="sugar-timing">Glucose</span>
-        </div>
-        <div class="sugar-row">
-          <div class="sugar-main" id="val-sugar">-- <span style="font-size:15px; font-weight:600;">mg/dL</span></div>
-          <span style="font-size:12px; font-weight:700; color:#b45309;" id="sugar-status">Recorded</span>
-        </div>
-      </div>
-
-      <!-- TEMP & BODY MASS -->
-      <div class="vitals-2col">
-        <div class="vital-tile tile-purple">
-          <div class="tile-lbl"><span>🌡️</span> Temperature</div>
-          <div class="circle-val" id="val-temp">--°C</div>
-          <div style="font-size:11px; font-weight:700; color:#6b21a8; text-align:center;">Body Temp</div>
-        </div>
-
-        <div class="vital-tile tile-yellow">
-          <div class="tile-lbl"><span>⚖️</span> Body Mass</div>
-          <div class="circle-val" id="val-bmi">--</div>
-          <div style="font-size:11px; font-weight:700; color:#854d0e; text-align:center;" id="val-weight">-- kg</div>
-        </div>
-      </div>
-
-      <!-- CHAT JOURNAL -->
-      <div class="journal-box">
-        <h3 style="font-size:16px; font-weight:800; color:#1b4332;">Care Journal</h3>
-        <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Timeline between Nurse visits, Doctor advice & Family:</p>
-        <div id="timeline-stream" class="timeline-stream"></div>
-      </div>
-
     </div>
   </div>
 
-  <script>
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxfaUyba2jRYmHlLlI24mRBneMlxoOd5BAv-8UfJmfsR-9bOLmdfmR9gX0M4mq38IwDeA/exec';
-
-    async function init() {
-      const token = new URLSearchParams(window.location.search).get('token');
-      if (!token) return showError('No token found in link.');
-
-      try {
-        const res = await fetch(APPS_SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: 'getReportLink', params: { token: token.trim() } })
-        });
-
-        const raw = await res.text();
-        let json;
-        try {
-          json = JSON.parse(raw);
-        } catch (err) {
-          return showError('Invalid server response: ' + raw.substring(0, 100));
-        }
-
-        if (!json.success || !json.data || !json.data.success) {
-          const errMsg = (json.data && json.data.error) ? json.data.error : (json.error || 'Invalid or expired report token.');
-          return showError(errMsg);
-        }
-
-        const report = json.data.report || {};
-        const careJournal = report.careJournal || {};
-        renderCareReport(careJournal, report.expiresAt, report.seniorId);
-      } catch (err) {
-        showError('Network error: ' + err.message);
-      }
-    }
-
-    function renderCareReport(data, expiresAt, seniorId) {
-      document.getElementById('loading').classList.add('hidden');
-      document.getElementById('error').classList.add('hidden');
-      const view = document.getElementById('report-view');
-      view.classList.remove('hidden');
-
-      if (expiresAt) {
-        document.getElementById('expiry-pill').textContent = 'Valid until: ' + new Date(expiresAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-      }
-
-      const name = data.seniorName || 'Senior Patient';
-      document.getElementById('pat-name').textContent = name;
-      document.getElementById('welcome-text').textContent = name;
-      document.getElementById('user-initials').textContent = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'NS';
-      document.getElementById('pat-id-tag').textContent = seniorId || (data.latestVitals ? data.latestVitals.senior_id : 'SENIOR');
-
-      const v = data.latestVitals || {};
-      const sys = v.bp_systolic || (v.bp ? v.bp.split('/')[0] : '--');
-      const dia = v.bp_diastolic || (v.bp ? v.bp.split('/')[1] : '--');
-      document.getElementById('val-bp').textContent = `${sys}/${dia}`;
-      document.getElementById('val-hr').innerHTML = `${v.heart_rate || '--'} <span style="font-size:15px; font-weight:600;">bpm</span>`;
-      document.getElementById('val-spo2').textContent = v.spo2 || '--';
-
-      const tempUnit = v.temperature_unit || 'C';
-      document.getElementById('val-temp').textContent = v.temperature ? `${v.temperature}°${tempUnit}` : '--°C';
-
-      const sugar = v.glucose_random || v.glucose_fasting || v.blood_sugar || '--';
-      document.getElementById('val-sugar').innerHTML = `${sugar} <span style="font-size:15px; font-weight:600;">mg/dL</span>`;
-      if (v.glucose_timing) document.getElementById('sugar-timing').textContent = v.glucose_timing;
-
-      document.getElementById('val-bmi').textContent = v.bmi || '--';
-      document.getElementById('val-weight').textContent = v.weight ? `${v.weight} kg` : '-- kg';
-
-      // Care Journal Timeline
-      const stream = document.getElementById('timeline-stream');
-      stream.innerHTML = '';
-      const timeline = data.timeline || [];
-
-      if (timeline.length === 0) {
-        stream.innerHTML = '<p style="color:#718096; font-size:12px;">No past entries recorded in this care journal.</p>';
-      } else {
-        timeline.forEach(evt => {
-          const div = document.createElement('div');
-          let roleClass = 'chat-nurse';
-          let icon = '👩‍⚕️';
-          if (evt.senderRole === 'doctor') { roleClass = 'chat-doctor'; icon = '🩺'; }
-          if (evt.senderRole === 'family') { roleClass = 'chat-family'; icon = '👨‍👩‍👦'; }
-
-          div.className = `chat-bubble ${roleClass}`;
-          div.innerHTML = `
-            <div style="font-size:22px; line-height:1;">${icon}</div>
-            <div style="flex:1;">
-              <div class="chat-meta">
-                <span><strong>${evt.sender} Says:</strong></span>
-                <span>${evt.date || ''}</span>
-              </div>
-              <div class="chat-title">${evt.title || ''}</div>
-              <div class="chat-text">${evt.message || ''}</div>
-              ${evt.flagged ? '<div class="alert-tag">⚠ Flagged for Review</div>' : ''}
-            </div>
-          `;
-          stream.appendChild(div);
-        });
-      }
-    }
-
-    function showError(msg) {
-      document.getElementById('loading').classList.add('hidden');
-      document.getElementById('report-view').classList.add('hidden');
-      const err = document.getElementById('error');
-      err.classList.remove('hidden');
-      document.getElementById('error-msg').textContent = msg;
-    }
-
-    init();
-  </script>
+  <script type="module" src="js/nurse.js"></script>
 </body>
 </html>
