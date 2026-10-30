@@ -2,497 +2,543 @@ import { requireAuth, signOut } from './auth.js';
 import { callApi } from './dataService.js';
 
 let currentProfile = null;
+let currentStaffProfile = null;
+let allWorkOrders = [];
 let activeWO = null;
+let timerInterval = null;
+let visitStartTime = null;
+
+// -------------------------------------------------------------
+// SAFE DOM HELPERS
+// -------------------------------------------------------------
+function setText(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text !== undefined && text !== null ? text : '';
+}
+function setHTML(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html !== undefined && html !== null ? html : '';
+}
+function show(id) { document.getElementById(id)?.classList.remove('hidden'); }
+function hide(id) { document.getElementById(id)?.classList.add('hidden'); }
 
 async function init() {
   try {
     currentProfile = await requireAuth('nurse');
     if (!currentProfile) return;
 
-    const userDisplay = document.getElementById('user-display');
-    if (userDisplay) {
-      userDisplay.textContent = currentProfile.full_name || currentProfile.email || 'Field Nurse';
-    }
-
     const logoutBtn = document.getElementById('btn-logout');
-    if (logoutBtn) {
-      logoutBtn.addEventListener('click', signOut);
-    }
+    if (logoutBtn) logoutBtn.addEventListener('click', signOut);
 
-    setupBmiCalculator();
+    setupNurseAvatarUpload();
     setupSosHandlers();
+    setupModalCloseButtons();
+    setupAssessmentBmi();
+    setupStartVisitFlow();
+    setupCockpitActions();
+    setupAssessmentForm();
+    setupDoctorOptions();
+    setupEndVisitFlow();
+
     await loadNurseWorkOrders();
   } catch (err) {
-    console.error('Nurse Portal Initialization Error:', err);
-    const tbody = document.querySelector('#nurse-wo-table tbody');
-    if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="5" style="color:red; text-align:center;">Failed to load assignments: ${err.message}</td></tr>`;
-    }
+    console.error('Nurse Portal Init Error:', err);
+    setHTML('route-list-container', `<p style="color:#dc2626; text-align:center; padding:20px 0;">Failed to load: ${err.message}</p>`);
   }
 }
 
 // -------------------------------------------------------------
-// BMI CALCULATOR
-// -------------------------------------------------------------
-function setupBmiCalculator() {
-  const weightInput = document.getElementById('asm-weight');
-  const heightInput = document.getElementById('asm-height');
-  const bmiOutput = document.getElementById('asm-bmi');
-
-  if (!weightInput || !heightInput || !bmiOutput) return;
-
-  function recalcBmi() {
-    const weight = parseFloat(weightInput.value);
-    const heightCm = parseFloat(heightInput.value);
-    if (weight > 0 && heightCm > 0) {
-      const heightM = heightCm / 100;
-      const bmi = weight / (heightM * heightM);
-      bmiOutput.value = bmi.toFixed(1);
-    } else {
-      bmiOutput.value = '';
-    }
-  }
-
-  weightInput.addEventListener('input', recalcBmi);
-  heightInput.addEventListener('input', recalcBmi);
-}
-
-// -------------------------------------------------------------
-// DEVICE GPS LOCATION CAPTURE
+// GPS LOCATION CAPTURE
 // -------------------------------------------------------------
 function getDeviceLocation() {
   return new Promise((resolve) => {
-    if (!navigator.geolocation) {
-      resolve(null);
-      return;
-    }
+    if (!navigator.geolocation) return resolve(null);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        resolve({
-          lat: pos.coords.latitude.toFixed(6),
-          lng: pos.coords.longitude.toFixed(6),
-          accuracy: Math.round(pos.coords.accuracy),
-          timestamp: new Date().toISOString()
-        });
-      },
-      (err) => {
-        console.warn('GPS location access denied or timed out:', err.message);
-        resolve(null);
-      },
+      (pos) => resolve({
+        lat: pos.coords.latitude.toFixed(6),
+        lng: pos.coords.longitude.toFixed(6),
+        accuracy: Math.round(pos.coords.accuracy)
+      }),
+      () => resolve(null),
       { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
     );
   });
 }
 
 // -------------------------------------------------------------
-// LOAD ASSIGNED WORK ORDERS
+// NURSE AVATAR / PHOTO UPLOAD
+// -------------------------------------------------------------
+function setupNurseAvatarUpload() {
+  const trigger = document.getElementById('btn-nurse-avatar');
+  const input = document.getElementById('nurse-photo-input');
+  if (!trigger || !input) return;
+
+  trigger.addEventListener('click', () => input.click());
+
+  input.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = async () => {
+        const canvas = document.createElement('canvas');
+        const MAX = 200;
+        let w = img.width, h = img.height;
+        if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } }
+        else { if (h > MAX) { w *= MAX / h; h = MAX; } }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const base64 = canvas.toDataURL('image/jpeg', 0.75);
+
+        renderNurseAvatar(base64);
+
+        try {
+          if (currentStaffProfile && currentStaffProfile.staff_id) {
+            await callApi('updateNursePhoto', { staffId: currentStaffProfile.staff_id, photoData: base64 });
+          }
+        } catch (err) {
+          console.warn('Photo upload sync failed:', err.message);
+        }
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderNurseAvatar(base64) {
+  setHTML('btn-nurse-avatar', `<img src="${base64}" alt="Nurse Photo">`);
+}
+
+// -------------------------------------------------------------
+// LOAD NURSE PROFILE + ASSIGNED WORK ORDERS (STRICT FILTER)
 // -------------------------------------------------------------
 async function loadNurseWorkOrders() {
-  const tbody = document.querySelector('#nurse-wo-table tbody');
-  if (!tbody) return;
-
   try {
     const staffId = currentProfile ? (currentProfile.staff_id || currentProfile.userId || '') : '';
     const data = await callApi('getNurseDashboard', { staffId: staffId });
 
-    tbody.innerHTML = '';
-    const orders = (data && data.workOrders) ? data.workOrders : [];
+    currentStaffProfile = data.staffProfile || { full_name: 'Nurse', staff_id: staffId };
+    setText('nurse-name-display', currentStaffProfile.full_name || 'Field Nurse');
+    setText('nurse-id-display', currentStaffProfile.staff_id || 'STF-XXXX');
 
-    if (orders.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:16px; color:#718096;">No active work orders assigned to you today.</td></tr>';
-      return;
+    if (currentStaffProfile.photo_url && String(currentStaffProfile.photo_url).startsWith('data:image')) {
+      renderNurseAvatar(currentStaffProfile.photo_url);
     }
 
-    orders.forEach(wo => {
-      const tr = document.createElement('tr');
-      const st = String(wo.status || '').toUpperCase();
-      const badgeClass = (st === 'COMPLETE' || st === 'CLOSE')
-        ? 'badge-green'
-        : (st === 'IN_PROGRESS' ? 'badge-yellow' : 'badge-blue');
-
-      let displayTime = '-';
-      if (wo.created_at) {
-        try {
-          displayTime = new Date(wo.created_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' });
-        } catch (e) {
-          displayTime = wo.created_at;
-        }
-      }
-
-      tr.innerHTML = `
-        <td><strong>${wo.work_order_id || '--'}</strong></td>
-        <td><code>${wo.senior_id || '--'}</code></td>
-        <td>${displayTime}</td>
-        <td><span class="badge ${badgeClass}">${wo.status || 'SCHEDULED'}</span></td>
-        <td>
-          <div style="display:flex; gap:6px; align-items:center;">
-            <button class="open-wo-btn" data-id="${wo.work_order_id}">Open Workspace</button>
-            <button class="view-report-btn secondary" data-senior="${wo.senior_id}" title="View Clinical Care Summary">👁️ View</button>
-          </div>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    document.querySelectorAll('.open-wo-btn').forEach(btn => {
-      btn.onclick = (e) => {
-        const id = e.target.getAttribute('data-id');
-        const match = orders.find(w => w.work_order_id === id);
-        if (match) openVisitWorkspace(match);
-      };
-    });
-
-    document.querySelectorAll('.view-report-btn').forEach(btn => {
-      btn.onclick = async (e) => {
-        const seniorId = e.target.getAttribute('data-senior');
-        if (!seniorId) return alert('No senior patient ID associated with this visit.');
-
-        const originalText = e.target.textContent;
-        e.target.textContent = '...';
-        e.target.disabled = true;
-
-        try {
-          const res = await callApi('generateClinicalCareReport', { seniorId: seniorId });
-          window.open(`report.html?token=${res.token}`, '_blank');
-        } catch (err) {
-          alert('Error opening patient report: ' + err.message);
-        } finally {
-          e.target.textContent = originalText;
-          e.target.disabled = false;
-        }
-      };
-    });
+    allWorkOrders = (data.workOrders || []).filter(w => String(w.status).toUpperCase() !== 'CLOSE');
+    renderRouteList();
 
   } catch (err) {
     console.error('Failed to load nurse work orders:', err);
-    tbody.innerHTML = `<tr><td colspan="5" style="color:#e53e3e; text-align:center; padding:14px;">Error connecting to service: ${err.message}</td></tr>`;
+    setHTML('route-list-container', `<p style="color:#dc2626; text-align:center; padding:16px 0;">Error: ${err.message}</p>`);
   }
 }
 
-// -------------------------------------------------------------
-// WORKSPACE WORKFLOW ORCHESTRATION
-// -------------------------------------------------------------
-function openVisitWorkspace(wo) {
-  activeWO = wo;
-  const workspace = document.getElementById('visit-workspace');
-  if (!workspace) return;
-  workspace.classList.remove('hidden');
+function renderRouteList() {
+  const container = document.getElementById('route-list-container');
+  if (!container) return;
 
-  const woIdEl = document.getElementById('active-wo-id');
-  const seniorEl = document.getElementById('active-senior-name');
-  const badgeEl = document.getElementById('active-lifecycle-badge');
+  setText('route-count-badge', `${allWorkOrders.length} Visit${allWorkOrders.length === 1 ? '' : 's'}`);
 
-  if (woIdEl) woIdEl.textContent = wo.work_order_id;
-  if (seniorEl) seniorEl.textContent = wo.senior_id;
-  if (badgeEl) {
-    badgeEl.textContent = wo.status;
-    badgeEl.className = 'badge ' + (wo.status === 'COMPLETE' ? 'badge-green' : (wo.status === 'IN_PROGRESS' ? 'badge-yellow' : 'badge-blue'));
+  if (allWorkOrders.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:#94a3b8; font-size:13px; padding:20px 0;">No visits assigned to you today. 🎉</p>';
+    return;
   }
 
-  const stepStart = document.getElementById('step-start');
-  const stepAsm = document.getElementById('step-assessment');
-  const stepDoc = document.getElementById('step-doctor');
-  const stepEnd = document.getElementById('step-end');
+  // Sort: IN_PROGRESS first, then SCHEDULED, then COMPLETE
+  const priority = { 'IN_PROGRESS': 0, 'SCHEDULED': 1, 'UNSCHEDULED': 1, 'COMPLETE': 2 };
+  const sorted = [...allWorkOrders].sort((a, b) => {
+    const pa = priority[String(a.status).toUpperCase()] ?? 3;
+    const pb = priority[String(b.status).toUpperCase()] ?? 3;
+    return pa - pb;
+  });
 
-  const inputStart = document.getElementById('input-start-code');
-  const inputEnd = document.getElementById('input-end-code');
-  if (inputStart) inputStart.value = '';
-  if (inputEnd) inputEnd.value = '';
+  container.innerHTML = sorted.map(wo => {
+    const st = String(wo.status || '').toUpperCase();
+    const badgeClass = st === 'IN_PROGRESS' ? 'badge-in_progress' : (st === 'COMPLETE' ? 'badge-complete' : 'badge-scheduled');
 
+    let displayTime = '-';
+    if (wo.created_at) {
+      try {
+        displayTime = new Date(wo.created_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' });
+      } catch (e) { displayTime = wo.created_at; }
+    }
+
+    const serviceLabel = wo.type === 'DoctorConsult' ? '🩺 Doctor Teleconsult' : '👩‍⚕️ Nurse Home Visit';
+
+    return `
+      <div class="visit-card-item" data-id="${wo.work_order_id}">
+        <div class="visit-card-top">
+          <span class="visit-senior-name">${wo.senior_name || wo.senior_id}</span>
+          <span class="status-badge ${badgeClass}">${wo.status}</span>
+        </div>
+        <div class="visit-meta-row">📋 ${serviceLabel}</div>
+        <div class="visit-meta-row">🕐 ${displayTime}</div>
+        <div class="visit-meta-row">🆔 ${wo.work_order_id}</div>
+      </div>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.visit-card-item').forEach(card => {
+    card.addEventListener('click', () => {
+      const id = card.getAttribute('data-id');
+      const match = allWorkOrders.find(w => w.work_order_id === id);
+      if (match) openVisitFlow(match);
+    });
+  });
+}
+
+// -------------------------------------------------------------
+// ROUTE VISIT CLICK → OPEN CORRECT MODAL BASED ON STATUS
+// -------------------------------------------------------------
+function openVisitFlow(wo) {
+  activeWO = wo;
   const st = String(wo.status || '').toUpperCase();
 
-  // STATE 1: COMPLETE OR CLOSED
   if (st === 'COMPLETE' || st === 'CLOSE') {
-    if (stepStart) {
-      stepStart.className = 'step-card done';
-      const b = document.getElementById('badge-step-start');
-      if (b) { b.textContent = 'VERIFIED'; b.className = 'badge badge-green'; }
-    }
-    if (stepAsm) {
-      stepAsm.classList.remove('hidden');
-      stepAsm.className = 'step-card done';
-      const b = document.getElementById('badge-step-asm');
-      if (b) { b.textContent = 'COMPLETED'; b.className = 'badge badge-green'; }
-    }
-    if (stepDoc) stepDoc.classList.add('hidden');
-    if (stepEnd) {
-      stepEnd.classList.remove('hidden');
-      stepEnd.className = 'step-card done';
-      const b = document.getElementById('badge-step-end');
-      if (b) { b.textContent = 'VISIT CONCLUDED'; b.className = 'badge badge-green'; }
-    }
-  }
-  // STATE 2: IN PROGRESS
-  else if (st === 'IN_PROGRESS') {
-    if (stepStart) {
-      stepStart.className = 'step-card done';
-      const b = document.getElementById('badge-step-start');
-      if (b) { b.textContent = 'VERIFIED'; b.className = 'badge badge-green'; }
-    }
-    if (stepAsm) {
-      stepAsm.classList.remove('hidden');
-      stepAsm.className = 'step-card active';
-      const b = document.getElementById('badge-step-asm');
-      if (b) { b.textContent = 'IN PROGRESS'; b.className = 'badge badge-blue'; }
-    }
-    if (stepDoc) stepDoc.classList.add('hidden');
-    if (stepEnd) stepEnd.classList.add('hidden');
-  }
-  // STATE 3: SCHEDULED (START CODE REQUIRED)
-  else {
-    if (stepStart) {
-      stepStart.className = 'step-card active';
-      const b = document.getElementById('badge-step-start');
-      if (b) { b.textContent = 'REQUIRED TO START'; b.className = 'badge badge-yellow'; }
-    }
-    if (stepAsm) stepAsm.classList.add('hidden');
-    if (stepDoc) stepDoc.classList.add('hidden');
-    if (stepEnd) stepEnd.classList.add('hidden');
+    alert(`✅ This visit for ${wo.senior_name || wo.senior_id} has already been completed.`);
+    return;
   }
 
-  workspace.scrollIntoView({ behavior: 'smooth' });
+  if (st === 'IN_PROGRESS') {
+    openCockpit(wo);
+  } else {
+    openStartVisitSheet(wo);
+  }
 }
 
 // -------------------------------------------------------------
-// STEP 1: VERIFY START CODE (NUMERIC + GPS)
+// MODAL SHEET 1: START VISIT (OTP ENTRY)
 // -------------------------------------------------------------
-document.getElementById('btn-verify-start')?.addEventListener('click', async () => {
-  if (activeWO && (activeWO.status === 'COMPLETE' || activeWO.status === 'CLOSE')) {
-    return alert('This visit has already been completed.');
-  }
+function openStartVisitSheet(wo) {
+  setText('start-sheet-senior-name', wo.senior_name || wo.senior_id);
+  setText('start-sheet-contact-info', `Sent to ${wo.senior_name || 'senior'}'s family (${wo.senior_phone || 'on file'}). Ask them to read you the code.`);
+  const input = document.getElementById('input-start-code');
+  if (input) input.value = '';
+  show('start-visit-overlay');
+}
 
-  const rawInput = document.getElementById('input-start-code')?.value || '';
-  const code = rawInput.trim().replace(/\D/g, '');
+function setupStartVisitFlow() {
+  document.getElementById('btn-verify-start')?.addEventListener('click', async () => {
+    const rawInput = document.getElementById('input-start-code')?.value || '';
+    const code = rawInput.trim().replace(/\D/g, '');
 
-  if (!code || code.length !== 6) {
-    return alert('Please enter a valid 6-digit numeric Start Code.');
-  }
-
-  const btn = document.getElementById('btn-verify-start');
-  btn.disabled = true;
-  btn.textContent = 'Verifying & Capturing GPS...';
-
-  try {
-    const geo = await getDeviceLocation();
-
-    const res = await callApi('verifyStartCode', {
-      workOrderId: activeWO.work_order_id,
-      code: code,
-      geo: geo
-    });
-
-    if (res.success) {
-      alert('Start Code Verified! Work order is now IN_PROGRESS.' + (geo ? `\nGPS Location: Lat ${geo.lat}, Lng ${geo.lng}` : ''));
-      activeWO.status = 'IN_PROGRESS';
-      openVisitWorkspace(activeWO);
-      await loadNurseWorkOrders();
-    } else {
-      alert(res.error || 'Verification failed');
+    if (!code || code.length !== 6) {
+      return alert('Please enter a valid 6-digit numeric Start Code.');
     }
-  } catch (err) {
-    alert('Verification error: ' + err.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Authorize & Start Visit';
-  }
-});
 
+    const btn = document.getElementById('btn-verify-start');
+    btn.disabled = true;
+    btn.textContent = 'Verifying...';
+
+    try {
+      const geo = await getDeviceLocation();
+      const res = await callApi('verifyStartCode', {
+        workOrderId: activeWO.work_order_id,
+        code: code,
+        geo: geo
+      });
+
+      if (res.success) {
+        activeWO.status = 'IN_PROGRESS';
+        activeWO._geo = geo;
+        hide('start-visit-overlay');
+        openCockpit(activeWO);
+        await loadNurseWorkOrders();
+      } else {
+        alert(res.error || 'Invalid code. Please try again.');
+      }
+    } catch (err) {
+      alert('Verification error: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Start Visit';
+    }
+  });
+
+  document.getElementById('btn-resend-code')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    alert('📱 A reminder has been sent to the family with the visit code.');
+  });
+}
+
+// -------------------------------------------------------------
+// MODAL SHEET 2: VISIT IN PROGRESS (COCKPIT)
+// -------------------------------------------------------------
+function openCockpit(wo) {
+  setText('cockpit-senior-name', wo.senior_name || wo.senior_id);
+  setText('cockpit-service-sub', `${wo.type === 'DoctorConsult' ? 'Doctor Teleconsult' : 'Home Visit'} • Today`);
+  setText('family-request-notes', wo.notes || wo.care_notes || 'Routine wellness check & vitals monitoring.');
+
+  // Location text
+  if (wo._geo && wo._geo.lat) {
+    setText('location-confirmed-text', `Lat ${wo._geo.lat}, Lng ${wo._geo.lng} (±${wo._geo.accuracy}m)`);
+  } else {
+    setText('location-confirmed-text', wo.senior_address || 'Address on file');
+  }
+
+  // Start live timer
+  visitStartTime = wo.start_verified_at ? new Date(wo.start_verified_at) : new Date();
+  setText('timer-started-at', 'started ' + visitStartTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }));
+  startLiveTimer();
+
+  show('cockpit-overlay');
+}
+
+function startLiveTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+
+  function tick() {
+    const diffMs = Date.now() - visitStartTime.getTime();
+    const totalSec = Math.max(0, Math.floor(diffMs / 1000));
+    const hh = String(Math.floor(totalSec / 3600)).padStart(2, '0');
+    const mm = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
+    const ss = String(totalSec % 60).padStart(2, '0');
+    setText('live-timer-display', `${hh}:${mm}:${ss}`);
+  }
+
+  tick();
+  timerInterval = setInterval(tick, 1000);
+}
+
+function stopLiveTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+
+// -------------------------------------------------------------
+// COCKPIT ACTION BUTTONS
+// -------------------------------------------------------------
+function setupCockpitActions() {
+  document.getElementById('btn-open-assessment')?.addEventListener('click', () => {
+    show('assessment-overlay');
+  });
+  document.getElementById('btn-doctor-options')?.addEventListener('click', () => {
+    show('doctor-overlay');
+  });
+  document.getElementById('btn-open-end-code')?.addEventListener('click', () => {
+    const input = document.getElementById('input-end-code');
+    if (input) input.value = '';
+    show('end-visit-overlay');
+  });
+}
+
+// -------------------------------------------------------------
+// BMI AUTO-CALC
+// -------------------------------------------------------------
+function setupAssessmentBmi() {
+  const weightInput = document.getElementById('asm-weight');
+  const heightInput = document.getElementById('asm-height');
+  const bmiOutput = document.getElementById('asm-bmi');
+  if (!weightInput || !heightInput || !bmiOutput) return;
+
+  function recalc() {
+    const w = parseFloat(weightInput.value);
+    const hCm = parseFloat(heightInput.value);
+    if (w > 0 && hCm > 0) {
+      const hM = hCm / 100;
+      bmiOutput.value = (w / (hM * hM)).toFixed(1);
+    } else {
+      bmiOutput.value = '';
+    }
+  }
+  weightInput.addEventListener('input', recalc);
+  heightInput.addEventListener('input', recalc);
+}
+
+// -------------------------------------------------------------
 // -------------------------------------------------------------
 // STEP 2: SUBMIT 20-POINT ASSESSMENT (WITH GPS)
 // -------------------------------------------------------------
-document.getElementById('assessment-form')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
+function setupAssessmentForm() {
+  document.getElementById('assessment-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-  const submitBtn = e.target.querySelector('button[type="submit"]');
-  if (submitBtn) {
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Saving Vitals & GPS...';
-  }
-
-  try {
-    const geo = await getDeviceLocation();
-    const bpSys = document.getElementById('asm-bp-sys')?.value || '';
-    const bpDia = document.getElementById('asm-bp-dia')?.value || '';
-
-    const payload = {
-      senior_id: activeWO.senior_id,
-      visit_id: activeWO.work_order_id,
-
-      bp_systolic: Number(bpSys),
-      bp_diastolic: Number(bpDia),
-      bp: bpSys + '/' + bpDia,
-
-      heart_rate: Number(document.getElementById('asm-hr')?.value || 0),
-      spo2: Number(document.getElementById('asm-spo2')?.value || 0),
-      respiratory_rate: Number(document.getElementById('asm-rr')?.value || 16),
-
-      temperature: Number(document.getElementById('asm-temp')?.value || 0),
-      temperature_unit: document.getElementById('asm-temp-unit')?.value || 'C',
-
-      glucose_fasting: document.getElementById('asm-glucose-fasting')?.value ? Number(document.getElementById('asm-glucose-fasting').value) : '',
-      glucose_random: document.getElementById('asm-glucose-random')?.value ? Number(document.getElementById('asm-glucose-random').value) : '',
-      glucose_timing: (document.getElementById('asm-glucose-timing')?.value || '').trim(),
-
-      weight: document.getElementById('asm-weight')?.value ? Number(document.getElementById('asm-weight').value) : '',
-      height: document.getElementById('asm-height')?.value ? Number(document.getElementById('asm-height').value) : '',
-      bmi: document.getElementById('asm-bmi')?.value || '',
-
-      waist_circumference: document.getElementById('asm-waist')?.value ? Number(document.getElementById('asm-waist').value) : '',
-      pain_level: Number(document.getElementById('asm-pain')?.value || 0),
-      pain_location: (document.getElementById('asm-pain-location')?.value || '').trim(),
-
-      level_of_consciousness: document.getElementById('asm-loc')?.value || 'Alert',
-      fall_risk: document.getElementById('asm-fall')?.value || 'Low',
-      mobility_status: document.getElementById('asm-mobility')?.value || 'Independent',
-
-      respiratory_symptoms: document.getElementById('asm-resp-symptoms')?.value || 'None',
-      respiratory_notes: (document.getElementById('asm-resp-notes')?.value || '').trim(),
-      edema_severity: document.getElementById('asm-edema')?.value || 'None',
-      edema_notes: (document.getElementById('asm-edema-notes')?.value || '').trim(),
-
-      hydration_status: document.getElementById('asm-hydration')?.value || 'Normal',
-      medication_adherence: document.getElementById('asm-meds')?.value || 'Good',
-      medication_notes: (document.getElementById('asm-meds-notes')?.value || '').trim(),
-
-      cognitive_observation: document.getElementById('asm-cognitive')?.value || 'Normal',
-      nurse_notes: (document.getElementById('asm-notes')?.value || '').trim(),
-
-      geo: geo,
-      geo_location: geo ? `Lat: ${geo.lat}, Lng: ${geo.lng} (Acc: ${geo.accuracy}m)` : ''
-    };
-
-    const res = await callApi('saveAssessment', payload);
-
-    alert('✓ 20-Point Assessment saved to database!' + (res.flagged ? ' Note: Values flagged for clinical review.' : ''));
-
-    const stepAsm = document.getElementById('step-assessment');
-    if (stepAsm) {
-      stepAsm.className = 'step-card done';
-      const b = document.getElementById('badge-step-asm');
-      if (b) { b.textContent = 'SAVED'; b.className = 'badge badge-green'; }
-    }
-
-    const stepDoc = document.getElementById('step-doctor');
-    const stepEnd = document.getElementById('step-end');
-    if (stepDoc) { stepDoc.classList.remove('hidden'); stepDoc.className = 'step-card active'; }
-    if (stepEnd) { stepEnd.classList.remove('hidden'); stepEnd.className = 'step-card active'; }
-
-  } catch (err) {
-    alert('Failed to save assessment: ' + err.message);
-  } finally {
+    const submitBtn = e.target.querySelector('button[type="submit"]');
     if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Save 20-Point Assessment';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Saving Vitals & GPS...';
     }
-  }
-});
+
+    try {
+      const geo = await getDeviceLocation();
+      const bpSys = document.getElementById('asm-bp-sys')?.value || '';
+      const bpDia = document.getElementById('asm-bp-dia')?.value || '';
+
+      const payload = {
+        senior_id: activeWO.senior_id,
+        visit_id: activeWO.work_order_id,
+
+        bp_systolic: Number(bpSys),
+        bp_diastolic: Number(bpDia),
+        bp: bpSys + '/' + bpDia,
+
+        heart_rate: Number(document.getElementById('asm-hr')?.value || 0),
+        spo2: Number(document.getElementById('asm-spo2')?.value || 0),
+        respiratory_rate: Number(document.getElementById('asm-rr')?.value || 16),
+
+        temperature: Number(document.getElementById('asm-temp')?.value || 0),
+        temperature_unit: document.getElementById('asm-temp-unit')?.value || 'C',
+
+        glucose_fasting: document.getElementById('asm-glucose-fasting')?.value ? Number(document.getElementById('asm-glucose-fasting').value) : '',
+        glucose_random: document.getElementById('asm-glucose-random')?.value ? Number(document.getElementById('asm-glucose-random').value) : '',
+        glucose_timing: (document.getElementById('asm-glucose-timing')?.value || '').trim(),
+
+        weight: document.getElementById('asm-weight')?.value ? Number(document.getElementById('asm-weight').value) : '',
+        height: document.getElementById('asm-height')?.value ? Number(document.getElementById('asm-height').value) : '',
+        bmi: document.getElementById('asm-bmi')?.value || '',
+
+        waist_circumference: document.getElementById('asm-waist')?.value ? Number(document.getElementById('asm-waist').value) : '',
+        pain_level: Number(document.getElementById('asm-pain')?.value || 0),
+        pain_location: (document.getElementById('asm-pain-location')?.value || '').trim(),
+
+        level_of_consciousness: document.getElementById('asm-loc')?.value || 'Alert',
+        fall_risk: document.getElementById('asm-fall')?.value || 'Low',
+        mobility_status: document.getElementById('asm-mobility')?.value || 'Independent',
+
+        respiratory_symptoms: document.getElementById('asm-resp-symptoms')?.value || 'None',
+        respiratory_notes: (document.getElementById('asm-resp-notes')?.value || '').trim(),
+        edema_severity: document.getElementById('asm-edema')?.value || 'None',
+        edema_notes: (document.getElementById('asm-edema-notes')?.value || '').trim(),
+
+        hydration_status: document.getElementById('asm-hydration')?.value || 'Normal',
+        medication_adherence: document.getElementById('asm-meds')?.value || 'Good',
+        medication_notes: (document.getElementById('asm-meds-notes')?.value || '').trim(),
+
+        cognitive_observation: document.getElementById('asm-cognitive')?.value || 'Normal',
+        nurse_notes: (document.getElementById('asm-notes')?.value || '').trim(),
+
+        geo: geo,
+        geo_location: geo ? `Lat: ${geo.lat}, Lng: ${geo.lng} (Acc: ${geo.accuracy}m)` : ''
+      };
+
+      const res = await callApi('saveAssessment', payload);
+
+      alert('✓ 20-Point Assessment saved!' + (res.flagged ? ' Note: Values flagged for clinical review.' : ''));
+      hide('assessment-overlay');
+      e.target.reset();
+      const bmiOutput = document.getElementById('asm-bmi');
+      if (bmiOutput) bmiOutput.value = '';
+
+    } catch (err) {
+      alert('Failed to save assessment: ' + err.message);
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Save 20-Point Assessment';
+      }
+    }
+  });
+}
 
 // -------------------------------------------------------------
 // STEP 3: DOCTOR CONSULT HANDLERS
 // -------------------------------------------------------------
-document.getElementById('btn-mark-consult')?.addEventListener('click', async () => {
-  const notes = prompt('Enter brief summary of doctor consultation:');
-  try {
-    await callApi('markDoctorConsultDone', {
-      workOrderId: activeWO.work_order_id,
-      notes: notes || 'Doctor teleconsult concluded'
-    });
-    const ind = document.getElementById('consult-status-indicator');
-    if (ind) {
-      ind.textContent = '✓ Consult logged';
-      ind.style.color = '#38a169';
+function setupDoctorOptions() {
+  document.getElementById('btn-mark-consult')?.addEventListener('click', async () => {
+    const notes = prompt('Enter brief summary of doctor consultation:');
+    try {
+      await callApi('markDoctorConsultDone', {
+        workOrderId: activeWO.work_order_id,
+        notes: notes || 'Doctor teleconsult concluded'
+      });
+      setText('consult-status-indicator', '✓ Consult logged successfully');
+      const ind = document.getElementById('consult-status-indicator');
+      if (ind) ind.style.color = '#15803d';
+    } catch (err) {
+      alert('Could not update consult status: ' + err.message);
     }
-  } catch (err) {
-    alert('Could not update consult status: ' + err.message);
-  }
-});
+  });
 
-document.getElementById('btn-escalate-doctor')?.addEventListener('click', async () => {
-  const reason = prompt('State clinical reason for urgent doctor review:');
-  if (!reason) return;
+  document.getElementById('btn-escalate-doctor')?.addEventListener('click', async () => {
+    const reason = prompt('State clinical reason for urgent doctor review:');
+    if (!reason) return;
 
-  try {
-    await callApi('createDoctorReviewRequest', {
-      seniorId: activeWO.senior_id,
-      workOrderId: activeWO.work_order_id,
-      reason: reason,
-      priority: 'URGENT'
-    });
-    alert('Clinical escalation submitted to doctor queue.');
-  } catch (err) {
-    alert('Escalation error: ' + err.message);
-  }
-});
+    try {
+      await callApi('createDoctorReviewRequest', {
+        seniorId: activeWO.senior_id,
+        workOrderId: activeWO.work_order_id,
+        reason: reason,
+        priority: 'URGENT'
+      });
+      alert('🚨 Clinical escalation submitted to doctor queue.');
+      hide('doctor-overlay');
+    } catch (err) {
+      alert('Escalation error: ' + err.message);
+    }
+  });
 
-document.getElementById('btn-skip-consult')?.addEventListener('click', () => {
-  const stepDoc = document.getElementById('step-doctor');
-  const stepEnd = document.getElementById('step-end');
-  if (stepDoc) stepDoc.className = 'step-card done';
-  if (stepEnd) {
-    stepEnd.classList.remove('hidden');
-    stepEnd.className = 'step-card active';
-    document.getElementById('input-end-code')?.focus();
-  }
-});
+  document.getElementById('btn-skip-consult-mobile')?.addEventListener('click', () => {
+    hide('doctor-overlay');
+  });
+}
 
 // -------------------------------------------------------------
 // STEP 4: VERIFY END CODE (NUMERIC)
 // -------------------------------------------------------------
-document.getElementById('btn-verify-end')?.addEventListener('click', async () => {
-  if (activeWO && (activeWO.status === 'COMPLETE' || activeWO.status ===
-'CLOSE')) {
-    return alert('This visit has already been concluded.');
-  }
+function setupEndVisitFlow() {
+  document.getElementById('btn-verify-end')?.addEventListener('click', async () => {
+    const rawInput = document.getElementById('input-end-code')?.value || '';
+    const code = rawInput.trim().replace(/\D/g, '');
 
-  const rawInput = document.getElementById('input-end-code')?.value || '';
-  const code = rawInput.trim().replace(/\D/g, '');
-
-  if (!code || code.length !== 6) {
-    return alert('Please enter a valid 6-digit numeric End Code.');
-  }
-
-  const btn = document.getElementById('btn-verify-end');
-  btn.disabled = true;
-  btn.textContent = 'Verifying End Code...';
-
-  try {
-    const res = await callApi('verifyEndCode', {
-      workOrderId: activeWO.work_order_id,
-      code: code
-    });
-
-    if (res.success) {
-      alert('End Code Verified! Work order marked COMPLETE.');
-      const workspace = document.getElementById('visit-workspace');
-      if (workspace) workspace.classList.add('hidden');
-      await loadNurseWorkOrders();
-    } else {
-      alert(res.error || 'Completion authorization failed');
+    if (!code || code.length !== 6) {
+      return alert('Please enter a valid 6-digit numeric End Code.');
     }
-  } catch (err) {
-    alert('Verification error: ' + err.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Verify End Code & Complete Visit';
-  }
-});
+
+    const btn = document.getElementById('btn-verify-end');
+    btn.disabled = true;
+    btn.textContent = 'Verifying End Code...';
+
+    try {
+      const res = await callApi('verifyEndCode', {
+        workOrderId: activeWO.work_order_id,
+        code: code
+      });
+
+      if (res.success) {
+        stopLiveTimer();
+        alert('✅ End Code Verified! Visit marked COMPLETE.');
+        hide('end-visit-overlay');
+        hide('cockpit-overlay');
+        hide('doctor-overlay');
+        hide('assessment-overlay');
+        activeWO = null;
+        await loadNurseWorkOrders();
+      } else {
+        alert(res.error || 'Completion authorization failed');
+      }
+    } catch (err) {
+      alert('Verification error: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Complete & Close Visit';
+    }
+  });
+}
 
 // -------------------------------------------------------------
-// SOS EMERGENCY HANDLER (Banner + Floating Button)
+// MODAL CLOSE BUTTONS (Universal wiring for all sheets)
+// -------------------------------------------------------------
+function setupModalCloseButtons() {
+  document.getElementById('btn-close-start-sheet')?.addEventListener('click', () => hide('start-visit-overlay'));
+  document.getElementById('btn-close-cockpit')?.addEventListener('click', () => hide('cockpit-overlay'));
+  document.getElementById('btn-close-assessment')?.addEventListener('click', () => hide('assessment-overlay'));
+  document.getElementById('btn-close-doctor')?.addEventListener('click', () => hide('doctor-overlay'));
+  document.getElementById('btn-close-end-sheet')?.addEventListener('click', () => hide('end-visit-overlay'));
+}
+
+// -------------------------------------------------------------
+// SOS EMERGENCY HANDLER
 // -------------------------------------------------------------
 function setupSosHandlers() {
-  const modal = document.getElementById('sos-modal');
-  const btnBanner = document.getElementById('btn-sos-banner');
-  const btnFloating = document.getElementById('btn-floating-sos');
+  const btnTrigger = document.getElementById('btn-sos-trigger');
   const btnCancel = document.getElementById('btn-cancel-sos');
   const btnConfirm = document.getElementById('btn-confirm-sos');
 
-  const openModal = () => modal && modal.classList.remove('hidden');
-  const closeModal = () => modal && modal.classList.add('hidden');
-
-  if (btnBanner) btnBanner.addEventListener('click', openModal);
-  if (btnFloating) btnFloating.addEventListener('click', openModal);
-  if (btnCancel) btnCancel.addEventListener('click', closeModal);
+  if (btnTrigger) btnTrigger.addEventListener('click', () => show('sos-modal'));
+  if (btnCancel) btnCancel.addEventListener('click', () => hide('sos-modal'));
 
   if (btnConfirm) {
     btnConfirm.addEventListener('click', async () => {
@@ -512,12 +558,12 @@ function setupSosHandlers() {
         });
 
         alert('🚨 Emergency alert sent to Control Room with your location. Stay with the patient.');
-        closeModal();
+        hide('sos-modal');
       } catch (err) {
         alert('Alert dispatch error: ' + err.message + '\nPlease call 112 directly.');
       } finally {
         btnConfirm.disabled = false;
-        btnConfirm.textContent = '🚨 Alert Control Room (With GPS)';
+        btnConfirm.textContent = '🚨 Alert Control Room (GPS)';
       }
     });
   }
