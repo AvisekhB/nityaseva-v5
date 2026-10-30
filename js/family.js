@@ -42,6 +42,7 @@ async function init() {
   setupMinBookingTime();
   setupHospitalWalletPass();
   setupPrintCard();
+  setupPhotoUpload();
   await loadDashboard();
 }
 
@@ -54,8 +55,12 @@ function setupMinBookingTime() {
   aptTimeInput.min = minDate.toISOString().slice(0, 16);
   aptTimeInput.value = minDate.toISOString().slice(0, 16);
 }
+
+// -------------------------------------------------------------
+// SENIOR PHOTO UPLOAD (Click avatar -> compress -> upload -> save)
+// -------------------------------------------------------------
 function setupPhotoUpload() {
-  const trigger = document.getElementById('avatar-upload-trigger');
+  const trigger = document.getElementById('btn-upload-photo');
   const input = document.getElementById('senior-photo-input');
   if (!trigger || !input) return;
 
@@ -65,11 +70,16 @@ function setupPhotoUpload() {
     const file = e.target.files[0];
     if (!file || !currentSeniorId) return;
 
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Please choose an image smaller than 5MB.');
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (ev) => {
       const img = new Image();
       img.onload = async () => {
-        // Compress to max 300x300 before upload
+        // Compress to max 300x300 before upload (keeps Google Sheets cell size manageable)
         const canvas = document.createElement('canvas');
         const MAX = 300;
         let w = img.width, h = img.height;
@@ -79,11 +89,11 @@ function setupPhotoUpload() {
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
         const base64 = canvas.toDataURL('image/jpeg', 0.75);
 
-        const avatarEl = document.getElementById('hcard-avatar');
-        if (avatarEl) avatarEl.innerHTML = `<img src="${base64}" alt="Senior Photo">`;
+        renderAvatarImage(base64);
 
         try {
           await callApi('updateSeniorPhoto', { seniorId: currentSeniorId, photoData: base64 });
+          if (currentSeniorData) currentSeniorData.photo_url = base64;
         } catch (err) {
           alert('Photo upload failed: ' + err.message);
         }
@@ -92,6 +102,13 @@ function setupPhotoUpload() {
     };
     reader.readAsDataURL(file);
   });
+}
+
+function renderAvatarImage(base64) {
+  const avatarEl = document.getElementById('hcard-avatar');
+  if (avatarEl && base64) {
+    avatarEl.innerHTML = `<img src="${base64}" alt="Senior Photo">`;
+  }
 }
 
 function calculateAge(dobStr) {
@@ -124,6 +141,7 @@ async function loadDashboard() {
       setText('hcard-cardno', generateCardNumber(s.senior_id));
       setText('hcard-gender', (s.gender ? s.gender + ' • ' : '') + 'Senior Citizen');
       setText('hcard-age', 'Age: ' + calculateAge(s.dob));
+      setText('hcard-blood', 'Blood: ' + (s.blood_group || 'B+'));
 
       const st = String(s.status || 'Active').toUpperCase();
       setText('hcard-status', st + ' Plan');
@@ -147,12 +165,15 @@ async function loadDashboard() {
       }
       setText('hcard-issued', 'Issued: ' + new Date().toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }));
 
-      // Avatar
-      const avatarEl = document.getElementById('hcard-avatar');
-      if (avatarEl) {
-        avatarEl.textContent = (s.gender && s.gender.toLowerCase().startsWith('m')) ? '👴' : '👵';
+      // Avatar: Photo if available, else gender-based emoji
+      if (s.photo_url && String(s.photo_url).startsWith('data:image')) {
+        renderAvatarImage(s.photo_url);
+      } else {
+        const avatarEl = document.getElementById('hcard-avatar');
+        if (avatarEl) {
+          avatarEl.textContent = (s.gender && s.gender.toLowerCase().startsWith('m')) ? '👴' : '👵';
+        }
       }
-
       // Render 20-Point Vitals
       if (data.latestAssessment) {
         renderAll20Vitals(data.latestAssessment);
@@ -409,6 +430,7 @@ function setupHospitalWalletPass() {
       setText('pass-patient-name', currentSeniorData.full_name || 'Senior Patient');
       setText('pass-uhid', currentSeniorData.senior_id);
       setText('pass-ice', currentSeniorData.emergency_contact || '112');
+      setText('pass-blood', currentSeniorData.blood_group || 'B+');
 
       try {
         const res = await callApi('generateClinicalCareReport', { seniorId: currentSeniorId });
@@ -454,23 +476,43 @@ function setupHospitalWalletPass() {
 }
 
 // -------------------------------------------------------------
-// PRINT CARD SETUP
+// PRINT CARD SETUP (Uses html2pdf.js to guarantee non-empty output)
 // -------------------------------------------------------------
 function setupPrintCard() {
   const btnPrint = document.getElementById('btn-print-card');
-  if (btnPrint) {
-    btnPrint.addEventListener('click', async () => {
-      if (!currentSeniorData) return alert('Senior details loading.');
+  if (!btnPrint) return;
 
+  btnPrint.addEventListener('click', async () => {
+    if (!currentSeniorData) return alert('Senior details loading. Please wait a moment.');
+
+    const originalText = btnPrint.textContent;
+    btnPrint.textContent = '⏳ Preparing...';
+    btnPrint.disabled = true;
+
+    try {
       setText('print-card-name', currentSeniorData.full_name);
       setText('print-card-code', currentSeniorData.senior_id);
       setText('print-card-ice', currentSeniorData.emergency_contact || '112');
       setText('print-card-hosp', currentSeniorData.preferred_hospital || 'Nearest Super-Speciality');
+      setText('print-card-blood', currentSeniorData.blood_group || 'B+');
 
-      try {
-        const res = await callApi('generateClinicalCareReport', { seniorId: currentSeniorId });
-        const triageUrl = `${window.location.origin}${window.location.pathname.replace('family.html', '')}report.html?token=${res.token}`;
-        const qrTarget = document.getElementById('print-qr-target');
+      // Sync photo onto the printable card
+      const printAvatarBox = document.getElementById('print-avatar-box');
+      if (printAvatarBox) {
+        if (currentSeniorData.photo_url && String(currentSeniorData.photo_url).startsWith('data:image')) {
+          printAvatarBox.innerHTML = `<img src="${currentSeniorData.photo_url}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+        } else {
+          const emoji = (currentSeniorData.gender && currentSeniorData.gender.toLowerCase().startsWith('m')) ? '👴' : '👵';
+          printAvatarBox.innerHTML = `<span style="font-size:18pt;">${emoji}</span>`;
+        }
+      }
+
+      // Generate QR code on the printable card (wait for render)
+      const res = await callApi('generateClinicalCareReport', { seniorId: currentSeniorId });
+      const triageUrl = `${window.location.origin}${window.location.pathname.replace('family.html', '')}report.html?token=${res.token}`;
+      const qrTarget = document.getElementById('print-qr-target');
+
+      await new Promise((resolve) => {
         if (qrTarget && window.QRCode) {
           qrTarget.innerHTML = '';
           new QRCode(qrTarget, {
@@ -481,12 +523,50 @@ function setupPrintCard() {
             colorLight: '#ffffff',
             correctLevel: QRCode.CorrectLevel.M
           });
+          // Give QR canvas/img a brief moment to paint before capture
+          setTimeout(resolve, 350);
+        } else {
+          resolve();
         }
-      } catch (e) {}
+      });
 
-      window.print();
-    });
-  }
+      const cardEl = document.getElementById('printable-id-card');
+
+      // Use html2pdf.js if available for a guaranteed non-empty, properly sized PDF
+      if (window.html2pdf && cardEl) {
+        const opt = {
+          margin: 0,
+          filename: `Nityaseva_HealthCard_${currentSeniorData.senior_id}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 3, useCORS: true, backgroundColor: '#ffffff' },
+          jsPDF: { unit: 'mm', format: [85.6, 53.98], orientation: 'landscape' }
+        };
+
+        // Temporarily force visible for capture (independent of @media print)
+        const prevDisplay = cardEl.style.display;
+        cardEl.style.display = 'block';
+        cardEl.style.position = 'fixed';
+        cardEl.style.left = '-9999px';
+        cardEl.style.top = '0';
+
+        await html2pdf().set(opt).from(cardEl).save();
+
+        cardEl.style.display = prevDisplay;
+        cardEl.style.position = '';
+        cardEl.style.left = '';
+        cardEl.style.top = '';
+      } else {
+        // Fallback to native browser print dialog
+        window.print();
+      }
+
+    } catch (err) {
+      alert('Failed to generate printable card: ' + err.message);
+    } finally {
+      btnPrint.textContent = originalText;
+      btnPrint.disabled = false;
+    }
+  });
 }
 
 // -------------------------------------------------------------
@@ -514,7 +594,8 @@ if (aptForm) {
       });
       alert('Appointment requested successfully! Our team will assign staff within 24 hours.');
       await loadDashboard();
-    } catch (err) {
+    } catch
+(err) {
       alert('Error booking appointment: ' + err.message);
     }
   });
