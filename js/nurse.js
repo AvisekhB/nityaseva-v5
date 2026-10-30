@@ -9,7 +9,6 @@ let timerInterval = null;
 let visitStartTime = null;
 let isVitalsSavedForActiveWO = false;
 
-
 // -------------------------------------------------------------
 // SAFE DOM HELPERS
 // -------------------------------------------------------------
@@ -271,8 +270,12 @@ function setupStartVisitFlow() {
 // MODAL SHEET 2: VISIT IN PROGRESS (COCKPIT)
 // -------------------------------------------------------------
 function openCockpit(wo) {
+  // If opening a new work order, reset vitals flag; if same WO, preserve it
+  if (!activeWO || activeWO.work_order_id !== wo.work_order_id) {
+    isVitalsSavedForActiveWO = false;
+  }
   activeWO = wo;
-  isVitalsSavedForActiveWO = false; // reset for active visit
+
   setText('cockpit-senior-name', wo.senior_name || wo.senior_id);
   setText('cockpit-service-sub', `${wo.type === 'DoctorConsult' ? 'Doctor Teleconsult' : 'Home Visit'} • Today`);
   setText('family-request-notes', wo.notes || wo.care_notes || 'Routine wellness check & vitals monitoring.');
@@ -316,21 +319,23 @@ function stopLiveTimer() {
 // COCKPIT ACTION BUTTONS
 // -------------------------------------------------------------
 function setupCockpitActions() {
-  // Intercept Conclude Visit button
-  document.getElementById('btn-open-end-code')?.addEventListener('click', () => {
-    // Check if vitals have been recorded
-    if (!isVitalsSavedForActiveWO) {
-      alert('⚠️ Mandatory Clinical Requirement:\n\nYou must fill in and save the 20-Point Vitals Assessment before you can enter the End Code and conclude this visit.');
-      show('assessment-overlay'); // Automatically opens the 20-point assessment form
-      return;
-    }
-    show('end-visit-overlay');
+  // 1. Open 20-Point Vitals Assessment
+  document.getElementById('btn-open-assessment')?.addEventListener('click', () => {
+    show('assessment-overlay');
   });
 
+  // 2. Open Doctor Consult Options
   document.getElementById('btn-doctor-options')?.addEventListener('click', () => {
     show('doctor-overlay');
   });
+
+  // 3. Open End Code Modal (Gated strictly by isVitalsSavedForActiveWO)
   document.getElementById('btn-open-end-code')?.addEventListener('click', () => {
+    if (!isVitalsSavedForActiveWO) {
+      alert('⚠️ Mandatory Clinical Requirement:\n\nYou must fill in and save the 20-Point Vitals Assessment before you can enter the End Code and conclude this visit.');
+      show('assessment-overlay');
+      return;
+    }
     const input = document.getElementById('input-end-code');
     if (input) input.value = '';
     show('end-visit-overlay');
@@ -360,7 +365,6 @@ function setupAssessmentBmi() {
   heightInput.addEventListener('input', recalc);
 }
 
-// -------------------------------------------------------------
 // -------------------------------------------------------------
 // STEP 2: SUBMIT 20-POINT ASSESSMENT (WITH GPS)
 // -------------------------------------------------------------
@@ -427,7 +431,7 @@ function setupAssessmentForm() {
       };
 
       const res = await callApi('saveAssessment', payload);
-      isVitalsSavedForActiveWO = true; // <-- MARK AS SAVED
+      isVitalsSavedForActiveWO = true; // <-- UNLOCKS END CODE
       alert('✓ 20-Point Assessment saved!' + (res.flagged ? ' Note: Values flagged for clinical review.' : ''));
       hide('assessment-overlay');
       e.target.reset();
@@ -493,7 +497,7 @@ function setupDoctorOptions() {
 function setupEndVisitFlow() {
   document.getElementById('btn-verify-end')?.addEventListener('click', async () => {
     if (!isVitalsSavedForActiveWO) {
-      alert('⚠️ Please save the 20-Point Vitals Assessment first.');
+      alert('⚠️ Mandatory Clinical Requirement:\n\nYou must fill in and save the 20-Point Vitals Assessment before you can conclude this visit.');
       hide('end-visit-overlay');
       show('assessment-overlay');
       return;
@@ -501,6 +505,7 @@ function setupEndVisitFlow() {
 
     const rawInput = document.getElementById('input-end-code')?.value || '';
     const code = rawInput.trim().replace(/\D/g, '');
+
     if (!code || code.length !== 6) {
       return alert('Please enter a valid 6-digit numeric End Code.');
     }
@@ -537,7 +542,7 @@ function setupEndVisitFlow() {
 }
 
 // -------------------------------------------------------------
-// MODAL CLOSE BUTTONS (Universal wiring for all sheets)
+// MODAL CLOSE BUTTONS
 // -------------------------------------------------------------
 function setupModalCloseButtons() {
   document.getElementById('btn-close-start-sheet')?.addEventListener('click', () => hide('start-visit-overlay'));
@@ -552,10 +557,12 @@ function setupModalCloseButtons() {
 // -------------------------------------------------------------
 function setupSosHandlers() {
   const btnTrigger = document.getElementById('btn-sos-trigger');
+  const btnFloating = document.getElementById('btn-floating-sos');
   const btnCancel = document.getElementById('btn-cancel-sos');
   const btnConfirm = document.getElementById('btn-confirm-sos');
 
   if (btnTrigger) btnTrigger.addEventListener('click', () => show('sos-modal'));
+  if (btnFloating) btnFloating.addEventListener('click', () => show('sos-modal'));
   if (btnCancel) btnCancel.addEventListener('click', () => hide('sos-modal'));
 
   if (btnConfirm) {
