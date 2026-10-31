@@ -87,15 +87,17 @@ async function loadNurseWorkOrders() {
     const data = await callApi('getNurseDashboard', { staffId: staffId });
 
     // 1. Populate Nurse Profile Card
+    // Populate Nurse Profile Card
     currentStaffProfile = data.staffProfile || {};
     setText('nurse-name-display', currentStaffProfile.full_name || 'Nurse');
     setText('nurse-id-display', currentStaffProfile.staff_id || 'STF-XXXX');
     setText('nurse-name-profile', currentStaffProfile.full_name || 'Nurse');
-    setText('nurse-role-profile', `Role: ${currentStaffProfile.role || 'Nurse'}`);
+    setText('nurse-role-profile', `Staff ID: ${currentStaffProfile.staff_id || 'STF-XXXX'}`);
     setText('n-age', currentStaffProfile.age || '--');
     setText('n-exp', currentStaffProfile.experience || '--');
-    setText('n-part', currentStaffProfile.partner_science || '--');
+    setText('n-part', currentStaffProfile.role || currentStaffProfile.partner_science || 'Nurse');
     setText('n-phone', currentStaffProfile.phone || '--');
+
 
     if (currentStaffProfile.photo_url) renderNurseAvatar(currentStaffProfile.photo_url);
 
