@@ -144,6 +144,18 @@ function renderRouteList() {
   if (allWorkOrders.length === 0) {
     container.innerHTML = '<p style="text-align:center; color:#94a3b8; font-size:13px; padding:20px 0;">No visits assigned today. 🎉</p>';
     return;
+    // Inside renderRouteList() map function:
+return `
+  <div class="visit-card-item" data-id="${wo.work_order_id}">
+    <div class="visit-card-top">
+      <span class="visit-senior-name">${wo.senior_name}</span>
+      <span class="status-badge ${badgeClass}">${wo.status}</span>
+    </div>
+    <div class="visit-meta-row">📍 ${wo.senior_address}</div>
+    <div class="visit-meta-row">📞 <a href="tel:${wo.senior_phone}">${wo.senior_phone}</a> | 🚨 ICE: ${wo.senior_emergency}</div>
+    <div class="visit-meta-row">🆔 ${wo.work_order_id}</div>
+  </div>
+`;
   }
 
   const priority = { 'IN_PROGRESS': 0, 'SCHEDULED': 1, 'UNSCHEDULED': 1, 'COMPLETE': 2 };
