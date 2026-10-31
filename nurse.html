@@ -525,7 +525,23 @@
 </head>
 <body>
   <div class="app-viewport">
-    
+    <!-- ADD THIS AT TOP OF MAIN -->
+<div class="card" id="nurse-profile-card" style="background:#1b4332; color:#fff; border-radius:20px; padding:20px;">
+  <div style="display:flex; align-items:center; gap:15px;">
+    <div id="btn-nurse-avatar" style="width:60px; height:60px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:30px;">👩‍⚕️</div>
+    <div>
+      <h2 id="nurse-name-profile" style="margin:0;">Loading...</h2>
+      <p id="nurse-role-profile" style="font-size:12px; opacity:0.8;">Role: Nurse</p>
+    </div>
+  </div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px; font-size:12px;">
+    <div>Age: <span id="n-age">--</span></div>
+    <div>Exp: <span id="n-exp">--</span> yrs</div>
+    <div>Specialty: <span id="n-part">--</span></div>
+    <div>Phone: <span id="n-phone">--</span></div>
+  </div>
+</div>
+
     <!-- TOP APP BAR WITH NURSE PROFILE ID -->
     <div class="app-header">
       <div class="app-header-left">
