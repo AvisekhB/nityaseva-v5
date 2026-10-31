@@ -56,26 +56,71 @@ async function getDeviceLocation() {
 }
 
 function setupNurseAvatarUpload() {
-  const trigger = document.getElementById('btn-nurse-avatar');
   const input = document.getElementById('nurse-photo-input');
-  if (!trigger || !input) return;
-  trigger.addEventListener('click', () => input.click());
-  input.addEventListener('change', async (e) => {
+  if (!input) return;
+
+  // Make all avatar triggers clickable for upload
+  document.querySelectorAll('#btn-nurse-avatar, .nurse-badge-avatar').forEach(trigger => {
+    trigger.style.cursor = 'pointer';
+    trigger.title = 'Click to upload Nurse Photo';
+    trigger.onclick = () => input.click();
+  });
+
+  input.onchange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
     const reader = new FileReader();
-    reader.onload = async (ev) => {
-      renderNurseAvatar(ev.target.result);
-      try {
-        await callApi('updateNursePhoto', { staffId: currentStaffProfile.staff_id, photoData: ev.target.result });
-      } catch (err) { console.warn('Photo sync failed:', err.message); }
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = async () => {
+        // COMPRESSION: Max 150x150 JPEG (fits safely under Google Sheets 50,000 char cell limit)
+        const canvas = document.createElement('canvas');
+        const MAX = 150;
+        let w = img.width;
+        let h = img.height;
+        if (w > h) {
+          if (w > MAX) { h = Math.round(h * (MAX / w)); w = MAX; }
+        } else {
+          if (h > MAX) { w = Math.round(w * (MAX / h)); h = MAX; }
+        }
+        canvas.width = w;
+        canvas.height = h;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const base64 = canvas.toDataURL('image/jpeg', 0.7);
+
+        renderNurseAvatar(base64);
+
+        const sId = (currentStaffProfile && currentStaffProfile.staff_id) || (currentProfile && (currentProfile.staff_id || currentProfile.userId));
+        if (!sId) {
+          alert('Staff ID not found. Could not save photo to database.');
+          return;
+        }
+
+        try {
+          const res = await callApi('updateNursePhoto', { staffId: sId, photoData: base64 });
+          if (res && res.success) {
+            if (currentStaffProfile) currentStaffProfile.photo_url = base64;
+            alert('✓ Nurse profile photo saved successfully to record!');
+          }
+        } catch (err) {
+          console.error('Photo sync error:', err);
+          alert('Photo save failed: ' + err.message);
+        }
+      };
+      img.src = ev.target.result;
     };
     reader.readAsDataURL(file);
-  });
+  };
 }
 
 function renderNurseAvatar(base64) {
-  setHTML('btn-nurse-avatar', `<img src="${base64}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`);
+  if (!base64) return;
+  document.querySelectorAll('#btn-nurse-avatar, .nurse-badge-avatar').forEach(el => {
+    el.innerHTML = `<img src="${base64}" alt="Nurse Photo" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;">`;
+  });
 }
 
 // -------------------------------------------------------------
@@ -87,7 +132,6 @@ async function loadNurseWorkOrders() {
     const data = await callApi('getNurseDashboard', { staffId: staffId });
 
     // 1. Populate Nurse Profile Card
-    // Populate Nurse Profile Card
     currentStaffProfile = data.staffProfile || {};
     setText('nurse-name-display', currentStaffProfile.full_name || 'Nurse');
     setText('nurse-id-display', currentStaffProfile.staff_id || 'STF-XXXX');
@@ -98,13 +142,16 @@ async function loadNurseWorkOrders() {
     setText('n-part', currentStaffProfile.role || currentStaffProfile.partner_science || 'Nurse');
     setText('n-phone', currentStaffProfile.phone || '--');
 
-
-    if (currentStaffProfile.photo_url) renderNurseAvatar(currentStaffProfile.photo_url);
+    // Load photo if saved in sheet
+    if (currentStaffProfile.photo_url && String(currentStaffProfile.photo_url).length > 20) {
+      renderNurseAvatar(currentStaffProfile.photo_url);
+    }
 
     // 2. Render Route
     allWorkOrders = (data.workOrders || []).filter(w => String(w.status).toUpperCase() !== 'CLOSE');
     renderRouteList();
   } catch (err) {
+    console.error('Failed to load nurse work orders:', err);
     setHTML('route-list-container', `<p style="color:#dc2626; text-align:center;">Error: ${err.message}</p>`);
   }
 }
@@ -121,7 +168,26 @@ function renderRouteList() {
 
   container.innerHTML = allWorkOrders.map(wo => {
     const st = String(wo.status || '').toUpperCase();
-    const badgeClass = st === 'IN_PROGRESS' ? 'badge-in_progress' : (st === 'COMPLETE' ? 'badge-complete' : 'badge-scheduled');
+    const isClosed = (st === 'COMPLETE' || st === 'CLOSE');
+    const badgeClass = st === 'IN_PROGRESS' ? 'badge-in_progress' : (isClosed ? 'badge-complete' : 'badge-scheduled');
+
+    // Dynamic Time Logic: Show Concluded Date for complete/close, Scheduled Date otherwise
+    let dateLabel = '🕐 Scheduled:';
+    let rawDate = wo.scheduled_at || wo.created_at;
+
+    if (isClosed) {
+      dateLabel = '🏁 Concluded:';
+      rawDate = wo.end_verified_at || wo.updated_at || wo.created_at;
+    }
+
+    let displayTime = '-';
+    if (rawDate) {
+      try {
+        displayTime = new Date(rawDate).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' });
+      } catch (e) {
+        displayTime = rawDate;
+      }
+    }
     
     return `
       <div class="visit-card-item" data-id="${wo.work_order_id}">
@@ -130,7 +196,10 @@ function renderRouteList() {
           <span class="status-badge ${badgeClass}">${wo.status}</span>
         </div>
         <div class="visit-meta-row">📍 ${wo.senior_address || 'No Address'}</div>
-        <div class="visit-meta-row">📞 <a href="tel:${wo.senior_phone}">${wo.senior_phone}</a> | 🚨 ICE: ${wo.senior_emergency}</div>
+        <div class="visit-meta-row">📞 <a href="tel:${wo.senior_phone}">${wo.senior_phone}</a> | 🚨 ICE: ${wo.senior_emergency || '112'}</div>
+        <div class="visit-meta-row" style="font-weight:700; color:${isClosed ? '#15803d' : '#0369a1'};">
+          ${dateLabel} ${displayTime}
+        </div>
         <div class="visit-meta-row" style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
           <span>🆔 ${wo.work_order_id}</span>
           <button class="btn-view-care-summary" data-senior="${wo.senior_id}" style="background:#2d6a4f; color:#ffffff; border:none; padding:5px 12px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer;">
@@ -144,7 +213,6 @@ function renderRouteList() {
   // Click on visit card opens visit workflow
   container.querySelectorAll('.visit-card-item').forEach(card => {
     card.onclick = (e) => {
-      // Prevent opening workflow if user clicked the View button
       if (e.target.closest('.btn-view-care-summary')) return;
       const match = allWorkOrders.find(w => w.work_order_id === card.getAttribute('data-id'));
       if (match) openVisitFlow(match);
@@ -179,12 +247,18 @@ function renderRouteList() {
 function openVisitFlow(wo) {
   activeWO = wo;
   const st = String(wo.status || '').toUpperCase();
-  if (st === 'COMPLETE') return alert(`✅ Visit for ${wo.senior_name || wo.senior_id} has already been completed. Use "View Care Report" to review data.`);
+  if (st === 'COMPLETE' || st === 'CLOSE') {
+    alert(`✅ Visit for ${wo.senior_name || wo.senior_id} has already been completed. Use "View Care Report" to review data.`);
+    return;
+  }
   st === 'IN_PROGRESS' ? openCockpit(wo) : openStartVisitSheet(wo);
 }
 
 function openStartVisitSheet(wo) {
   setText('start-sheet-senior-name', wo.senior_name || wo.senior_id);
+  setText('start-sheet-contact-info', `Sent to ${wo.senior_name || 'senior'}'s family (${wo.senior_phone || 'on file'}). Ask them to read you the code.`);
+  const input = document.getElementById('input-start-code');
+  if (input) input.value = '';
   show('start-visit-overlay');
 }
 
@@ -192,8 +266,21 @@ function openCockpit(wo) {
   isVitalsSavedForActiveWO = false;
   activeWO = wo;
   setText('cockpit-senior-name', wo.senior_name || wo.senior_id);
+  setText('cockpit-service-sub', `${wo.type === 'DoctorConsult' ? 'Doctor Teleconsult' : 'Home Visit'} • Today`);
+  setText('family-request-notes', wo.notes || wo.care_notes || 'Routine wellness check & vitals monitoring.');
+
+  // Location text
+  if (wo._geo && wo._geo.lat) {
+    setText('location-confirmed-text', `Lat ${wo._geo.lat}, Lng ${wo._geo.lng} (±${wo._geo.accuracy}m)`);
+  } else {
+    setText('location-confirmed-text', wo.senior_address || 'Address on file');
+  }
+
+  // Start live timer
   visitStartTime = wo.start_verified_at ? new Date(wo.start_verified_at) : new Date();
+  setText('timer-started-at', 'started ' + visitStartTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }));
   startLiveTimer();
+
   show('cockpit-overlay');
 }
 
