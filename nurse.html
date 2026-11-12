@@ -97,7 +97,16 @@
       cursor: pointer;
     }
 
-    /* SOS BANNER */
+    /* NURSE PROFILE CARD */
+    .nurse-profile-card {
+      background: #1b4332;
+      color: #ffffff;
+      border-radius: 20px;
+      padding: 18px 20px;
+      box-shadow: 0 6px 18px rgba(27,67,50,0.2);
+    }
+
+    /* FIELD EMERGENCY PROTOCOL */
     .emergency-strip {
       background: #fef2f2;
       border: 1px solid #fecaca;
@@ -123,7 +132,7 @@
       cursor: pointer;
     }
 
-    /* ROUTE SUMMARY CARD */
+    /* ROUTE SUMMARY CARD & SUB-TABS */
     .route-card {
       background: var(--card-white);
       border-radius: 20px;
@@ -131,7 +140,7 @@
       box-shadow: 0 4px 14px rgba(0,0,0,0.03);
     }
     .route-card-title {
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 800;
       color: #0f172a;
       display: flex;
@@ -148,7 +157,35 @@
       font-weight: 800;
     }
 
-    /* VISIT ITEM IN ROUTE LIST */
+    /* PENDING vs COMPLETED SUB-TABS */
+    .route-sub-tabs {
+      display: flex;
+      gap: 6px;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 14px;
+    }
+    .sub-tab-btn {
+      flex: 1;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #64748b;
+      background: transparent;
+      border: none;
+      border-radius: 9px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+    .sub-tab-btn.active {
+      background: #ffffff;
+      color: var(--green-dark);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    /* VISIT ITEM */
     .visit-card-item {
       background: #f8fafc;
       border: 1px solid #e2e8f0;
@@ -180,7 +217,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      margin-top: 2px;
+      margin-top: 3px;
     }
     .status-badge {
       font-size: 10px;
@@ -193,9 +230,7 @@
     .badge-in_progress { background: #e0f2fe; color: #0369a1; }
     .badge-complete { background: #dcfce7; color: #166534; }
 
-    /* =========================================================
-       SCREENSHOT 1: PEAKAGE "START VISIT" OTP DIALOG
-       ========================================================= */
+    /* MODAL SHEETS */
     .modal-sheet-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -277,7 +312,6 @@
       margin-top: 6px;
     }
 
-    /* 6-DIGIT OTP PIN BOXES */
     .otp-input-field {
       width: 100%;
       background: #ffffff;
@@ -308,35 +342,17 @@
       cursor: pointer;
     }
 
-    /* =========================================================
-       SCREENSHOT 2: PEAKAGE "VISIT IN PROGRESS" COCKPIT
-       ========================================================= */
-    .cockpit-view {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+    /* COCKPIT */
+    .cockpit-view { display: flex; flex-direction: column; gap: 12px; }
     .senior-hero-card {
       background: #ffffff;
       border-radius: 20px;
       padding: 18px;
       box-shadow: 0 4px 14px rgba(0,0,0,0.03);
     }
-    .hero-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-    .hero-title h2 {
-      font-size: 20px;
-      font-weight: 800;
-      color: #0f172a;
-    }
-    .hero-service-sub {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
+    .hero-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .hero-title h2 { font-size: 20px; font-weight: 800; color: #0f172a; }
+    .hero-service-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
     .pin-verified-pill {
       background: #dcfce7;
       color: #15803d;
@@ -350,7 +366,6 @@
       margin-top: 12px;
     }
 
-    /* DARK LIVE TIMER CARD (FROM SCREENSHOT 2) */
     .live-timer-card {
       background: var(--timer-card-bg);
       color: #ffffff;
@@ -358,12 +373,7 @@
       padding: 20px 18px;
       box-shadow: 0 8px 24px rgba(20, 31, 24, 0.25);
     }
-    .timer-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
+    .timer-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .timer-indicator {
       display: flex;
       align-items: center;
@@ -388,12 +398,8 @@
       color: #ffffff;
       margin: 4px 0;
     }
-    .timer-sub-meta {
-      font-size: 11px;
-      color: #94a3b8;
-    }
+    .timer-sub-meta { font-size: 11px; color: #94a3b8; }
 
-    /* "WHAT THE FAMILY ASKED FOR" CARD */
     .family-request-card {
       background: #fefce8;
       border: 1px solid #fef08a;
@@ -406,9 +412,6 @@
       color: #854d0e;
       letter-spacing: 1px;
       margin-bottom: 4px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
     }
     .family-request-text {
       font-size: 14px;
@@ -417,7 +420,6 @@
       line-height: 1.4;
     }
 
-    /* "LOCATION CONFIRMED" CARD */
     .location-confirmed-card {
       background: #f8fafc;
       border: 1px solid #e2e8f0;
@@ -448,7 +450,8 @@
     .location-details span {
       font-size: 13px;
       font-weight: 700;
-      color: #1e293b;
+      color:
+ #1e293b;
     }
 
     /* ACTION BUTTONS IN COCKPIT */
@@ -525,31 +528,30 @@
 </head>
 <body>
   <div class="app-viewport">
-    <!-- ADD THIS AT TOP OF MAIN -->
-<div class="card" id="nurse-profile-card" style="background:#1b4332; color:#fff; border-radius:20px; padding:20px; margin-bottom:14px;">
-  <div style="display:flex; align-items:center; gap:15px;">
-    <div id="btn-nurse-avatar" style="width:60px; height:60px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:30px; overflow:hidden;">
-      <span id="nurse-avatar-text">👩‍⚕️</span>
+    <!-- NURSE PROFILE CARD -->
+    <div class="card" id="nurse-profile-card" style="background:#1b4332; color:#fff; border-radius:20px; padding:20px; margin-bottom:14px;">
+      <div style="display:flex; align-items:center; gap:15px;">
+        <div id="btn-nurse-avatar" class="nurse-badge-avatar" style="width:60px; height:60px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:30px; overflow:hidden;">
+          <span id="nurse-avatar-text">👩‍⚕️</span>
+        </div>
+        <div>
+          <h2 id="nurse-name-profile" style="margin:0; font-size:20px;">Loading...</h2>
+          <p id="nurse-role-profile" style="font-size:12px; opacity:0.85; margin:3px 0 0 0;">Staff ID: STF-001</p>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px; font-size:12px;">
+        <div>Age: <span id="n-age">--</span></div>
+        <div>Exp: <span id="n-exp">--</span> yrs</div>
+        <div>Role: <span id="n-part">--</span></div>
+        <div>Phone: <span id="n-phone">--</span></div>
+      </div>
     </div>
-    <div>
-      <h2 id="nurse-name-profile" style="margin:0; font-size:20px;">Loading...</h2>
-      <p id="nurse-role-profile" style="font-size:12px; opacity:0.85; margin:3px 0 0 0;">Staff ID: STF-001</p>
-    </div>
-  </div>
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px; font-size:12px;">
-    <div>Age: <span id="n-age">--</span></div>
-    <div>Exp: <span id="n-exp">--</span> yrs</div>
-    <div>Role: <span id="n-part">--</span></div>
-    <div>Phone: <span id="n-phone">--</span></div>
-  </div>
-</div>
 
-
-    <!-- TOP APP BAR WITH NURSE PROFILE ID -->
+    <!-- TOP APP BAR -->
     <div class="app-header">
       <div class="app-header-left">
-        <div class="nurse-badge-avatar" id="btn-nurse-avatar" title="Nurse Photo">
-          <span id="nurse-avatar-text">👩‍⚕️</span>
+        <div class="nurse-badge-avatar" style="width:40px; height:40px;">
+          <span>👩‍⚕️</span>
         </div>
         <div class="nurse-info">
           <h4 id="nurse-name-display">Loading Nurse...</h4>
@@ -565,66 +567,54 @@
       <button class="btn-sos-trigger" id="btn-sos-trigger">Trigger SOS</button>
     </div>
 
-    <!-- =========================================================
-         VIEW 1: TODAY'S ASSIGNED CARE ROUTE
-         ========================================================= -->
+    <!-- ROUTE SUMMARY CARD (WITH PENDING & COMPLETED TABS) -->
     <div id="view-route" class="route-card">
       <div class="route-card-title">
-        <span>Today's Care Route</span>
+        <span>Care Route Visits</span>
         <span class="route-count-pill" id="route-count-badge">0 Visits</span>
       </div>
-      <div
-id="route-list-container">
-        <p style="text-align:center; color:#94a3b8; font-size:13px; padding:20px 0;">Loading your assigned visits...</p>
+
+      <!-- Slicer Sub-Tabs -->
+      <div class="sub-tabs-bar">
+        <button class="sub-tab-btn active" id="nurse-tab-pending" type="button">⏳ Pending / Active</button>
+        <button class="sub-tab-btn" id="nurse-tab-complete" type="button">✅ Completed</button>
+      </div>
+
+      <div id="route-list-container">
+        <p style="text-align:center; color:#94a3b8; font-size:13px; padding:20px 0;">Loading assigned visits...</p>
       </div>
     </div>
 
-    <!-- Hidden GPS/Photo inputs -->
     <input type="file" id="nurse-photo-input" accept="image/*" style="display:none;">
   </div>
 
-  <!-- =========================================================
-       MODAL SHEET 1: START VISIT (PEAKAGE OTP SCREEN)
-       ========================================================= -->
+  <!-- MODAL SHEET 1: START VISIT (OTP SCREEN) -->
   <div id="start-visit-overlay" class="modal-sheet-overlay hidden">
     <div class="modal-sheet">
       <div class="modal-top-notch">
         <span class="otp-protected-chip">🔒 OTP PROTECTED</span>
         <button class="modal-close-btn" id="btn-close-start-sheet">✕</button>
       </div>
-
       <div class="start-visit-title">Start visit</div>
       <div class="start-visit-sub">
         Ask <strong id="start-sheet-senior-name">the senior's</strong> family for their visit PIN to begin.
       </div>
-
       <div class="whatsapp-resend-box">
-        <a href="#" class="whatsapp-resend-btn" id="btn-resend-code">
-          <span>📱</span> Resend code to family
-        </a>
-        <div class="whatsapp-sending-info" id="start-sheet-contact-info">
-          Sent to family contact. Ask them to read you the code from the Nityaseva message.
-        </div>
+        <a href="#" class="whatsapp-resend-btn" id="btn-resend-code"><span>📱</span> Resend code to family</a>
+        <div class="whatsapp-sending-info" id="start-sheet-contact-info">Sent to family contact. Ask them for the PIN.</div>
       </div>
-
-      <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" 
-             class="otp-input-field" id="input-start-code" placeholder="••••••">
-
+      <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" class="otp-input-field" id="input-start-code" placeholder="••••••">
       <button class="btn-start-action" id="btn-verify-start">Start Visit</button>
     </div>
   </div>
 
-  <!-- =========================================================
-       MODAL SHEET 2: VISIT IN PROGRESS (PEAKAGE COCKPIT SCREEN)
-       ========================================================= -->
+  <!-- MODAL SHEET 2: COCKPIT -->
   <div id="cockpit-overlay" class="modal-sheet-overlay hidden">
     <div class="modal-sheet cockpit-view">
       <div class="modal-top-notch">
         <span class="otp-protected-chip" style="background:#dcfce7; color:#166534;">🔒 OTP MATCH = ENTRY</span>
         <button class="modal-close-btn" id="btn-close-cockpit">✕</button>
       </div>
-
-      <!-- Senior Hero Info -->
       <div class="senior-hero-card">
         <div class="hero-top">
           <div class="hero-title">
@@ -632,29 +622,19 @@ id="route-list-container">
             <div class="hero-service-sub" id="cockpit-service-sub">Home Visit • Today</div>
           </div>
         </div>
-        <div class="pin-verified-pill">
-          <span>✅</span> PIN verified. Visit started.
-        </div>
+        <div class="pin-verified-pill"><span>✅</span> PIN verified. Visit started.</div>
       </div>
-
-      <!-- Live Timer Card -->
       <div class="live-timer-card">
         <div class="timer-header-row">
-          <div class="timer-indicator">
-            <span class="timer-pulse-dot"></span> VISIT IN PROGRESS
-          </div>
+          <div class="timer-indicator"><span class="timer-pulse-dot"></span> VISIT IN PROGRESS</div>
         </div>
         <div class="timer-main-display" id="live-timer-display">00:00:00</div>
         <div class="timer-sub-meta" id="timer-started-at">started --:--</div>
       </div>
-
-      <!-- Family Request Notes -->
       <div class="family-request-card">
         <div class="family-request-header">📋 WHAT THE FAMILY ASKED FOR</div>
         <div class="family-request-text" id="family-request-notes">Routine wellness check & vitals monitoring.</div>
       </div>
-
-      <!-- Location Confirmed -->
       <div class="location-confirmed-card">
         <div class="location-icon-box">📍</div>
         <div class="location-details">
@@ -662,8 +642,6 @@ id="route-list-container">
           <span id="location-confirmed-text">Fetching GPS coordinates...</span>
         </div>
       </div>
-
-      <!-- Action Tiles -->
       <div class="cockpit-actions-grid">
         <button class="btn-action-tile" id="btn-open-assessment">
           <strong>📝 20-Point Vitals</strong>
@@ -674,21 +652,17 @@ id="route-list-container">
           <small>Teleconsult or escalate</small>
         </button>
       </div>
-
       <button class="btn-conclude-full" id="btn-open-end-code">🏁 Conclude Visit (End Code)</button>
     </div>
   </div>
 
-  <!-- =========================================================
-       MODAL SHEET 3: 20-POINT ASSESSMENT FORM
-       ========================================================= -->
+  <!-- MODAL SHEET 3: 20-POINT ASSESSMENT FORM -->
   <div id="assessment-overlay" class="modal-sheet-overlay hidden">
     <div class="modal-sheet" style="max-height:85vh;">
       <div class="modal-top-notch">
         <span class="otp-protected-chip" style="background:#e0f2fe; color:#0369a1;">📝 CLINICAL ASSESSMENT</span>
         <button class="modal-close-btn" id="btn-close-assessment">✕</button>
       </div>
-
       <form id="assessment-form">
         <div class="form-group-mobile">
           <label>1. Blood Pressure (Systolic / Diastolic)</label>
@@ -697,18 +671,9 @@ id="route-list-container">
             <input type="number" id="asm-bp-dia" placeholder="80" required>
           </div>
         </div>
-        <div class="form-group-mobile">
-          <label>2. Heart Rate (bpm)</label>
-          <input type="number" id="asm-hr" required>
-        </div>
-        <div class="form-group-mobile">
-          <label>3. SpO₂ (%)</label>
-          <input type="number" id="asm-spo2" required>
-        </div>
-        <div class="form-group-mobile">
-          <label>4. Respiratory Rate</label>
-          <input type="number" id="asm-rr" value="16" required>
-        </div>
+        <div class="form-group-mobile"><label>2. Heart Rate (bpm)</label><input type="number" id="asm-hr" required></div>
+        <div class="form-group-mobile"><label>3. SpO₂ (%)</label><input type="number" id="asm-spo2" required></div>
+        <div class="form-group-mobile"><label>4. Respiratory Rate</label><input type="number" id="asm-rr" value="16" required></div>
         <div class="form-group-mobile">
           <label>5. Temperature</label>
           <div style="display:flex; gap:8px;">
@@ -719,42 +684,15 @@ id="route-list-container">
             </select>
           </div>
         </div>
-        <div class="form-group-mobile">
-          <label>6. Fasting Glucose</label>
-          <input type="number" id="asm-glucose-fasting">
-        </div>
-        <div class="form-group-mobile">
-          <label>7. Random Glucose</label>
-          <input type="number" id="asm-glucose-random">
-        </div>
-        <div class="form-group-mobile">
-          <label>7a. Glucose Timing</label>
-          <input type="text" id="asm-glucose-timing" placeholder="e.g. after lunch">
-        </div>
-        <div class="form-group-mobile">
-          <label>8. Weight (kg)</label>
-          <input type="number" step="0.1" id="asm-weight">
-        </div>
-        <div class="form-group-mobile">
-          <label>9. Height (cm)</label>
-          <input type="number" step="0.1" id="asm-height">
-        </div>
-        <div class="form-group-mobile">
-          <label>10. BMI (Auto)</label>
-          <input type="text" id="asm-bmi" readonly style="background:#f1f5f9;">
-        </div>
-        <div class="form-group-mobile">
-          <label>11. Waist Circumference</label>
-          <input type="number" step="0.1" id="asm-waist">
-        </div>
-        <div class="form-group-mobile">
-          <label>12. Pain Score (0-10)</label>
-          <input type="number" min="0" max="10" id="asm-pain" value="0">
-        </div>
-        <div class="form-group-mobile">
-          <label>12a. Pain Location</label>
-          <input type="text" id="asm-pain-location">
-        </div>
+        <div class="form-group-mobile"><label>6. Fasting Glucose</label><input type="number" id="asm-glucose-fasting"></div>
+        <div class="form-group-mobile"><label>7. Random Glucose</label><input type="number" id="asm-glucose-random"></div>
+        <div class="form-group-mobile"><label>7a. Glucose Timing</label><input type="text" id="asm-glucose-timing" placeholder="e.g. after lunch"></div>
+        <div class="form-group-mobile"><label>8. Weight (kg)</label><input type="number" step="0.1" id="asm-weight"></div>
+        <div class="form-group-mobile"><label>9. Height (cm)</label><input type="number" step="0.1" id="asm-height"></div>
+        <div class="form-group-mobile"><label>10. BMI (Auto)</label><input type="text" id="asm-bmi" readonly style="background:#f1f5f9;"></div>
+        <div class="form-group-mobile"><label>11. Waist Circumference</label><input type="number" step="0.1" id="asm-waist"></div>
+        <div class="form-group-mobile"><label>12. Pain Score (0-10)</label><input type="number" min="0" max="10" id="asm-pain" value="0"></div>
+        <div class="form-group-mobile"><label>12a. Pain Location</label><input type="text" id="asm-pain-location"></div>
         <div class="form-group-mobile">
           <label>13. Consciousness</label>
           <select id="asm-loc">
@@ -791,10 +729,7 @@ id="route-list-container">
             <option value="Other">Other</option>
           </select>
         </div>
-        <div class="form-group-mobile">
-          <label>16a. Respiratory Notes</label>
-          <input type="text" id="asm-resp-notes">
-        </div>
+        <div class="form-group-mobile"><label>16a. Respiratory Notes</label><input type="text" id="asm-resp-notes"></div>
         <div class="form-group-mobile">
           <label>17. Edema</label>
           <select id="asm-edema">
@@ -804,10 +739,7 @@ id="route-list-container">
             <option value="Severe">Severe</option>
           </select>
         </div>
-        <div class="form-group-mobile">
-          <label>17a. Edema Notes</label>
-          <input type="text" id="asm-edema-notes">
-        </div>
+        <div class="form-group-mobile"><label>17a. Edema Notes</label><input type="text" id="asm-edema-notes"></div>
         <div class="form-group-mobile">
           <label>18. Hydration Status</label>
           <select id="asm-hydration">
@@ -825,10 +757,7 @@ id="route-list-container">
             <option value="Uncertain">Uncertain</option>
           </select>
         </div>
-        <div class="form-group-mobile">
-          <label>19a. Medication Notes</label>
-          <input type="text" id="asm-meds-notes">
-        </div>
+        <div class="form-group-mobile"><label>19a. Medication Notes</label><input type="text" id="asm-meds-notes"></div>
         <div class="form-group-mobile">
           <label>20. Cognitive Observation</label>
           <select id="asm-cognitive">
@@ -838,28 +767,20 @@ id="route-list-container">
             <option value="Behaviour change">Behaviour Change</option>
           </select>
         </div>
-        <div class="form-group-mobile">
-          <label>Nurse Notes</label>
-          <textarea id="asm-notes" rows="3"></textarea>
-        </div>
-
+        <div class="form-group-mobile"><label>Nurse Notes</label><textarea id="asm-notes" rows="3"></textarea></div>
         <button type="submit" class="btn-start-action" style="margin-top:8px;">Save 20-Point Assessment</button>
       </form>
     </div>
   </div>
 
-  <!-- =========================================================
-       MODAL SHEET 4: DOCTOR CONSULT OPTIONS
-       ========================================================= -->
+  <!-- MODAL SHEET 4: DOCTOR CONSULT OPTIONS -->
   <div id="doctor-overlay" class="modal-sheet-overlay hidden">
     <div class="modal-sheet">
       <div class="modal-top-notch">
         <span class="otp-protected-chip" style="background:#f3e8ff; color:#7e22ce;">🩺 DOCTOR OPTIONS</span>
         <button class="modal-close-btn" id="btn-close-doctor">✕</button>
       </div>
-      <p style="font-size:13px; color:#475569; margin-bottom:16px;">
-        Does this visit include a planned doctor consult, or do abnormal vitals require escalation?
-      </p>
+      <p style="font-size:13px; color:#475569; margin-bottom:16px;">Record consult or escalate urgent review:</p>
       <div style="display:flex; flex-direction:column; gap:10px;">
         <button class="btn-action-tile" id="btn-mark-consult" style="text-align:center; align-items:center;">
           <strong>✅ Record Doctor Consult Completed</strong>
@@ -875,9 +796,7 @@ id="route-list-container">
     </div>
   </div>
 
-  <!-- =========================================================
-       MODAL SHEET 5: END VISIT (CONCLUDE OTP)
-       ========================================================= -->
+  <!-- MODAL SHEET 5: END VISIT -->
   <div id="end-visit-overlay" class="modal-sheet-overlay hidden">
     <div class="modal-sheet">
       <div class="modal-top-notch">
@@ -885,29 +804,22 @@ id="route-list-container">
         <button class="modal-close-btn" id="btn-close-end-sheet">✕</button>
       </div>
       <div class="start-visit-title">End Visit</div>
-      <div class="start-visit-sub">
-        Service complete. Ask the family for the <strong>End Code</strong> to confirm visit closure.
-      </div>
-      <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" 
-             class="otp-input-field" id="input-end-code" placeholder="••••••">
+      <div class="start-visit-sub">Service complete. Ask the family for the <strong>End Code</strong> to confirm closure.</div>
+      <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" class="otp-input-field" id="input-end-code" placeholder="••••••">
       <button class="btn-start-action" style="background:#dc2626;" id="btn-verify-end">Complete & Close Visit</button>
     </div>
   </div>
 
-  <!-- =========================================================
-       SOS EMERGENCY MODAL
-       ========================================================= -->
+  <!-- SOS MODAL -->
   <div id="sos-modal" class="modal-sheet-overlay hidden">
     <div class="modal-sheet" style="text-align:center;">
       <div style="font-size:50px; margin-bottom:10px;">🚨</div>
       <h3 style="color:#dc2626; font-size:19px; margin-bottom:8px;">Confirm Emergency SOS</h3>
-      <p style="font-size:13px; color:#475569; margin-bottom:18px; line-height:1.5;">
-        This will immediately notify the Nityaseva Control Room with your GPS location and active senior's details.
-      </p>
+      <p style="font-size:13px; color:#475569; margin-bottom:18px; line-height:1.5;">Immediately alert Control Room with GPS location.</p>
       <div style="display:flex; flex-direction:column; gap:10px;">
         <a href="tel:112" class="btn-start-action" style="background:#dc2626; text-decoration:none; display:block;">📞 Call 112 Now</a>
         <button class="btn-start-action" id="btn-confirm-sos">🚨 Alert Control Room (GPS)</button>
-        <button class="btn-close-mini" id="btn-cancel-sos" style="background:transparent; color:#64748b; border:none; font-size:13px; font-weight:700; cursor:pointer; padding:8px;">Cancel</button>
+        <button id="btn-cancel-sos" style="background:transparent; color:#64748b; border:none; font-size:13px; font-weight:700; cursor:pointer; padding:8px;">Cancel</button>
       </div>
     </div>
   </div>
