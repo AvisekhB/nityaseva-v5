@@ -8,6 +8,7 @@ let activeWO = null;
 let timerInterval = null;
 let visitStartTime = null;
 let isVitalsSavedForActiveWO = false;
+let nurseActiveTab = 'PENDING'; // 'PENDING' or 'COMPLETE'
 
 // -------------------------------------------------------------
 // SAFE DOM HELPERS
@@ -34,12 +35,35 @@ async function init() {
     setupAssessmentForm();
     setupDoctorOptions();
     setupEndVisitFlow();
+    setupRouteTabs();
 
     await loadNurseWorkOrders();
   } catch (err) {
     console.error('Nurse Portal Init Error:', err);
     setHTML('route-list-container', `<p style="color:#dc2626; text-align:center; padding:20px 0;">Failed to load: ${err.message}</p>`);
   }
+}
+
+// -------------------------------------------------------------
+// PENDING vs COMPLETED SLICER TABS
+// -------------------------------------------------------------
+function setupRouteTabs() {
+  const btnPending = document.getElementById('nurse-tab-pending');
+  const btnComplete = document.getElementById('nurse-tab-complete');
+
+  btnPending?.addEventListener('click', () => {
+    nurseActiveTab = 'PENDING';
+    btnPending.classList.add('active');
+    btnComplete.classList.remove('active');
+    renderRouteList();
+  });
+
+  btnComplete?.addEventListener('click', () => {
+    nurseActiveTab = 'COMPLETE';
+    btnComplete.classList.add('active');
+    btnPending.classList.remove('active');
+    renderRouteList();
+  });
 }
 
 // -------------------------------------------------------------
@@ -59,7 +83,6 @@ function setupNurseAvatarUpload() {
   const input = document.getElementById('nurse-photo-input');
   if (!input) return;
 
-  // Make all avatar triggers clickable for upload
   document.querySelectorAll('#btn-nurse-avatar, .nurse-badge-avatar').forEach(trigger => {
     trigger.style.cursor = 'pointer';
     trigger.title = 'Click to upload Nurse Photo';
@@ -74,18 +97,13 @@ function setupNurseAvatarUpload() {
     reader.onload = (ev) => {
       const img = new Image();
       img.onload = async () => {
-        // COMPRESSION: Max 150x150 JPEG (fits safely under Google Sheets 50,000 char cell limit)
         const canvas = document.createElement('canvas');
         const MAX = 150;
-        let w = img.width;
-        let h = img.height;
-        if (w > h) {
-          if (w > MAX) { h = Math.round(h * (MAX / w)); w = MAX; }
-        } else {
-          if (h > MAX) { w = Math.round(w * (MAX / h)); h = MAX; }
-        }
-        canvas.width = w;
-        canvas.height = h;
+        let w = img.width, h = img.height;
+        if (w > h) { if (w > MAX) { h
+ = Math.round(h * (MAX / w)); w = MAX; } }
+        else { if (h > MAX) { w = Math.round(w * (MAX / h)); h = MAX; } }
+        canvas.width = w; canvas.height = h;
 
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, w, h);
@@ -142,13 +160,12 @@ async function loadNurseWorkOrders() {
     setText('n-part', currentStaffProfile.role || currentStaffProfile.partner_science || 'Nurse');
     setText('n-phone', currentStaffProfile.phone || '--');
 
-    // Load photo if saved in sheet
     if (currentStaffProfile.photo_url && String(currentStaffProfile.photo_url).length > 20) {
       renderNurseAvatar(currentStaffProfile.photo_url);
     }
 
-    // 2. Render Route
-    allWorkOrders = (data.workOrders || []).filter(w => String(w.status).toUpperCase() !== 'CLOSE');
+    // 2. Keep all work orders (including COMPLETE & CLOSE)
+    allWorkOrders = (data.workOrders || []);
     renderRouteList();
   } catch (err) {
     console.error('Failed to load nurse work orders:', err);
@@ -156,22 +173,52 @@ async function loadNurseWorkOrders() {
   }
 }
 
+// -------------------------------------------------------------
+// RENDER ROUTE LIST WITH SEPARATE PENDING & COMPLETED TABS
+// -------------------------------------------------------------
 function renderRouteList() {
   const container = document.getElementById('route-list-container');
   if (!container) return;
-  setText('route-count-badge', `${allWorkOrders.length} Visits`);
 
-  if (allWorkOrders.length === 0) {
-    container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">No visits assigned.</p>';
+  // 1. Filter work orders strictly by the active tab
+  let filtered = [];
+  if (nurseActiveTab === 'PENDING') {
+    // Pending includes: SCHEDULED, UNSCHEDULED, IN_PROGRESS
+    filtered = allWorkOrders.filter(w => {
+      const st = String(w.status || '').toUpperCase();
+      return st === 'SCHEDULED' || st === 'UNSCHEDULED' || st === 'IN_PROGRESS';
+    });
+  } else {
+    // Completed includes: COMPLETE, CLOSE
+    filtered = allWorkOrders.filter(w => {
+      const st = String(w.status || '').toUpperCase();
+      return st === 'COMPLETE' || st === 'CLOSE';
+    });
+  }
+
+  // Update total badge count for currently active tab
+  setText('route-count-badge', `${filtered.length} ${nurseActiveTab === 'PENDING' ? 'Active' : 'Completed'}`);
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<p style="text-align:center; color:#94a3b8; padding:24px 0; font-size:13px;">No ${nurseActiveTab.toLowerCase()} visits found. 🎉</p>`;
     return;
   }
 
-  container.innerHTML = allWorkOrders.map(wo => {
+  // 2. Sort: IN_PROGRESS first, then newest dates
+  const priority = { 'IN_PROGRESS': 0, 'SCHEDULED': 1, 'UNSCHEDULED': 1, 'COMPLETE': 2, 'CLOSE': 3 };
+  const sorted = [...filtered].sort((a, b) => {
+    const pa = priority[String(a.status).toUpperCase()] ?? 4;
+    const pb = priority[String(b.status).toUpperCase()] ?? 4;
+    if (pa !== pb) return pa - pb;
+    return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+  });
+
+  // 3. Render cards with address, phone, emergency ICE and dynamic date labels
+  container.innerHTML = sorted.map(wo => {
     const st = String(wo.status || '').toUpperCase();
     const isClosed = (st === 'COMPLETE' || st === 'CLOSE');
     const badgeClass = st === 'IN_PROGRESS' ? 'badge-in_progress' : (isClosed ? 'badge-complete' : 'badge-scheduled');
 
-    // Dynamic Time Logic: Show Concluded Date for complete/close, Scheduled Date otherwise
     let dateLabel = '🕐 Scheduled:';
     let rawDate = wo.scheduled_at || wo.created_at;
 
@@ -188,14 +235,14 @@ function renderRouteList() {
         displayTime = rawDate;
       }
     }
-    
+
     return `
       <div class="visit-card-item" data-id="${wo.work_order_id}">
         <div class="visit-card-top">
           <span class="visit-senior-name">${wo.senior_name || wo.senior_id}</span>
           <span class="status-badge ${badgeClass}">${wo.status}</span>
         </div>
-        <div class="visit-meta-row">📍 ${wo.senior_address || 'No Address'}</div>
+        <div class="visit-meta-row">📍 ${wo.senior_address || 'Address on file'}</div>
         <div class="visit-meta-row">📞 <a href="tel:${wo.senior_phone}">${wo.senior_phone}</a> | 🚨 ICE: ${wo.senior_emergency || '112'}</div>
         <div class="visit-meta-row" style="font-weight:700; color:${isClosed ? '#15803d' : '#0369a1'};">
           ${dateLabel} ${displayTime}
@@ -210,7 +257,7 @@ function renderRouteList() {
     `;
   }).join('');
 
-  // Click on visit card opens visit workflow
+  // Card click: opens visit workflow
   container.querySelectorAll('.visit-card-item').forEach(card => {
     card.onclick = (e) => {
       if (e.target.closest('.btn-view-care-summary')) return;
@@ -219,7 +266,7 @@ function renderRouteList() {
     };
   });
 
-  // Dedicated "View Care Report" action
+  // Button click: opens 72-hour Care Report
   container.querySelectorAll('.btn-view-care-summary').forEach(btn => {
     btn.onclick = async (e) => {
       e.stopPropagation();
@@ -248,7 +295,7 @@ function openVisitFlow(wo) {
   activeWO = wo;
   const st = String(wo.status || '').toUpperCase();
   if (st === 'COMPLETE' || st === 'CLOSE') {
-    alert(`✅ Visit for ${wo.senior_name || wo.senior_id} has already been completed. Use "View Care Report" to review data.`);
+    alert(`✅ Visit for ${wo.senior_name || wo.senior_id} has already been completed. Use "View Care Report" to inspect vitals.`);
     return;
   }
   st === 'IN_PROGRESS' ? openCockpit(wo) : openStartVisitSheet(wo);
@@ -263,20 +310,21 @@ function openStartVisitSheet(wo) {
 }
 
 function openCockpit(wo) {
-  isVitalsSavedForActiveWO = false;
+  if (!activeWO || activeWO.work_order_id !== wo.work_order_id) {
+    isVitalsSavedForActiveWO = false;
+  }
   activeWO = wo;
+
   setText('cockpit-senior-name', wo.senior_name || wo.senior_id);
   setText('cockpit-service-sub', `${wo.type === 'DoctorConsult' ? 'Doctor Teleconsult' : 'Home Visit'} • Today`);
   setText('family-request-notes', wo.notes || wo.care_notes || 'Routine wellness check & vitals monitoring.');
 
-  // Location text
   if (wo._geo && wo._geo.lat) {
     setText('location-confirmed-text', `Lat ${wo._geo.lat}, Lng ${wo._geo.lng} (±${wo._geo.accuracy}m)`);
   } else {
     setText('location-confirmed-text', wo.senior_address || 'Address on file');
   }
 
-  // Start live timer
   visitStartTime = wo.start_verified_at ? new Date(wo.start_verified_at) : new Date();
   setText('timer-started-at', 'started ' + visitStartTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }));
   startLiveTimer();
@@ -427,7 +475,6 @@ function setupModalCloseButtons() {
 
 function setupSosHandlers() {
   document.getElementById('btn-sos-trigger')?.addEventListener('click', () => show('sos-modal'));
-  document.getElementById('btn-floating-sos')?.addEventListener('click', () => show('sos-modal'));
   document.getElementById('btn-cancel-sos')?.addEventListener('click', () => hide('sos-modal'));
   document.getElementById('btn-confirm-sos')?.addEventListener('click', async () => {
     const geo = await getDeviceLocation();
