@@ -2,161 +2,632 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Doctor Portal — Nityaseva</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Doctor Consultation Portal — Nityaseva</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    .vitals-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 14px 0; }
-    .vital-tile { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; text-align: center; }
-    .vital-val { font-size: 20px; font-weight: 700; color: #1e5238; }
-    .vital-lbl { font-size: 11px; text-transform: uppercase; color: #718096; margin-top: 3px; font-weight: 600; }
+    :root {
+      --bg: #f4f6f4;
+      --card-white: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --green-dark: #1b4332;
+      --green-accent: #2d6a4f;
+      --purple-accent: #6b46c1;
+      --purple-soft: #faf5ff;
+    }
 
-    /* Chatbot-Style Timeline */
-    .timeline-stream { display: flex; flex-direction: column; gap: 12px; margin: 14px 0; max-height: 420px; overflow-y: auto; padding-right: 6px; }
-    .chat-bubble { display: flex; gap: 12px; padding: 12px 14px; border-radius: 10px; font-size: 13px; line-height: 1.45; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
-    .chat-nurse { background: #ffffff; border-left: 5px solid #3182ce; }
-    .chat-doctor { background: #ffffff; border-left: 5px solid #805ad5; }
-    .chat-family { background: #e6fffa; border-left: 5px solid #319795; }
-    .chat-icon { font-size: 22px; line-height: 1; }
-    .chat-meta { font-size: 11px; color: #718096; margin-bottom: 3px; font-weight: 700; display: flex; justify-content: space-between; gap: 8px; }
-    .chat-title { font-weight: 700; color: #2d3748; margin-bottom: 2px; }
-    .chat-text { color: #4a5568; }
-    .alert-tag { background: #fed7d7; color: #9b2c2c; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 700; display: inline-block; margin-top: 4px; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      padding: 12px 10px 80px;
+      min-height: 100vh;
+    }
+
+    .app-viewport {
+      width: 100%;
+      max-width: 460px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* TOP APP BAR */
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 4px;
+    }
+    .app-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .doctor-avatar-badge {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: #e9d8fd;
+      color: #6b46c1;
+      border: 2px solid #805ad5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 10px rgba(107, 70, 193, 0.15);
+      flex-shrink: 0;
+    }
+    .doctor-meta-info h4 {
+      font-size: 15px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.2;
+    }
+    .doctor-meta-info small {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+    .btn-logout-mini {
+      background: #e2e8f0;
+      border: none;
+      color: #334155;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-logout-mini:hover { background: #cbd5e1; }
+
+    /* EMERGENCY SOS BANNER */
+    .emergency-strip {
+      background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+      border: 1.5px solid #feb2b2;
+      border-radius: 14px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .emergency-strip span {
+      font-size: 12px;
+      font-weight: 800;
+      color: #991b1b;
+    }
+    .btn-sos-call {
+      background: #dc2626;
+      color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    /* CLINICAL DISCLAIMER BANNER */
+    .disclaimer-banner {
+      background: #fff7ed;
+      border: 1.5px solid #fdba74;
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 11px;
+      color: #7c2d12;
+      line-height: 1.45;
+    }
+    .disclaimer-banner strong { color: #9a3412; }
+
+    /* SUB-NAV TABS */
+    .sub-tabs-container {
+      display: flex;
+      gap: 8px;
+      background: #e2e8f0;
+      padding: 4px;
+      border-radius: 14px;
+    }
+    .sub-tab-btn {
+      flex: 1;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+      background: transparent;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+    .sub-tab-btn.active {
+      background: #ffffff;
+      color: #1b4332;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    /* SECTION CARD */
+    .portal-card {
+      background: var(--card-white);
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+      border: 1px solid #eef2f5;
+    }
+    .portal-card-header {
+      font-size: 15px;
+      font-weight: 800;
+      color: #0f172a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #edf2f7;
+    }
+
+    /* TABLES MOBILE NORMALIZATION */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid #edf2f7;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    table th, table td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid #edf2f7;
+    }
+    table th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .open-doc-wo-btn, .review-btn {
+      background: #2d6a4f;
+      color: #ffffff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .review-btn { background: #6b46c1; }
+
+    /* WORKSPACE STYLING */
+    #doctor-wo-workspace {
+      animation: slideUp 0.3s ease-out;
+    }
+    .workspace-hero {
+      background: linear-gradient(135deg, #f3e8ff 0%, #e9d8fd 100%);
+      border: 1px solid #d6bcfa;
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+    }
+    .workspace-hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .workspace-hero h3 {
+      font-size: 17px;
+      font-weight: 800;
+      color: #44337a;
+    }
+
+    /* PIN BOX CONTAINER */
+    .pin-auth-card {
+      background: #f8fafc;
+      border: 1.5px dashed #cbd5e1;
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+    .pin-auth-card p {
+      font-size: 12px;
+      color: #475569;
+      margin-bottom: 10px;
+    }
+    .pin-input-group {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .pin-input-group input {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 4px;
+      text-align: center;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 2px solid #cbd5e1;
+      outline: none;
+      max-width: 170px;
+      background: #ffffff;
+    }
+    .pin-input-group input:focus {
+      border-color: #6b46c1;
+      box-shadow: 0 0 0 3px rgba(107, 70, 193, 0.15);
+    }
+    .pin-input-group button {
+      background: #6b46c1;
+      color: #ffffff;
+      border: none;
+      padding: 11px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    /* VITALS GRID */
+    .vitals-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 8px;
+      margin: 10px 0;
+    }
+    .vital-tile {
+      background: #ffffff;
+      border: 1px solid #bee3f8;
+      border-radius: 10px;
+      padding: 10px 8px;
+      text-align: center;
+    }
+    .vital-val {
+      font-size: 18px;
+      font-weight: 800;
+      color: #2b6cb0;
+    }
+    .vital-lbl {
+      font-size: 10px;
+      text-transform: uppercase;
+      color: #718096;
+      margin-top: 3px;
+      font-weight: 700;
+    }
+
+    /* CARE JOURNAL TIMELINE (CHAT STREAM) */
+    .timeline-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 10px 0;
+      max-height: 380px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .chat-bubble {
+      display: flex;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-size: 12.5px;
+      line-height: 1.45;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .chat-nurse { background: #ffffff; border-left: 4px solid #3182ce; }
+    .chat-doctor { background: #ffffff; border-left: 4px solid #805ad5; }
+    .chat-family { background: #e6fffa; border-left: 4px solid #319795; }
+    .chat-icon { font-size: 20px; line-height: 1; }
+    .chat-meta {
+      font-size: 10.5px;
+      color: #718096;
+      margin-bottom: 2px;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+    .chat-title { font-weight: 800; color: #1e293b; margin-bottom: 2px; }
+    .chat-text { color: #475569; }
+    .alert-tag {
+      background: #fed7d7;
+      color: #9b2c2c;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      display: inline-block;
+      margin-top: 4px;
+    }
+
+    /* FORM STYLING ("Doctor Says") */
+    .consult-feedback-box {
+      background: #faf5ff;
+      border: 1px solid #d6bcfa;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .consult-feedback-box h3 {
+      font-size: 14px;
+      font-weight: 800;
+      color: #6b46c1;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .form-group {
+      margin-bottom: 12px;
+      text-align: left;
+    }
+    .form-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 13px;
+      outline: none;
+      background: #ffffff;
+    }
+    .form-group input:focus, .form-group textarea:focus {
+      border-color: #6b46c1;
+      box-shadow: 0 0 0 2px rgba(107, 70, 193, 0.15);
+    }
+    .btn-save-advice {
+      background: #6b46c1;
+      color: #ffffff;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 800;
+      width: 100%;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .btn-save-advice:hover { background: #553c9a; }
+
+    /* BADGE COLORS */
+    .badge-yellow { background: #fef3c7; color: #92400e; }
+    .badge-green { background: #dcfce7; color: #166534; }
+    .badge-red { background: #fee2e2; color: #991b1b; }
+    .badge-blue { background: #e0f2fe; color: #0369a1; }
+
+    .hidden { display: none !important; }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Nityaseva Doctor Consultation Portal</h1>
-    <div class="header-user">
-      <span id="user-display">Loading...</span>
-      <button id="btn-logout" class="secondary">Logout</button>
-    </div>
-  </header>
+  <div class="app-viewport">
 
-  <main>
-    <!-- Doctor Scheduled Work Orders -->
-    <div class="card">
-      <h2>My Assigned Doctor Consultations (Work Orders)</h2>
-      <table id="doctor-wo-table">
-        <thead>
-          <tr>
-            <th>WO ID</th>
-            <th>Senior Patient</th>
-            <th>Scheduled Time</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td colspan="5">Loading consultations...</td></tr>
-        </tbody>
-      </table>
+    <!-- TOP BAR WITH DOCTOR IDENTITY -->
+    <div class="app-header">
+      <div class="app-header-left">
+        <div class="doctor-avatar-badge" id="btn-doc-avatar" title="Attending Physician">🩺</div>
+        <div class="doctor-meta-info">
+          <h4 id="user-display">Dr. Consulting Physician</h4>
+          <small>Nityaseva Teleconsultation Desk</small>
+        </div>
+      </div>
+      <button id="btn-logout" class="btn-logout-mini">Logout</button>
+    </div>
+
+    <!-- EMERGENCY PROTOCOL CALL BANNER -->
+    <div class="emergency-strip">
+      <span>🚨 Hospital Emergency (112)</span>
+      <a href="tel:112" class="btn-sos-call">Call 112</a>
+    </div>
+
+    <!-- CLINICAL REGULATORY DISCLAIMER NOTICE -->
+    <div class="disclaimer-banner">
+      <strong>⚠️ Clinical Decision Support Notice:</strong> This portal displays home vitals and nurse observation streams. It is an informational dashboard for registered physicians to deliver teleconsult advice. Final prescription decisions remain with the consulting physician.
+    </div>
+
+    <!-- TABS TO TOGGLE BETWEEN SCHEDULED WORK ORDERS & ESCALATION QUEUE -->
+    <div class="sub-tabs-container">
+      <button class="sub-tab-btn active" id="tab-btn-wo" type="button">📋 Assigned Teleconsults</button>
+      <button class="sub-tab-btn" id="tab-btn-queue" type="button">🚨 Urgent Escalations</button>
+    </div>
+
+    <!-- TAB 1: SCHEDULED DOCTOR CONSULTATIONS (WORK ORDERS) -->
+    <div id="tab-content-wo" class="portal-card">
+      <div class="portal-card-header">
+        <span>Assigned Teleconsults</span>
+        <span class="badge badge-blue">Route</span>
+      </div>
+      <div class="table-responsive">
+        <table id="doctor-wo-table">
+          <thead>
+            <tr>
+              <th>WO ID</th>
+              <th>Senior Patient</th>
+              <th>Scheduled Time</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="5" style="text-align:center; padding:18px; color:#718096;">Loading assigned consultations...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 2: PENDING CLINICAL ESCALATIONS FROM NURSES -->
+    <div id="tab-content-queue" class="portal-card hidden">
+      <div class="portal-card-header">
+        <span>Urgent Escalations Queue</span>
+        <span class="badge badge-red">Nurse Alerts</span>
+      </div>
+      <div class="table-responsive">
+        <table id="doctor-queue-table">
+          <thead>
+            <tr>
+              <th>Review ID</th>
+              <th>Senior</th>
+              <th>Priority</th>
+              <th>Reason</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="5" style="text-align:center; padding:18px; color:#718096;">Loading queue...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- ACTIVE WORKSPACE FOR SELECTED CONSULTATION -->
-    <div id="doctor-wo-workspace" class="card hidden">
-      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #edf2f7; padding-bottom:10px; margin-bottom:14px;">
-        <h2 style="margin:0; color:#1e5238;">Consultation Workspace: <span id="doc-active-wo-id"></span></h2>
-        <span id="doc-active-status" class="badge badge-yellow"></span>
-      </div>
-      <p style="font-size: 14px; margin-top:0;">Senior: <strong id="doc-active-senior" style="color:#1e5238;"></strong></p>
-
+    <div id="doctor-wo-workspace" class="portal-card hidden">
       
-<!-- START CODE ENTRY (IF SCHEDULED) -->
-<div id="doc-start-step" style="background:#f7fafc; padding:14px; border-radius:8px; margin-bottom:16px;">
-  <p style="font-size: 13px; margin:0 0 8px 0;">Request the numeric <strong>Start Code</strong> from the patient to begin the consultation:</p>
-  <div style="display:flex; gap:10px; align-items:center;">
-    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="doc-input-start-code" placeholder="6-digit Code" style="max-width:180px; font-size:18px; letter-spacing:3px; text-align:center;">
-    <button id="doc-btn-verify-start">Authorize & Start Teleconsult</button>
-  </div>
-</div>
+      <!-- HERO WORKSPACE BANNER -->
+      <div class="workspace-hero">
+        <div class="workspace-hero-top">
+          <h3>Workspace: <span id="doc-active-wo-id">--</span></h3>
+          <span id="doc-active-status" class="badge badge-yellow">SCHEDULED</span>
+        </div>
+        <p style="font-size:13px; color:#44337a; margin-top:2px;">
+          Senior Patient: <strong id="doc-active-senior">--</strong>
+        </p>
+      </div>
 
+      <!-- STEP 1: START CODE VERIFICATION PIN (NUMERIC 6-DIGIT) -->
+      <div id="doc-start-step" class="pin-auth-card">
+        <p>Request the <strong>6-digit Start Code</strong> from the patient to authorize teleconsult:</p>
+        <div class="pin-input-group">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="doc-input-start-code" placeholder="••••••">
+          <button id="doc-btn-verify-start" type="button">Start Teleconsult</button>
+        </div>
+      </div>
 
-      <!-- SECTION 1: LATEST NURSE VISIT REPORT & VITALS -->
-      <div class="card" style="border: 1px solid #bee3f8; background:#ebf8ff; margin-bottom:16px;">
-        <h3 style="margin:0 0 6px 0; color:#2b6cb0; font-size:15px;">📋 Latest Nurse Home Visit Report & Vitals</h3>
-        <p id="nurse-report-date" style="font-size:12px; color:#4a5568; margin:0;"></p>
+      <!-- SECTION 1: LATEST NURSE VISIT REPORT & 20-POINT VITALS -->
+      <div class="portal-card" style="border: 1px solid #bee3f8; background:#ebf8ff; margin-bottom:14px;">
+        <div class="portal-card-header" style="border-bottom:1px solid #bee3f8; color:#2b6cb0;">
+          <span>📋 Latest Nurse Home Visit & Vitals</span>
+          <small id="nurse-report-date" style="font-size:11px; color:#4a5568;"></small>
+        </div>
         <div id="doc-vitals-container" class="vitals-grid">
           <div>Loading nurse visit vitals...</div>
         </div>
-        <div id="nurse-notes-box" style="font-size:13px; color:#2d3748; background:#fff; padding:10px; border-radius:6px; margin-top:8px;">
+        <div id="nurse-notes-box" style="font-size:12px; color:#2d3748; background:#fff; padding:10px 12px; border-radius:8px; margin-top:8px; border-left:3px solid #3182ce;">
           <strong>Nurse Observations:</strong> <span id="doc-nurse-notes">None recorded</span>
         </div>
       </div>
 
       <!-- SECTION 2: CHATBOT-STYLE CARE JOURNAL TIMELINE -->
-      <div class="card" style="border: 1px solid #e2e8f0; margin-bottom:16px;">
-        <h3 style="margin:0 0 6px 0; color:#1e5238; font-size:15px;">💬 Care Journal & Timeline (Nurse, Doctor & Family History)</h3>
-        <p style="font-size:12px; color:#718096; margin:0 0 10px 0;">Chronological history of what the nurse observed, past doctor advice, and family requests:</p>
+      <div class="portal-card" style="margin-bottom:14px;">
+        <div class="portal-card-header" style="color:#1b4332;">
+          <span>💬 Continuous Care Journal</span>
+          <small style="font-size:10px; color:#718096;">History</small>
+        </div>
         <div id="doc-timeline-stream" class="timeline-stream">
           <div>Loading care history...</div>
         </div>
       </div>
 
-      <!-- SECTION 3: DOCTOR CONSULTATION NOTES & RECOMMENDATIONS -->
-      <div class="card" style="border: 1px solid #d6bcfa; background:#faf5ff; margin-bottom:16px;">
-        <h3 style="margin:0 0 8px 0; color:#6b46c1; font-size:15px;">🩺 Doctor Clinical Advice & Prescription ("Doctor Says")</h3>
+      <!-- SECTION 3: DOCTOR CONSULTATION NOTES & RECOMMENDATIONS ("Doctor Says") -->
+      <div class="consult-feedback-box">
+        <h3>🩺 Clinical Advice & Prescription ("Doctor Says")</h3>
         <form id="doc-consult-feedback-form">
           <div class="form-group">
             <label>Clinical Summary</label>
-            <textarea id="doc-consult-summary" rows="2" placeholder="e.g. Patient evaluated via teleconsult. Vitals reviewed." required></textarea>
+            <textarea id="doc-consult-summary" rows="2" placeholder="e.g. Teleconsult conducted. Patient vitals reviewed." required></textarea>
           </div>
           <div class="form-group">
             <label>Observations</label>
-            <textarea id="doc-consult-obs" rows="2" placeholder="e.g. Mild hypertension observed in nurse vitals. General condition stable."></textarea>
+            <textarea id="doc-consult-obs" rows="2" placeholder="e.g. Blood pressure moderately elevated. Condition stable."></textarea>
           </div>
           <div class="form-group">
             <label>Doctor Advice to Family & Nurse ("Doctor Says")</label>
             <textarea id="doc-consult-advice" rows="2" placeholder="e.g. Continue Amlodipine 5mg. Restrict sodium. Retake BP in 3 days." required></textarea>
           </div>
-          <div class="grid">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
             <div class="form-group">
-              <label>Recommended Tests / Diagnostics</label>
-              <input type="text" id="doc-consult-inv" placeholder="e.g. Serum Creatinine, ECG">
+              <label>Recommended Tests</label>
+              <input type="text" id="doc-consult-inv" placeholder="e.g. Serum Creatinine">
             </div>
             <div class="form-group">
               <label>Follow-up Date</label>
               <input type="date" id="doc-consult-followup">
             </div>
           </div>
-          <button type="submit" style="background:#6b46c1;">Save Clinical Advice to Care Journal</button>
+          <button type="submit" class="btn-save-advice">Save Clinical Advice to Care Journal</button>
         </form>
       </div>
 
-
-<!-- SECTION 4: END CODE VERIFICATION -->
-<div id="doc-end-step" class="hidden" style="background:#f7fafc; padding:14px; border-radius:8px;">
-  <h3 style="margin:0 0 6px 0; color:#1e5238; font-size:15px;">Complete Consultation (End Code)</h3>
-  <p style="font-size: 13px; margin:0 0 8px 0;">Once consultation is concluded, enter the numeric <strong>End Code</strong> provided by the patient:</p>
-  <div style="display:flex; gap:10px; align-items:center;">
-    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="doc-input-end-code" placeholder="6-digit Code" style="max-width:180px; font-size:18px; letter-spacing:3px; text-align:center;">
-    <button id="doc-btn-verify-end">Verify End Code & Close Consultation</button>
-  </div>
-</div>
-
+      <!-- SECTION 4: END CODE VERIFICATION (CONCLUDE CONSULTATION) -->
+      <div id="doc-end-step" class="pin-auth-card hidden" style="background:#f0fdf4; border-color:#86efac;">
+        <h4 style="margin:0 0 6px 0; color:#166534; font-size:14px;">Conclude Teleconsult (End Code)</h4>
+        <p style="margin:0 0 10px 0;">Enter the <strong>6-digit End Code</strong> provided by the patient to complete and lock this consultation:</p>
+        <div class="pin-input-group">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="doc-input-end-code" placeholder="••••••">
+          <button id="doc-btn-verify-end" type="button" style="background:#166534;">Verify & Complete</button>
+        </div>
       </div>
-    </div>
 
-    <!-- Clinical Escalations Queue from Nurses -->
-    <div class="card">
-      <h2>Pending Clinical Escalations from Nurses</h2>
-      <table id="doctor-queue-table">
-        <thead>
-          <tr>
-            <th>Review ID</th>
-            <th>Senior</th>
-            <th>Priority</th>
-            <th>Reason</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td colspan="5">Loading queue...</td></tr>
-        </tbody>
-      </table>
+      <!-- CLOSE WORKSPACE BUTTON -->
+      <button id="btn-close-doc-workspace" type="button" style="background:#f1f5f9; color:#475569; border:none; padding:10px; border-radius:10px; font-size:12px; font-weight:700; width:100%; cursor:pointer; margin-top:8px;">
+        ✕ Close Workspace
+      </button>
+
     </div>
-  </main>
+  </div>
 
   <script type="module" src="js/doctor.js"></script>
+  <script>
+    // Sub-tab switcher logic (pure frontend toggle)
+    document.getElementById('tab-btn-wo')?.addEventListener('click', () => {
+      document.getElementById('tab-btn-wo').classList.add('active');
+      document.getElementById('tab-btn-queue').classList.remove('active');
+      document.getElementById('tab-content-wo').classList.remove('hidden');
+      document.getElementById('tab-content-queue').classList.add('hidden');
+    });
+
+    document.getElementById('tab-btn-queue')?.addEventListener('click', () => {
+      document.getElementById('tab-btn-queue').classList.add('active');
+      document.getElementById('tab-btn-wo').classList.remove('active');
+      document.getElementById('tab-content-queue').classList.remove('hidden');
+      document.getElementById('tab-content-wo').classList.add('hidden');
+    });
+
+    document.getElementById('btn-close-doc-workspace')?.addEventListener('click', () => {
+      document.getElementById('doctor-wo-workspace').classList.add('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  </script>
 </body>
 </html>
