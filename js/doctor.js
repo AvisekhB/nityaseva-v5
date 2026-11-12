@@ -24,17 +24,6 @@ async function init() {
   await loadDoctorQueue();
 }
 
-
-  const btnClose = document.getElementById('btn-close-doc-workspace');
-  if (btnClose) {
-    btnClose.addEventListener('click', () => {
-      const workspace = document.getElementById('doctor-wo-workspace');
-      if (workspace) workspace.classList.add('hidden');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  }
-
-
 async function loadDoctorQueue() {
   try {
     const data = await callApi('getDoctorDashboard', {
@@ -54,7 +43,7 @@ function renderReviewQueue(queue) {
   tbody.innerHTML = '';
 
   if (queue.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5">No pending clinical escalations in queue.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:16px; color:#718096;">No pending clinical escalations in queue.</td></tr>';
     return;
   }
 
@@ -89,7 +78,7 @@ function renderWorkOrders(orders) {
   tbody.innerHTML = '';
 
   if (orders.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5">No doctor consultations assigned yet.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:16px; color:#718096;">No doctor consultations assigned yet.</td></tr>';
     return;
   }
 
@@ -188,12 +177,19 @@ async function loadPatientClinicalSummary(seniorId) {
   const reportDateEl = document.getElementById('nurse-report-date');
   const nurseNotesEl = document.getElementById('doc-nurse-notes');
   const stream = document.getElementById('doc-timeline-stream');
+  const seniorEl = document.getElementById('doc-active-senior');
 
   if (vitalsContainer) vitalsContainer.innerHTML = '<div>Loading complete nurse assessment...</div>';
   if (stream) stream.innerHTML = '<div>Loading care history...</div>';
 
   try {
     const summary = await callApi('getSeniorClinicalSummary', { seniorId: seniorId });
+    
+    // Display full patient name if available
+    if (summary.senior && seniorEl) {
+      seniorEl.innerHTML = `<strong>${summary.senior.full_name}</strong> (${seniorId})`;
+    }
+
     const v = summary.latestAssessment;
 
     if (v && vitalsContainer) {
@@ -338,7 +334,7 @@ async function loadPatientClinicalSummary(seniorId) {
       }
     } else if (vitalsContainer) {
       if (reportDateEl) reportDateEl.textContent = '';
-      vitalsContainer.innerHTML = '<p style="color:#718096;">No nurse assessments recorded for this senior yet.</p>';
+      vitalsContainer.innerHTML = '<p style="color:#718096; text-align:center; padding:12px;">No nurse assessments recorded for this senior yet.</p>';
       if (nurseNotesEl) nurseNotesEl.textContent = 'None';
     }
 
@@ -348,7 +344,7 @@ async function loadPatientClinicalSummary(seniorId) {
       const timeline = (summary.careJournal && summary.careJournal.timeline) || [];
 
       if (timeline.length === 0) {
-        stream.innerHTML = '<p style="color:#718096;font-size:13px;">No history recorded in care journal.</p>';
+        stream.innerHTML = '<p style="color:#718096; font-size:12px; text-align:center; padding:12px;">No history recorded in care journal.</p>';
         return;
       }
 
@@ -391,7 +387,7 @@ function wireWorkspaceActions() {
     btnStart.addEventListener('click', async () => {
       const codeInput = document.getElementById('doc-input-start-code');
       const raw = codeInput ? codeInput.value : '';
-      const code = raw.trim().replace(/\D/g, ''); // Extract numeric digits only
+      const code = raw.trim().replace(/\D/g, '');
 
       if (!code) {
         return alert('Please enter the numeric Start Code provided by the patient.');
@@ -432,7 +428,7 @@ function wireWorkspaceActions() {
     });
   }
 
-  // 2. Submit Doctor Feedback / Advice
+  // 2. Submit Doctor Feedback / Advice ("Doctor Says")
   const formFeedback = document.getElementById('doc-consult-feedback-form');
   if (formFeedback) {
     formFeedback.addEventListener('submit', async (e) => {
@@ -455,6 +451,20 @@ function wireWorkspaceActions() {
         formFeedback.reset();
 
         // Refresh care journal timeline in place so doctor sees their new entry
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
         await loadPatientClinicalSummary(activeSeniorId);
 
         // If in Work Order mode, show End Code section
@@ -505,6 +515,18 @@ function wireWorkspaceActions() {
       }
     });
   }
+
+  // 4. Close Workspace Button (Smooth dismiss)
+  const btnClose = document.getElementById('btn-close-doc-workspace');
+  if (btnClose) {
+    btnClose.addEventListener('click', () => {
+      const workspace = document.getElementById('doctor-wo-workspace');
+      if (workspace) workspace.classList.add('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
 }
 
 init();
+
+      
