@@ -24,6 +24,17 @@ async function init() {
   await loadDoctorQueue();
 }
 
+
+  const btnClose = document.getElementById('btn-close-doc-workspace');
+  if (btnClose) {
+    btnClose.addEventListener('click', () => {
+      const workspace = document.getElementById('doctor-wo-workspace');
+      if (workspace) workspace.classList.add('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+
 async function loadDoctorQueue() {
   try {
     const data = await callApi('getDoctorDashboard', {
