@@ -39,6 +39,8 @@ async function loadDoctorQueue() {
 
 function renderReviewQueue(queue) {
   const tbody = document.querySelector('#doctor-queue-table tbody');
+  const badgeCount = document.getElementById('badge-queue-count');
+  if (badgeCount) badgeCount.textContent = queue.length;
   if (!tbody) return;
   tbody.innerHTML = '';
 
@@ -73,43 +75,80 @@ function renderReviewQueue(queue) {
 }
 
 function renderWorkOrders(orders) {
-  const tbody = document.querySelector('#doctor-wo-table tbody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
+  const tbodyPending = document.querySelector('#doctor-wo-table-pending tbody');
+  const tbodyComplete = document.querySelector('#doctor-wo-table-complete tbody');
+  const badgePending = document.getElementById('badge-pending-count');
+  const badgeComplete = document.getElementById('badge-complete-count');
 
-  if (orders.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:16px; color:#718096;">No doctor consultations assigned yet.</td></tr>';
-    return;
-  }
-
-  orders.forEach(wo => {
-    const badgeColor = wo.status === 'COMPLETE'
-      ? 'badge-green'
-      : (wo.status === 'IN_PROGRESS' ? 'badge-yellow' : 'badge-blue');
-
-    let displayTime = wo.created_at || '-';
-    try {
-      if (wo.created_at) {
-        displayTime = new Date(wo.created_at).toLocaleString('en-IN', {
-          dateStyle: 'short',
-          timeStyle: 'short'
-        });
-      }
-    } catch (e) {}
-
-    const tr = document.createElement('tr');
-
-    tr.innerHTML = `
-      <td><strong>${wo.work_order_id}</strong></td>
-      <td><code>${wo.senior_id}</code></td>
-      <td>${displayTime}</td>
-      <td><span class="badge ${badgeColor}">${wo.status}</span></td>
-      <td><button class="open-doc-wo-btn" data-id="${wo.work_order_id}">Open Workspace</button></td>
-    `;
-    tbody.appendChild(tr);
+  // 1. Filter orders by status
+  const pendingOrders = orders.filter(w => {
+    const st = String(w.status || '').toUpperCase();
+    return st === 'SCHEDULED' || st === 'UNSCHEDULED' || st === 'IN_PROGRESS';
   });
 
-  tbody.querySelectorAll('.open-doc-wo-btn').forEach(btn => {
+  const completeOrders = orders.filter(w => {
+    const st = String(w.status || '').toUpperCase();
+    return st === 'COMPLETE' || st === 'CLOSE';
+  });
+
+  if (badgePending) badgePending.textContent = pendingOrders.length;
+  if (badgeComplete) badgeComplete.textContent = completeOrders.length;
+
+  // 2. Render Pending / Active Teleconsults
+  if (tbodyPending) {
+    if (pendingOrders.length === 0) {
+      tbodyPending.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:16px; color:#718096;">No active or scheduled teleconsults.</td></tr>';
+    } else {
+      tbodyPending.innerHTML = pendingOrders.map(wo => {
+        const badgeColor = String(wo.status).toUpperCase() === 'IN_PROGRESS' ? 'badge-yellow' : 'badge-blue';
+        let displayTime = wo.scheduled_at || wo.created_at || '-';
+        try {
+          if (displayTime !== '-') {
+            displayTime = new Date(displayTime).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' });
+          }
+        } catch (e) {}
+
+        return `
+          <tr>
+            <td><strong>${wo.work_order_id}</strong></td>
+            <td><code>${wo.senior_id}</code></td>
+            <td>${displayTime}</td>
+            <td><span class="badge ${badgeColor}">${wo.status}</span></td>
+            <td><button class="open-doc-wo-btn" data-id="${wo.work_order_id}">Open Workspace</button></td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+
+  // 3. Render Completed Teleconsults
+  if (tbodyComplete) {
+    if (completeOrders.length === 0) {
+      tbodyComplete.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:16px; color:#718096;">No completed teleconsults on record.</td></tr>';
+    } else {
+      tbodyComplete.innerHTML = completeOrders.map(wo => {
+        let displayTime = wo.end_verified_at || wo.updated_at || wo.created_at || '-';
+        try {
+          if (displayTime !== '-') {
+            displayTime = new Date(displayTime).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' });
+          }
+        } catch (e) {}
+
+        return `
+          <tr>
+            <td><strong>${wo.work_order_id}</strong></td>
+            <td><code>${wo.senior_id}</code></td>
+            <td>${displayTime}</td>
+            <td><span class="badge badge-green">${wo.status}</span></td>
+            <td><button class="open-doc-wo-btn" data-id="${wo.work_order_id}">View Summary</button></td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+
+  // 4. Wire Workspace Open Buttons across both tables
+  document.querySelectorAll('.open-doc-wo-btn').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       const woId = e.target.getAttribute('data-id');
       const match = orders.find(w => w.work_order_id === woId);
@@ -137,7 +176,7 @@ async function openClinicalWorkspace(seniorId, workOrder) {
   if (statusEl) {
     const st = workOrder ? workOrder.status : 'IN_REVIEW';
     statusEl.textContent = st;
-    statusEl.className = 'badge ' + (st === 'COMPLETE' ? 'badge-green' : 'badge-yellow');
+    statusEl.className = 'badge ' + (st === 'COMPLETE' || st === 'CLOSE' ? 'badge-green' : (st === 'IN_PROGRESS' ? 'badge-yellow' : 'badge-blue'));
   }
 
   // Work Order verification steps
@@ -151,10 +190,11 @@ async function openClinicalWorkspace(seniorId, workOrder) {
   if (inputEnd) inputEnd.value = '';
 
   if (workOrder) {
-    if (workOrder.status === 'IN_PROGRESS') {
+    const stUpper = String(workOrder.status).toUpperCase();
+    if (stUpper === 'IN_PROGRESS') {
       if (startStep) startStep.classList.add('hidden');
       if (endStep) endStep.classList.remove('hidden');
-    } else if (workOrder.status === 'COMPLETE' || workOrder.status === 'CLOSE') {
+    } else if (stUpper === 'COMPLETE' || stUpper === 'CLOSE') {
       if (startStep) startStep.classList.add('hidden');
       if (endStep) endStep.classList.add('hidden');
     } else {
@@ -168,7 +208,7 @@ async function openClinicalWorkspace(seniorId, workOrder) {
 
   workspace.scrollIntoView({ behavior: 'smooth' });
 
-  // Load Patient Clinical Summary: All 22 Nurse Vitals + Care Journal Timeline
+  // Load Patient Clinical Summary: All 20 Nurse Vitals + Care Journal Timeline
   await loadPatientClinicalSummary(seniorId);
 }
 
@@ -260,11 +300,11 @@ async function loadPatientClinicalSummary(seniorId) {
 
         <!-- Glucose (6-7) -->
         <div class="vital-tile">
-          <div class="vital-val" style="font-size:17px;">${fastingGluc}</div>
+          <div class="vital-val" style="font-size:16px;">${fastingGluc}</div>
           <div class="vital-lbl">6. Fasting Glucose</div>
         </div>
         <div class="vital-tile">
-          <div class="vital-val" style="font-size:17px;">${randomGluc}</div>
+          <div class="vital-val" style="font-size:16px;">${randomGluc}</div>
           <div class="vital-lbl">7. Random Glucose${glucTiming}</div>
         </div>
 
@@ -282,7 +322,7 @@ async function loadPatientClinicalSummary(seniorId) {
           <div class="vital-lbl">10. BMI (kg/m²)</div>
         </div>
         <div class="vital-tile">
-          <div class="vital-val" style="font-size:17px;">${waist}</div>
+          <div class="vital-val" style="font-size:16px;">${waist}</div>
           <div class="vital-lbl">11. Waist Circumference</div>
         </div>
 
@@ -292,13 +332,13 @@ async function loadPatientClinicalSummary(seniorId) {
           <div class="vital-lbl">12. Pain Score${painLoc}</div>
         </div>
         <div class="vital-tile">
-          <div class="vital-val" style="font-size:17px;">${loc}</div>
+          <div class="vital-val" style="font-size:16px;">${loc}</div>
           <div class="vital-lbl">13. Consciousness</div>
         </div>
 
         <!-- Risk & Mobility (14-15) -->
         <div class="vital-tile">
-          <div class="vital-val" style="font-size:17px;">${fall}</div>
+          <div class="vital-val" style="font-size:16px;">${fall}</div>
           <div class="vital-lbl">14. Fall Risk</div>
         </div>
         <div class="vital-tile">
@@ -451,20 +491,6 @@ function wireWorkspaceActions() {
         formFeedback.reset();
 
         // Refresh care journal timeline in place so doctor sees their new entry
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
         await loadPatientClinicalSummary(activeSeniorId);
 
         // If in Work Order mode, show End Code section
@@ -486,7 +512,7 @@ function wireWorkspaceActions() {
     btnEnd.addEventListener('click', async () => {
       const codeInput = document.getElementById('doc-input-end-code');
       const raw = codeInput ? codeInput.value : '';
-      const code = raw.trim().replace(/\D/g, ''); // Extract numeric digits only
+      const code = raw.trim().replace(/\D/g, '');
 
       if (!code) {
         return alert('Please enter the numeric End Code provided by the patient to complete the consultation.');
@@ -528,5 +554,3 @@ function wireWorkspaceActions() {
 }
 
 init();
-
-      
