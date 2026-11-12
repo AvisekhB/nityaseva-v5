@@ -122,7 +122,7 @@
       white-space: nowrap;
     }
 
-    /* CLINICAL DISCLAIMER BANNER */
+    /* CLINICAL REGULATORY DISCLAIMER BANNER */
     .disclaimer-banner {
       background: #fff7ed;
       border: 1.5px solid #fdba74;
@@ -134,19 +134,19 @@
     }
     .disclaimer-banner strong { color: #9a3412; }
 
-    /* SUB-NAV TABS */
+    /* 3-WAY SUB-NAV TABS (Pending / Completed / Escalations) */
     .sub-tabs-container {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       background: #e2e8f0;
       padding: 4px;
       border-radius: 14px;
     }
     .sub-tab-btn {
       flex: 1;
-      padding: 8px 10px;
-      font-size: 12px;
-      font-weight: 700;
+      padding: 8px 6px;
+      font-size: 11px;
+      font-weight: 800;
       color: #475569;
       background: transparent;
       border: none;
@@ -154,6 +154,7 @@
       cursor: pointer;
       transition: all 0.2s ease;
       text-align: center;
+      white-space: nowrap;
     }
     .sub-tab-btn.active {
       background: #ffffff;
@@ -317,7 +318,7 @@
       font-weight: 700;
     }
 
-    /* CARE JOURNAL TIMELINE (CHAT STREAM) */
+    /* CARE JOURNAL TIMELINE */
     .timeline-stream {
       display: flex;
       flex-direction: column;
@@ -361,7 +362,7 @@
       margin-top: 4px;
     }
 
-    /* FORM STYLING ("Doctor Says") */
+    /* "DOCTOR SAYS" FORM */
     .consult-feedback-box {
       background: #faf5ff;
       border: 1px solid #d6bcfa;
@@ -457,20 +458,21 @@
       <strong>⚠️ Clinical Decision Support Notice:</strong> This portal displays home vitals and nurse observation streams. It is an informational dashboard for registered physicians to deliver teleconsult advice. Final prescription decisions remain with the consulting physician.
     </div>
 
-    <!-- TABS TO TOGGLE BETWEEN SCHEDULED WORK ORDERS & ESCALATION QUEUE -->
+    <!-- 3-WAY SUB-NAV TABS: PENDING vs COMPLETED vs ESCALATIONS -->
     <div class="sub-tabs-container">
-      <button class="sub-tab-btn active" id="tab-btn-wo" type="button">📋 Assigned Teleconsults</button>
-      <button class="sub-tab-btn" id="tab-btn-queue" type="button">🚨 Urgent Escalations</button>
+      <button class="sub-tab-btn active" id="tab-btn-pending" type="button">⏳ Pending</button>
+      <button class="sub-tab-btn" id="tab-btn-complete" type="button">✅ Completed</button>
+      <button class="sub-tab-btn" id="tab-btn-queue" type="button">🚨 Escalations</button>
     </div>
 
-    <!-- TAB 1: SCHEDULED DOCTOR CONSULTATIONS (WORK ORDERS) -->
-    <div id="tab-content-wo" class="portal-card">
+    <!-- TAB 1: PENDING / ACTIVE TELECONSULTS (SCHEDULED / IN_PROGRESS) -->
+    <div id="tab-content-pending" class="portal-card">
       <div class="portal-card-header">
-        <span>Assigned Teleconsults</span>
-        <span class="badge badge-blue">Route</span>
+        <span>Active & Scheduled Teleconsults</span>
+        <span class="badge badge-yellow" id="badge-pending-count">0</span>
       </div>
       <div class="table-responsive">
-        <table id="doctor-wo-table">
+        <table id="doctor-wo-table-pending">
           <thead>
             <tr>
               <th>WO ID</th>
@@ -481,17 +483,41 @@
             </tr>
           </thead>
           <tbody>
-            <tr><td colspan="5" style="text-align:center; padding:18px; color:#718096;">Loading assigned consultations...</td></tr>
+            <tr><td colspan="5" style="text-align:center; padding:18px; color:#718096;">Loading active consultations...</td></tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- TAB 2: PENDING CLINICAL ESCALATIONS FROM NURSES -->
+    <!-- TAB 2: COMPLETED TELECONSULTS (COMPLETE / CLOSE) -->
+    <div id="tab-content-complete" class="portal-card hidden">
+      <div class="portal-card-header">
+        <span>Completed Teleconsults</span>
+        <span class="badge badge-green" id="badge-complete-count">0</span>
+      </div>
+      <div class="table-responsive">
+        <table id="doctor-wo-table-complete">
+          <thead>
+            <tr>
+              <th>WO ID</th>
+              <th>Senior Patient</th>
+              <th>Concluded Date</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="5" style="text-align:center; padding:18px; color:#718096;">Loading completed consultations...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 3: PENDING CLINICAL ESCALATIONS FROM NURSES -->
     <div id="tab-content-queue" class="portal-card hidden">
       <div class="portal-card-header">
         <span>Urgent Escalations Queue</span>
-        <span class="badge badge-red">Nurse Alerts</span>
+        <span class="badge badge-red" id="badge-queue-count">0</span>
       </div>
       <div class="table-responsive">
         <table id="doctor-queue-table">
@@ -609,24 +635,36 @@
 
   <script type="module" src="js/doctor.js"></script>
   <script>
-    // Sub-tab switcher logic (pure frontend toggle)
-    document.getElementById('tab-btn-wo')?.addEventListener('click', () => {
-      document.getElementById('tab-btn-wo').classList.add('active');
-      document.getElementById('tab-btn-queue').classList.remove('active');
-      document.getElementById('tab-content-wo').classList.remove('hidden');
-      document.getElementById('tab-content-queue').classList.add('hidden');
+    // 3-Way Sub-tab switcher logic (pure frontend toggle)
+    const btnPending = document.getElementById('tab-btn-pending');
+    const btnComplete = document.getElementById('tab-btn-complete');
+    const btnQueue = document.getElementById('tab-btn-queue');
+
+    const contentPending = document.getElementById('tab-content-pending');
+    const contentComplete = document.getElementById('tab-content-complete');
+    const contentQueue = document.getElementById('tab-content-queue');
+
+    function resetTabs() {
+      [btnPending, btnComplete, btnQueue].forEach(b => b?.classList.remove('active'));
+      [contentPending, contentComplete, contentQueue].forEach(c => c?.classList.add('hidden'));
+    }
+
+    btnPending?.addEventListener('click', () => {
+      resetTabs();
+      btnPending.classList.add('active');
+      contentPending.classList.remove('hidden');
     });
 
-    document.getElementById('tab-btn-queue')?.addEventListener('click', () => {
-      document.getElementById('tab-btn-queue').classList.add('active');
-      document.getElementById('tab-btn-wo').classList.remove('active');
-      document.getElementById('tab-content-queue').classList.remove('hidden');
-      document.getElementById('tab-content-wo').classList.add('hidden');
+    btnComplete?.addEventListener('click', () => {
+      resetTabs();
+      btnComplete.classList.add('active');
+      contentComplete.classList.remove('hidden');
     });
 
-    document.getElementById('btn-close-doc-workspace')?.addEventListener('click', () => {
-      document.getElementById('doctor-wo-workspace').classList.add('hidden');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    btnQueue?.addEventListener('click', () => {
+      resetTabs();
+      btnQueue.classList.add('active');
+      contentQueue.classList.remove('hidden');
     });
   </script>
 </body>
