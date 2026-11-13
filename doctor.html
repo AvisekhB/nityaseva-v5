@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="css/style.css">
   <style>
     :root {
-      --bg: #f4f6f4;
+      --bg: #f2f5f2;
       --card-white: #ffffff;
       --text-main: #0f172a;
       --text-muted: #64748b;
@@ -18,6 +18,7 @@
       --green-accent: #2d6a4f;
       --purple-accent: #6b46c1;
       --purple-soft: #faf5ff;
+      --timer-bg: #141f18;
     }
 
     * {
@@ -39,7 +40,7 @@
 
     .app-viewport {
       width: 100%;
-      max-width: 460px;
+      max-width: 440px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -57,7 +58,7 @@
       align-items: center;
       gap: 10px;
     }
-    .doctor-avatar-badge {
+    .doc-badge-avatar {
       width: 46px;
       height: 46px;
       border-radius: 50%;
@@ -68,19 +69,20 @@
       align-items: center;
       justify-content: center;
       font-size: 22px;
-      box-shadow: 0 4px 10px rgba(107, 70, 193, 0.15);
       flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(107, 70, 193, 0.15);
     }
-    .doctor-meta-info h4 {
+    .doc-info h4 {
       font-size: 15px;
       font-weight: 800;
-      color: #0f172a;
+      color: #0f2419;
       line-height: 1.2;
     }
-    .doctor-meta-info small {
+    .doc-info small {
       font-size: 11px;
       color: var(--text-muted);
       font-weight: 700;
+      font-family: monospace;
     }
     .btn-logout-mini {
       background: #e2e8f0;
@@ -91,11 +93,9 @@
       font-size: 11px;
       font-weight: 700;
       cursor: pointer;
-      transition: all 0.15s ease;
     }
-    .btn-logout-mini:hover { background: #cbd5e1; }
 
-    /* EMERGENCY SOS BANNER */
+    /* EMERGENCY PROTOCOL STRIP */
     .emergency-strip {
       background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
       border: 1.5px solid #feb2b2;
@@ -122,7 +122,7 @@
       white-space: nowrap;
     }
 
-    /* CLINICAL REGULATORY DISCLAIMER BANNER */
+    /* DISCLAIMER BANNER */
     .disclaimer-banner {
       background: #fff7ed;
       border: 1.5px solid #fdba74;
@@ -132,45 +132,43 @@
       color: #7c2d12;
       line-height: 1.45;
     }
-    .disclaimer-banner strong { color: #9a3412; }
 
-    /* 3-WAY SUB-NAV TABS (Pending / Completed / Escalations) */
-    .sub-tabs-container {
+    /* SUB-TABS (Pending / Completed / Escalations) */
+    .sub-tabs-bar {
       display: flex;
       gap: 6px;
       background: #e2e8f0;
       padding: 4px;
-      border-radius: 14px;
+      border-radius: 12px;
     }
     .sub-tab-btn {
       flex: 1;
       padding: 8px 6px;
       font-size: 11px;
       font-weight: 800;
-      color: #475569;
+      color: #64748b;
       background: transparent;
       border: none;
-      border-radius: 10px;
+      border-radius: 9px;
       cursor: pointer;
-      transition: all 0.2s ease;
       text-align: center;
+      transition: all 0.2s ease;
       white-space: nowrap;
     }
     .sub-tab-btn.active {
       background: #ffffff;
-      color: #1b4332;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      color: var(--green-dark);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
 
-    /* SECTION CARD */
-    .portal-card {
+    /* ROUTE CARD CONTAINER */
+    .route-card {
       background: var(--card-white);
       border-radius: 20px;
       padding: 16px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
-      border: 1px solid #eef2f5;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.03);
     }
-    .portal-card-header {
+    .route-card-title {
       font-size: 15px;
       font-weight: 800;
       color: #0f172a;
@@ -178,120 +176,225 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 12px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #edf2f7;
+    }
+    .route-count-pill {
+      background: #e8f5e9;
+      color: var(--green-accent);
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 800;
     }
 
-    /* TABLES MOBILE NORMALIZATION */
-    .table-responsive {
-      width: 100%;
-      overflow-x: auto;
-      border-radius: 12px;
-      border: 1px solid #edf2f7;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-    }
-    table th, table td {
-      padding: 10px 12px;
-      text-align: left;
-      border-bottom: 1px solid #edf2f7;
-    }
-    table th {
+    /* CARD ITEM IN ROUTE */
+    .doc-wo-item {
       background: #f8fafc;
-      color: #475569;
-      font-weight: 700;
-      font-size: 11px;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .doc-wo-item:hover {
+      border-color: var(--purple-accent);
+      background: #ffffff;
+      box-shadow: 0 4px 12px rgba(107, 70, 193, 0.08);
+    }
+    .doc-wo-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .doc-wo-name {
+      font-size: 16px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .doc-wo-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 3px;
+    }
+
+    .status-badge {
+      font-size: 10px;
+      font-weight: 800;
       text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 8px;
+    }
+    .badge-scheduled { background: #fef3c7; color: #92400e; }
+    .badge-in_progress { background: #e0f2fe; color: #0369a1; }
+    .badge-complete { background: #dcfce7; color: #166534; }
+    .badge-emergency { background: #fee2e2; color: #991b1b; }
+    .badge-urgent { background: #fef3c7; color: #92400e; }
+
+    /* MODAL SHEETS */
+    .modal-sheet-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-sheet {
+      background: #ffffff;
+      width: 100%;
+      max-width: 440px;
+      border-radius: 28px 28px 0 0;
+      padding: 24px 20px 34px;
+      animation: sheetUp 0.3s ease-out;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-top-notch {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .chip {
+      padding: 4px 12px;
+      border-radius:
+
+       20px;
+      font-size: 11px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .chip-purple { background: #f3e8ff; color: #7e22ce; }
+    .chip-green { background: #dcfce7; color: #166534; }
+    .modal-close-btn {
+      background: #f1f5f9;
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    /* 6-DIGIT OTP PIN BOX */
+    .otp-input-field {
+      width: 100%;
+      background: #ffffff;
+      border: 2px solid #cbd5e1;
+      border-radius: 16px;
+      padding: 14px;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 10px;
+      text-align: center;
+      outline: none;
+      margin: 14px 0;
+      color: #0f172a;
+    }
+    .otp-input-field:focus {
+      border-color: var(--purple-accent);
+      box-shadow: 0 0 0 3px rgba(107, 70, 193, 0.15);
+    }
+    .btn-action-primary {
+      background: var(--purple-accent);
+      color: #ffffff;
+      width: 100%;
+      padding: 14px;
+      border-radius: 16px;
+      font-size: 14px;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* LIVE COCKPIT VIEW */
+    .cockpit-view { display: flex; flex-direction: column; gap: 12px; }
+    .senior-hero-card {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+    }
+    .hero-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .hero-title h2 { font-size: 19px; font-weight: 800; color: #0f172a; }
+    .hero-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    .live-timer-card {
+      background: var(--timer-bg);
+      color: #ffffff;
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: 0 8px 24px rgba(20, 31, 24, 0.25);
+    }
+    .timer-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #86efac;
       letter-spacing: 0.5px;
     }
-    .open-doc-wo-btn, .review-btn {
-      background: #2d6a4f;
+    .timer-pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: pulse-dot 1.5s infinite;
+    }
+    .timer-main-display {
+      font-size: 38px;
+      font-weight: 800;
+      font-family: monospace;
+      letter-spacing: 2px;
       color: #ffffff;
-      border: none;
+      margin: 4px 0;
+    }
+    .timer-sub-meta { font-size: 11px; color: #94a3b8; }
+
+    /* REPORT SELECTOR CHIPS & TOGGLE */
+    .report-chips-bar {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: 10px;
+    }
+    .report-chip {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
       padding: 6px 12px;
-      border-radius: 8px;
+      border-radius: 12px;
       font-size: 11px;
       font-weight: 700;
       cursor: pointer;
       white-space: nowrap;
     }
-    .review-btn { background: #6b46c1; }
-
-    /* WORKSPACE STYLING */
-    #doctor-wo-workspace {
-      animation: slideUp 0.3s ease-out;
-    }
-    .workspace-hero {
-      background: linear-gradient(135deg, #f3e8ff 0%, #e9d8fd 100%);
-      border: 1px solid #d6bcfa;
-      border-radius: 16px;
-      padding: 14px 16px;
-      margin-bottom: 14px;
-    }
-    .workspace-hero-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4px;
-    }
-    .workspace-hero h3 {
-      font-size: 17px;
-      font-weight: 800;
-      color: #44337a;
-    }
-
-    /* PIN BOX CONTAINER */
-    .pin-auth-card {
-      background: #f8fafc;
-      border: 1.5px dashed #cbd5e1;
-      border-radius: 16px;
-      padding: 14px;
-      margin-bottom: 14px;
-      text-align: center;
-    }
-    .pin-auth-card p {
-      font-size: 12px;
-      color: #475569;
-      margin-bottom: 10px;
-    }
-    .pin-input-group {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .pin-input-group input {
-      font-size: 20px;
-      font-weight: 800;
-      letter-spacing: 4px;
-      text-align: center;
-      padding: 10px 14px;
-      border-radius: 10px;
-      border: 2px solid #cbd5e1;
-      outline: none;
-      max-width: 170px;
-      background: #ffffff;
-    }
-    .pin-input-group input:focus {
-      border-color: #6b46c1;
-      box-shadow: 0 0 0 3px rgba(107, 70, 193, 0.15);
-    }
-    .pin-input-group button {
-      background: #6b46c1;
+    .report-chip.active {
+      background: var(--purple-accent);
       color: #ffffff;
+      border-color: var(--purple-accent);
+    }
+    .btn-toggle-all-reports {
+      background: transparent;
+      color: var(--purple-accent);
       border: none;
-      padding: 11px 16px;
-      border-radius: 10px;
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 800;
       cursor: pointer;
+      padding: 4px;
     }
 
-    /* VITALS GRID */
+    /* VITALS GRID TILES */
     .vitals-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -299,16 +402,16 @@
       margin: 10px 0;
     }
     .vital-tile {
-      background: #ffffff;
-      border: 1px solid #bee3f8;
-      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
       padding: 10px 8px;
       text-align: center;
     }
     .vital-val {
       font-size: 18px;
       font-weight: 800;
-      color: #2b6cb0;
+      color: #1e5238;
     }
     .vital-lbl {
       font-size: 10px;
@@ -318,118 +421,97 @@
       font-weight: 700;
     }
 
-    /* CARE JOURNAL TIMELINE */
-    .timeline-stream {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    /* COMPARE PANEL */
+    .compare-panel {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 12px;
       margin: 10px 0;
-      max-height: 380px;
-      overflow-y: auto;
-      padding-right: 4px;
     }
-    .chat-bubble {
-      display: flex;
-      gap: 10px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      font-size: 12.5px;
-      line-height: 1.45;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
     }
-    .chat-nurse { background: #ffffff; border-left: 4px solid #3182ce; }
-    .chat-doctor { background: #ffffff; border-left: 4px solid #805ad5; }
-    .chat-family { background: #e6fffa; border-left: 4px solid #319795; }
-    .chat-icon { font-size: 20px; line-height: 1; }
-    .chat-meta {
-      font-size: 10.5px;
-      color: #718096;
-      margin-bottom: 2px;
-      font-weight: 700;
-      display: flex;
-      justify-content: space-between;
+    .compare-table th, .compare-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
     }
-    .chat-title { font-weight: 800; color: #1e293b; margin-bottom: 2px; }
-    .chat-text { color: #475569; }
-    .alert-tag {
-      background: #fed7d7;
-      color: #9b2c2c;
-      font-size: 10px;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: 700;
-      display: inline-block;
-      margin-top: 4px;
+    .compare-table th {
+      background: #edf2f7;
+      color: #475569;
+      font-weight: 800;
     }
+    .trend-improved { background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 6px; font-weight: 800; }
+    .trend-caution { background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 6px; font-weight: 800; }
 
-    /* "DOCTOR SAYS" FORM */
-    .consult-feedback-box {
+    /* FORM ("Doctor Says") */
+    .prescription-card {
       background: #faf5ff;
       border: 1px solid #d6bcfa;
-      border-radius: 16px;
+      border-radius: 20px;
       padding: 16px;
-      margin-bottom: 14px;
     }
-    .consult-feedback-box h3 {
+    .prescription-card h3 {
       font-size: 14px;
       font-weight: 800;
-      color: #6b46c1;
+      color: var(--purple-accent);
       margin-bottom: 12px;
       display: flex;
       align-items: center;
       gap: 6px;
     }
-    .form-group {
-      margin-bottom: 12px;
+    .form-group-mobile {
+      margin-bottom: 10px;
       text-align: left;
     }
-    .form-group label {
+    .form-group-mobile label {
       display: block;
       font-size: 11px;
       font-weight: 700;
       color: #475569;
       text-transform: uppercase;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
-    .form-group input, .form-group select, .form-group textarea {
+    .form-group-mobile input, .form-group-mobile textarea {
       width: 100%;
       padding: 9px 12px;
-      border: 1px solid #cbd5e1;
       border-radius: 10px;
+      border: 1px solid #cbd5e1;
       font-size: 13px;
       outline: none;
       background: #ffffff;
     }
-    .form-group input:focus, .form-group textarea:focus {
-      border-color: #6b46c1;
-      box-shadow: 0 0 0 2px rgba(107, 70, 193, 0.15);
-    }
-    .btn-save-advice {
-      background: #6b46c1;
-      color: #ffffff;
-      border: none;
-      padding: 12px;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: 800;
-      width: 100%;
-      cursor: pointer;
-      transition: background 0.15s ease;
-    }
-    .btn-save-advice:hover { background: #553c9a; }
 
-    /* BADGE COLORS */
-    .badge-yellow { background: #fef3c7; color: #92400e; }
-    .badge-green { background: #dcfce7; color: #166534; }
-    .badge-red { background: #fee2e2; color: #991b1b; }
-    .badge-blue { background: #e0f2fe; color: #0369a1; }
+    /* TIMELINE CHAT STREAM */
+    .timeline-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 10px 0;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .chat-bubble {
+      display: flex;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-size: 12px;
+      line-height: 1.4;
+      background: #ffffff;
+      border-left: 4px solid #3182ce;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+    .chat-doctor { border-left-color: #805ad5; }
+    .chat-family { border-left-color: #319795; background: #e6fffa; }
 
     .hidden { display: none !important; }
 
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.8); } }
   </style>
 </head>
 <body>
@@ -438,10 +520,10 @@
     <!-- TOP BAR WITH DOCTOR IDENTITY -->
     <div class="app-header">
       <div class="app-header-left">
-        <div class="doctor-avatar-badge" id="btn-doc-avatar" title="Attending Physician">🩺</div>
-        <div class="doctor-meta-info">
+        <div class="doc-badge-avatar" id="btn-doc-avatar">🩺</div>
+        <div class="doc-info">
           <h4 id="user-display">Dr. Consulting Physician</h4>
-          <small>Nityaseva Teleconsultation Desk</small>
+          <small id="doc-id-display">DOC-XXXX</small>
         </div>
       </div>
       <button id="btn-logout" class="btn-logout-mini">Logout</button>
@@ -455,217 +537,195 @@
 
     <!-- CLINICAL REGULATORY DISCLAIMER NOTICE -->
     <div class="disclaimer-banner">
-      <strong>⚠️ Clinical Decision Support Notice:</strong> This portal displays home vitals and nurse observation streams. It is an informational dashboard for registered physicians to deliver teleconsult advice. Final prescription decisions remain with the consulting physician.
+      <strong>⚠️ Clinical Decision Support Notice:</strong> Informational teleconsultation dashboard for registered physicians. Final diagnostic conclusions remain with the attending physician.
     </div>
 
-    <!-- 3-WAY SUB-NAV TABS: PENDING vs COMPLETED vs ESCALATIONS -->
-    <div class="sub-tabs-container">
-      <button class="sub-tab-btn active" id="tab-btn-pending" type="button">⏳ Pending</button>
-      <button class="sub-tab-btn" id="tab-btn-complete" type="button">✅ Completed</button>
-      <button class="sub-tab-btn" id="tab-btn-queue" type="button">🚨 Escalations</button>
+    <!-- 3-WAY SUB-NAV TABS -->
+    <div class="sub-tabs-bar">
+      <button class="sub-tab-btn active" id="tab-btn-pending" type="button">⏳ Pending (<span id="count-pending">0</span>)</button>
+      <button class="sub-tab-btn" id="tab-btn-complete" type="button">✅ Completed (<span id="count-complete">0</span>)</button>
+      <button class="sub-tab-btn" id="tab-btn-queue" type="button">🚨 Escalations (<span id="count-queue">0</span>)</button>
     </div>
 
-    <!-- TAB 1: PENDING / ACTIVE TELECONSULTS (SCHEDULED / IN_PROGRESS) -->
-    <div id="tab-content-pending" class="portal-card">
-      <div class="portal-card-header">
+    <!-- ROUTE VIEW 1: PENDING / SCHEDULED / IN_PROGRESS TELECONSULTS -->
+    <div id="view-pending" class="route-card">
+      <div class="route-card-title">
         <span>Active & Scheduled Teleconsults</span>
-        <span class="badge badge-yellow" id="badge-pending-count">0</span>
+        <span class="route-count-pill" id="badge-pending-pill">0 Consults</span>
       </div>
-      <div class="table-responsive">
-        <table id="doctor-wo-table-pending">
-          <thead>
-            <tr>
-              <th>WO ID</th>
-              <th>Senior Patient</th>
-              <th>Scheduled Time</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td colspan="5" style="text-align:center; padding:18px; color:#718096;">Loading active consultations...</td></tr>
-          </tbody>
-        </table>
+      <div id="pending-list-container">
+        <p style="text-align:center; color:#94a3b8; font-size:13px; padding:20px 0;">Loading assigned consultations...</p>
       </div>
     </div>
 
-    <!-- TAB 2: COMPLETED TELECONSULTS (COMPLETE / CLOSE) -->
-    <div id="tab-content-complete" class="portal-card hidden">
-      <div class="portal-card-header">
-        <span>Completed Teleconsults</span>
-        <span class="badge badge-green" id="badge-complete-count">0</span>
+    <!-- ROUTE VIEW 2: COMPLETED TELECONSULTS -->
+    <div id="view-complete" class="route-card hidden">
+      <div class="route-card-title">
+        <span>Completed Teleconsultations</span>
+        <span class="route-count-pill" id="badge-complete-pill" style="background:#e0f2fe; color:#0369a1;">0 Closed</span>
       </div>
-      <div class="table-responsive">
-        <table id="doctor-wo-table-complete">
-          <thead>
-            <tr>
-              <th>WO ID</th>
-              <th>Senior Patient</th>
-              <th>Concluded Date</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td colspan="5" style="text-align:center; padding:18px; color:#718096;">Loading completed consultations...</td></tr>
-          </tbody>
-        </table>
+      <div id="complete-list-container">
+        <p style="text-align:center; color:#94a3b8; font-size:13px; padding:20px 0;">No completed consultations on record.</p>
       </div>
     </div>
 
-    <!-- TAB 3: PENDING CLINICAL ESCALATIONS FROM NURSES -->
-    <div id="tab-content-queue" class="portal-card hidden">
-      <div class="portal-card-header">
+    <!-- ROUTE VIEW 3: NURSE CLINICAL ESCALATIONS QUEUE -->
+    <div id="view-queue" class="route-card hidden">
+      <div class="route-card-title">
         <span>Urgent Escalations Queue</span>
-        <span class="badge badge-red" id="badge-queue-count">0</span>
+        <span class="route-count-pill" id="badge-queue-pill" style="background:#fee2e2; color:#991b1b;">0 Alerts</span>
       </div>
-      <div class="table-responsive">
-        <table id="doctor-queue-table">
-          <thead>
-            <tr>
-              <th>Review ID</th>
-              <th>Senior</th>
-              <th>Priority</th>
-              <th>Reason</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td colspan="5" style="text-align:center; padding:18px; color:#718096;">Loading queue...</td></tr>
-          </tbody>
-        </table>
+      <div id="queue-list-container">
+        <p style="text-align:center; color:#94a3b8; font-size:13px; padding:20px 0;">Loading escalations...</p>
       </div>
     </div>
 
-    <!-- ACTIVE WORKSPACE FOR SELECTED CONSULTATION -->
-    <div id="doctor-wo-workspace" class="portal-card hidden">
-      
-      <!-- HERO WORKSPACE BANNER -->
-      <div class="workspace-hero">
-        <div class="workspace-hero-top">
-          <h3>Workspace: <span id="doc-active-wo-id">--</span></h3>
-          <span id="doc-active-status" class="badge badge-yellow">SCHEDULED</span>
-        </div>
-        <p style="font-size:13px; color:#44337a; margin-top:2px;">
-          Senior Patient: <strong id="doc-active-senior">--</strong>
-        </p>
+  </div>
+
+  <!-- =========================================================
+       MODAL SHEET 1: START TELECONSULT (OTP ENTRY)
+       ========================================================= -->
+  <div id="start-consult-overlay" class="modal-sheet-overlay hidden">
+    <div class="modal-sheet">
+      <div class="modal-top-notch">
+        <span class="chip chip-purple">🔒 PIN PROTECTED</span>
+        <button class="modal-close-btn" id="btn-close-start-sheet">✕</button>
       </div>
 
-      <!-- STEP 1: START CODE VERIFICATION PIN (NUMERIC 6-DIGIT) -->
-      <div id="doc-start-step" class="pin-auth-card">
-        <p>Request the <strong>6-digit Start Code</strong> from the patient to authorize teleconsult:</p>
-        <div class="pin-input-group">
-          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="doc-input-start-code" placeholder="••••••">
-          <button id="doc-btn-verify-start" type="button">Start Teleconsult</button>
+      <h3 style="font-size:20px; font-weight:800; margin-bottom:4px; color:#0f172a;">Start Teleconsultation</h3>
+      <p style="font-size:12.5px; color:#64748b; line-height:1.4;">
+        Request the 6-digit Start PIN from <strong id="start-sheet-senior-name">the senior's</strong> family to authorize this consultation.
+      </p>
+
+      <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" 
+             class="otp-input-field" id="doc-input-start-code" placeholder="••••••">
+
+      <button class="btn-action-primary" id="doc-btn-verify-start">Authorize & Start Teleconsult</button>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       MODAL SHEET 2: DOCTOR CLINICAL COCKPIT (WORKSPACE)
+       ========================================================= -->
+  <div id="cockpit-overlay" class="modal-sheet-overlay hidden">
+    <div class="modal-sheet cockpit-view">
+      <div class="modal-top-notch">
+        <span class="chip chip-green">🩺 CLINICAL WORKSPACE</span>
+        <button class="modal-close-btn" id="btn-close-cockpit">✕</button>
+      </div>
+
+      <!-- Senior Hero Card -->
+      <div class="senior-hero-card">
+        <div class="hero-top">
+          <div class="hero-title">
+            <h2 id="cockpit-senior-name">Senior Patient</h2>
+            <div class="hero-sub" id="cockpit-wo-id">WO-XXXX • Teleconsult</div>
+          </div>
+          <span class="status-badge badge-in_progress" id="cockpit-badge-state">IN_PROGRESS</span>
         </div>
       </div>
 
-      <!-- SECTION 1: LATEST NURSE VISIT REPORT & 20-POINT VITALS -->
-      <div class="portal-card" style="border: 1px solid #bee3f8; background:#ebf8ff; margin-bottom:14px;">
-        <div class="portal-card-header" style="border-bottom:1px solid #bee3f8; color:#2b6cb0;">
-          <span>📋 Latest Nurse Home Visit & Vitals</span>
-          <small id="nurse-report-date" style="font-size:11px; color:#4a5568;"></small>
+      <!-- Live Consultation Timer -->
+      <div class="live-timer-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="timer-indicator">
+            <span class="timer-pulse-dot"></span> CONSULTATION IN PROGRESS
+          </div>
         </div>
+        <div class="timer-main-display" id="doc-live-timer-display">00:00:00</div>
+        <div class="timer-sub-meta" id="doc-timer-started-at">started --:--</div>
+      </div>
+
+      <!-- Historical Reports Selector Chips (Last 4 default + view all toggle) -->
+      <div class="route-card" style="padding:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <strong style="font-size:13px; color:#1e293b;">📋 Nurse Assessments (Last 4)</strong>
+          <button class="btn-toggle-all-reports" id="btn-toggle-reports">View All</button>
+        </div>
+        <div class="report-chips-bar" id="report-chips-container"></div>
+
+        <!-- 20-Point Vitals Grid for Selected Assessment -->
         <div id="doc-vitals-container" class="vitals-grid">
-          <div>Loading nurse visit vitals...</div>
+          <p style="color:#64748b; font-size:12px; text-align:center; padding:10px;">Select an assessment to view vitals.</p>
         </div>
-        <div id="nurse-notes-box" style="font-size:12px; color:#2d3748; background:#fff; padding:10px 12px; border-radius:8px; margin-top:8px; border-left:3px solid #3182ce;">
-          <strong>Nurse Observations:</strong> <span id="doc-nurse-notes">None recorded</span>
+        
+        <div style="font-size:12px; color:#2d3748; background:#fff; padding:10px; border-radius:10px; margin-top:8px; border-left:3px solid #3182ce;">
+          <strong>Nurse Observation:</strong> <span id="doc-nurse-notes">None recorded</span>
+        </div>
+
+        <!-- Compare Last 2 Visits Button & Slide-Down Table -->
+        <button id="btn-toggle-compare" style="background:#f1f5f9; color:#1b4332; border:1px solid #cbd5e1; padding:7px 12px; border-radius:10px; font-size:11px; font-weight:800; cursor:pointer; width:100%; margin-top:10px;">
+          ⚖️ Compare Last 2 Visits
+        </button>
+        <div id="compare-panel" class="compare-panel hidden">
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th id="cmp-label-prev">Prev</th>
+                <th id="cmp-label-curr">Current</th>
+                <th>Delta</th>
+              </tr>
+            </thead>
+            <tbody id="compare-tbody"></tbody>
+          </table>
         </div>
       </div>
 
-      <!-- SECTION 2: CHATBOT-STYLE CARE JOURNAL TIMELINE -->
-      <div class="portal-card" style="margin-bottom:14px;">
-        <div class="portal-card-header" style="color:#1b4332;">
-          <span>💬 Continuous Care Journal</span>
-          <small style="font-size:10px; color:#718096;">History</small>
-        </div>
-        <div id="doc-timeline-stream" class="timeline-stream">
-          <div>Loading care history...</div>
-        </div>
+      <!-- Continuous Care Journal Timeline -->
+      <div class="route-card" style="padding:14px;">
+        <strong style="font-size:13px; color:#1e293b;">💬 Care Journal (Chronological History)</strong>
+        <div id="doc-timeline-stream" class="timeline-stream"></div>
       </div>
 
-      <!-- SECTION 3: DOCTOR CONSULTATION NOTES & RECOMMENDATIONS ("Doctor Says") -->
-      <div class="consult-feedback-box">
+      <!-- Prescription & Doctor Clinical Advice Form ("Doctor Says") -->
+      <div class="prescription-card">
         <h3>🩺 Clinical Advice & Prescription ("Doctor Says")</h3>
         <form id="doc-consult-feedback-form">
-          <div class="form-group">
+          <div class="form-group-mobile">
             <label>Clinical Summary</label>
             <textarea id="doc-consult-summary" rows="2" placeholder="e.g. Teleconsult conducted. Patient vitals reviewed." required></textarea>
           </div>
-          <div class="form-group">
+          <div class="form-group-mobile">
             <label>Observations</label>
-            <textarea id="doc-consult-obs" rows="2" placeholder="e.g. Blood pressure moderately elevated. Condition stable."></textarea>
+            <textarea id="doc-consult-obs" rows="2" placeholder="e.g. Mild hypertension observed in nurse vitals. Condition stable."></textarea>
           </div>
-          <div class="form-group">
-            <label>Doctor Advice to Family & Nurse ("Doctor Says")</label>
+          <div class="form-group-mobile">
+            <label>Advice to Family & Nurse ("Doctor Says")</label>
             <textarea id="doc-consult-advice" rows="2" placeholder="e.g. Continue Amlodipine 5mg. Restrict sodium. Retake BP in 3 days." required></textarea>
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <div class="form-group">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div class="form-group-mobile">
               <label>Recommended Tests</label>
               <input type="text" id="doc-consult-inv" placeholder="e.g. Serum Creatinine">
             </div>
-            <div class="form-group">
+            <div class="form-group-mobile">
               <label>Follow-up Date</label>
               <input type="date" id="doc-consult-followup">
             </div>
           </div>
-          <button type="submit" class="btn-save-advice">Save Clinical Advice to Care Journal</button>
+          <button type="submit" class="btn-action-primary" style="background:#6b46c1; margin-top:4px;">
+            💾 Save Clinical Advice to Care Journal
+          </button>
         </form>
       </div>
 
-      <!-- SECTION 4: END CODE VERIFICATION (CONCLUDE CONSULTATION) -->
-      <div id="doc-end-step" class="pin-auth-card hidden" style="background:#f0fdf4; border-color:#86efac;">
-        <h4 style="margin:0 0 6px 0; color:#166534; font-size:14px;">Conclude Teleconsult (End Code)</h4>
-        <p style="margin:0 0 10px 0;">Enter the <strong>6-digit End Code</strong> provided by the patient to complete and lock this consultation:</p>
-        <div class="pin-input-group">
-          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="doc-input-end-code" placeholder="••••••">
-          <button id="doc-btn-verify-end" type="button" style="background:#166534;">Verify & Complete</button>
-        </div>
+      <!-- Conclude Teleconsult (End Code Section) -->
+      <div id="doc-end-step-box" class="route-card" style="background:#fef2f2; border:1px dashed #fca5a5; padding:16px; text-align:center;">
+        <h4 style="color:#991b1b; font-size:14px; margin-bottom:4px;">Conclude Teleconsult (End PIN)</h4>
+        <p style="font-size:12px; color:#7f1d1d; margin-bottom:10px;">
+          Enter the 6-digit End PIN provided by the patient to complete and lock this teleconsultation:
+        </p>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" 
+               class="otp-input-field" id="doc-input-end-code" placeholder="••••••" style="margin:0 0 10px 0;">
+        <button class="btn-action-primary" id="doc-btn-verify-end" style="background:#dc2626;">
+          🏁 Verify End Code & Conclude Visit
+        </button>
       </div>
-
-      <!-- CLOSE WORKSPACE BUTTON -->
-      <button id="btn-close-doc-workspace" type="button" style="background:#f1f5f9; color:#475569; border:none; padding:10px; border-radius:10px; font-size:12px; font-weight:700; width:100%; cursor:pointer; margin-top:8px;">
-        ✕ Close Workspace
-      </button>
 
     </div>
   </div>
 
   <script type="module" src="js/doctor.js"></script>
-  <script>
-    // 3-Way Sub-tab switcher logic (pure frontend toggle)
-    const btnPending = document.getElementById('tab-btn-pending');
-    const btnComplete = document.getElementById('tab-btn-complete');
-    const btnQueue = document.getElementById('tab-btn-queue');
-
-    const contentPending = document.getElementById('tab-content-pending');
-    const contentComplete = document.getElementById('tab-content-complete');
-    const contentQueue = document.getElementById('tab-content-queue');
-
-    function resetTabs() {
-      [btnPending, btnComplete, btnQueue].forEach(b => b?.classList.remove('active'));
-      [contentPending, contentComplete, contentQueue].forEach(c => c?.classList.add('hidden'));
-    }
-
-    btnPending?.addEventListener('click', () => {
-      resetTabs();
-      btnPending.classList.add('active');
-      contentPending.classList.remove('hidden');
-    });
-
-    btnComplete?.addEventListener('click', () => {
-      resetTabs();
-      btnComplete.classList.add('active');
-      contentComplete.classList.remove('hidden');
-    });
-
-    btnQueue?.addEventListener('click', () => {
-      resetTabs();
-      btnQueue.classList.add('active');
-      contentQueue.classList.remove('hidden');
-    });
-  </script>
 </body>
 </html>
