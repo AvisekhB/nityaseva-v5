@@ -4,11 +4,10 @@ import { callApi } from './dataService.js';
 let currentProfile = null;
 let allWorkOrders = [];
 let allQueue = [];
-let activeSeniorId = null;
 let activeDocWO = null;
+let activeSeniorId = null;
 let activeReviewId = null;
 
-let activeTab = 'PENDING'; // 'PENDING' | 'COMPLETE' | 'QUEUE'
 let currentAssessments = [];
 let selectedAssessmentIndex = 0;
 let showAllReportChips = false;
@@ -16,88 +15,70 @@ let showAllReportChips = false;
 let timerInterval = null;
 let visitStartTime = null;
 
-// -------------------------------------------------------------
-// SAFE DOM HELPERS
-// -------------------------------------------------------------
+// Safe DOM Helper functions
 function setText(id, text) { const el = document.getElementById(id); if (el) el.textContent = text ?? ''; }
-function setHTML(id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html ?? ''; }
 function show(id) { document.getElementById(id)?.classList.remove('hidden'); }
 function hide(id) { document.getElementById(id)?.classList.add('hidden'); }
 
 async function init() {
-  currentProfile = await requireAuth('doctor');
-  if (!currentProfile) return;
+  try {
+    currentProfile = await requireAuth('doctor');
+    if (!currentProfile) return;
 
-  setText('user-display', currentProfile.full_name || 'Dr. Physician');
-  setText('doc-id-display', currentProfile.doctor_id || currentProfile.userId || 'DOC-XXXX');
+    setText('user-display', currentProfile.full_name || 'Dr. Consulting Physician');
+    setText('doc-id-display', currentProfile.doctor_id || currentProfile.id || 'DOC-XXXX');
 
-  document.getElementById('btn-logout')?.addEventListener('click', signOut);
+    document.getElementById('btn-logout')?.addEventListener('click', signOut);
 
-  setupSubTabs();
-  setupModalDismissals();
-  wireWorkspaceActions();
-
-  await loadDoctorDashboard();
+    setupSubTabs();
+    wireWorkspaceActions();
+    await loadDoctorDashboard();
+  } catch (err) {
+    console.error('Doctor Dashboard Init Error:', err);
+    alert('Dashboard init error: ' + err.message);
+  }
 }
 
 // -------------------------------------------------------------
-// 3-WAY SUB-TAB SLICER
+// SUB-TABS (Pending / Complete / Escalations)
 // -------------------------------------------------------------
 function setupSubTabs() {
   const btnPending = document.getElementById('tab-btn-pending');
   const btnComplete = document.getElementById('tab-btn-complete');
   const btnQueue = document.getElementById('tab-btn-queue');
 
-  const vPending = document.getElementById('view-pending');
-  const vComplete = document.getElementById('view-complete');
-  const vQueue = document.getElementById('view-queue');
-
-  function resetTabs() {
-    [btnPending, btnComplete, btnQueue].forEach(b => b?.classList.remove('active'));
-    [vPending, vComplete, vQueue].forEach(v => v?.classList.add('hidden'));
-  }
+  const viewPending = document.getElementById('view-pending');
+  const viewComplete = document.getElementById('view-complete');
+  const viewQueue = document.getElementById('view-queue');
 
   btnPending?.addEventListener('click', () => {
-    resetTabs();
-    activeTab = 'PENDING';
     btnPending.classList.add('active');
-    vPending.classList.remove('hidden');
-    renderWorkOrders();
+    btnComplete?.classList.remove('active');
+    btnQueue?.classList.remove('active');
+
+    viewPending?.classList.remove('hidden');
+    viewComplete?.classList.add('hidden');
+    viewQueue?.classList.add('hidden');
   });
 
   btnComplete?.addEventListener('click', () => {
-    resetTabs();
-    activeTab = 'COMPLETE';
     btnComplete.classList.add('active');
-    vComplete.classList.remove('hidden');
-    renderWorkOrders();
+    btnPending?.classList.remove('active');
+    btnQueue?.classList.remove('active');
+
+    viewComplete?.classList.remove('hidden');
+    viewPending?.classList.add('hidden');
+    viewQueue?.classList.add('hidden');
   });
 
   btnQueue?.addEventListener('click', () => {
-    resetTabs();
-    activeTab = 'QUEUE';
     btnQueue.classList.add('active');
-    vQueue.classList.remove('hidden');
-    renderQueueList();
-  });
-}
+    btnPending?.classList.remove('active');
+    btnComplete?.classList.remove('active');
 
-function setupModalDismissals() {
-  document.getElementById('btn-close-start-sheet')?.addEventListener('click', () => hide('start-consult-overlay'));
-  document.getElementById('btn-close-cockpit')?.addEventListener('click', () => {
-    stopLiveTimer();
-    hide('cockpit-overlay');
-  });
-
-  document.getElementById('btn-toggle-compare')?.addEventListener('click', () => {
-    const box = document.getElementById('compare-panel-box');
-    if (box) box.classList.toggle('hidden');
-  });
-
-  document.getElementById('btn-toggle-all-reports')?.addEventListener('click', () => {
-    showAllReportChips = !showAllReportChips;
-    setText('btn-toggle-all-reports', showAllReportChips ? 'Show 4' : 'View All');
-    renderReportChips();
+    viewQueue?.classList.remove('hidden');
+    viewPending?.classList.add('hidden');
+    viewComplete?.classList.add('hidden');
   });
 }
 
@@ -106,13 +87,12 @@ function setupModalDismissals() {
 // -------------------------------------------------------------
 async function loadDoctorDashboard() {
   try {
-    const doctorId = currentProfile.doctor_id || currentProfile.id || '';
-    const data = await callApi('getDoctorDashboard', { doctorId });
+    const docId = currentProfile.doctor_id || currentProfile.id || '';
+    const data = await callApi('getDoctorDashboard', { doctorId: docId });
 
     allWorkOrders = data.workOrders || [];
     allQueue = data.queue || [];
 
-    // Update Counts in Sub-Tabs
     const pendingCount = allWorkOrders.filter(w => {
       const st = String(w.status || '').toUpperCase();
       return st === 'SCHEDULED' || st === 'UNSCHEDULED' || st === 'IN_PROGRESS';
@@ -154,15 +134,17 @@ function renderWorkOrders() {
   setText('badge-pending-pill', `${pendingList.length} Consults`);
   setText('badge-complete-pill', `${completeList.length} Closed`);
 
-  // Render Pending List
+  // 1. Render Pending List
   if (containerPending) {
     if (pendingList.length === 0) {
-      containerPending.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px 0; font-size:13px;">No active teleconsults scheduled today.</p>';
+      containerPending.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px 0; font-size:13px;">No active or scheduled teleconsults today.</p>';
     } else {
       containerPending.innerHTML = pendingList.map(wo => {
         const st = String(wo.status || '').toUpperCase();
         const badgeClass = st === 'IN_PROGRESS' ? 'badge-in_progress' : 'badge-scheduled';
-        const displayTime = wo.scheduled_at ? new Date(wo.scheduled_at).toLocaleString('en-IN', { dateStyle:'short', timeStyle:'short' }) : 'Pending scheduling';
+        const displayTime = wo.scheduled_at 
+          ? new Date(wo.scheduled_at).toLocaleString('en-IN', { dateStyle:'short', timeStyle:'short' }) 
+          : (wo.created_at ? new Date(wo.created_at).toLocaleString('en-IN', { dateStyle:'short', timeStyle:'short' }) : 'Pending scheduling');
 
         return `
           <div class="doc-wo-item" data-id="${wo.work_order_id}" data-action="open-wo">
@@ -178,13 +160,14 @@ function renderWorkOrders() {
     }
   }
 
-  // Render Complete List
+  // 2. Render Complete List
   if (containerComplete) {
     if (completeList.length === 0) {
       containerComplete.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px 0; font-size:13px;">No completed consultations on record.</p>';
     } else {
       containerComplete.innerHTML = completeList.map(wo => {
-        const displayTime = (wo.end_verified_at || wo.updated_at || wo.created_at) ? new Date(wo.end_verified_at || wo.updated_at || wo.created_at).toLocaleString('en-IN', { dateStyle:'short', timeStyle:'short' }) : '-';
+        const rawDate = wo.end_verified_at || wo.updated_at || wo.created_at;
+        const displayTime = rawDate ? new Date(rawDate).toLocaleString('en-IN', { dateStyle:'short', timeStyle:'short' }) : '-';
 
         return `
           <div class="doc-wo-item" data-id="${wo.work_order_id}" data-action="open-wo">
@@ -200,7 +183,7 @@ function renderWorkOrders() {
     }
   }
 
-  // Attach card click handlers
+  // Attach card click handlers across both lists
   document.querySelectorAll('[data-action="open-wo"]').forEach(card => {
     card.onclick = () => {
       const id = card.getAttribute('data-id');
@@ -216,7 +199,7 @@ function renderQueueList() {
   setText('badge-queue-pill', `${allQueue.length} Alerts`);
 
   if (allQueue.length === 0) {
-    container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px 0; font-size:13px;">No urgent escalations pending review. 🎉</p>';
+    container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px 0; font-size:13px;">No urgent escalations in queue. 🎉</p>';
     return;
   }
 
@@ -315,8 +298,7 @@ function stopLiveTimer() {
 // -------------------------------------------------------------
 async function loadPatientClinicalSummary(seniorId) {
   const vitalsBox = document.getElementById('doc-vitals-container');
-  const stream = document.getElementById('doc-timeline-stream');
-  if (vitalsBox) vitalsBox.innerHTML = '<p style="color:#64748b; font-size:12px;">Loading nurse assessments...</p>';
+  if (vitalsBox) vitalsBox.innerHTML = '<p style="color:#64748b; font-size:12px; text-align:center; padding:12px;">Loading nurse assessments...</p>';
 
   try {
     const summary = await callApi('getSeniorClinicalSummary', { seniorId });
@@ -331,7 +313,7 @@ async function loadPatientClinicalSummary(seniorId) {
     if (currentAssessments.length > 0) {
       renderVitalsForAssessment(currentAssessments[0]);
     } else {
-      if (vitalsBox) vitalsBox.innerHTML = '<p style="color:#94a3b8; font-size:12px;">No nurse assessments recorded yet.</p>';
+      if (vitalsBox) vitalsBox.innerHTML = '<p style="color:#94a3b8; font-size:12px; text-align:center; padding:12px;">No nurse assessments recorded yet.</p>';
     }
 
     // Render Care Journal timeline
@@ -364,8 +346,7 @@ function renderReportChips() {
       const idx = Number(chip.getAttribute('data-idx'));
       selectedAssessmentIndex = idx;
       renderReportChips();
-
-            renderVitalsForAssessment(currentAssessments[idx]);
+      renderVitalsForAssessment(currentAssessments[idx]);
     };
   });
 
@@ -374,6 +355,7 @@ function renderReportChips() {
 }
 
 // -------------------------------------------------------------
+//
 // RENDER 20-POINT VITALS FOR SELECTED REPORT
 // -------------------------------------------------------------
 function renderVitalsForAssessment(v) {
@@ -405,8 +387,8 @@ function renderVitalsForAssessment(v) {
     <div class="vital-tile"><div class="vital-val">${pain}</div><div class="vital-lbl">Pain Level</div></div>
     <div class="vital-tile"><div class="vital-val">${loc}</div><div class="vital-lbl">Consciousness</div></div>
     <div class="vital-tile"><div class="vital-val">${fall}</div><div class="vital-lbl">Fall Risk</div></div>
-    <div class="vital-tile"><div class="vital-val" style="font-size:14px;">${mobility}</div><div class="vital-lbl">Mobility</div></div>
-    <div class="vital-tile"><div class="vital-val" style="font-size:14px;">${v.hydration_status || 'Normal'}</div><div class="vital-lbl">Hydration</div></div>
+    <div class="vital-tile"><div class="vital-val" style="font-size:13px;">${mobility}</div><div class="vital-lbl">Mobility</div></div>
+    <div class="vital-tile"><div class="vital-val" style="font-size:13px;">${v.hydration_status || 'Normal'}</div><div class="vital-lbl">Hydration</div></div>
   `;
 
   setText('doc-nurse-notes', v.nurse_notes || 'No specific notes recorded for this visit.');
@@ -420,7 +402,6 @@ function updateCompareTable() {
   if (!tbody) return;
 
   const curr = currentAssessments[selectedAssessmentIndex];
-  // Previous is the next item in the chronological reverse list
   const prev = currentAssessments[selectedAssessmentIndex + 1];
 
   if (!curr || !prev) {
@@ -612,10 +593,8 @@ function wireWorkspaceActions() {
       alert('✅ Clinical prescription saved to the Patient Care Journal!');
       document.getElementById('doc-consult-feedback-form').reset();
 
-      // Refresh care journal timeline in cockpit
       await loadPatientClinicalSummary(activeSeniorId);
 
-      // Unhide the End Code box if hidden
       const endBox = document.getElementById('doc-end-step-box');
       if (endBox) endBox.classList.remove('hidden');
 
@@ -663,6 +642,31 @@ function wireWorkspaceActions() {
     } finally {
       btn.disabled = false;
       btn.textContent = 'Verify End Code & Conclude Visit';
+    }
+  });
+
+  // 4. Modal Close Buttons (Universal wiring)
+  document.getElementById('btn-close-start-sheet')?.addEventListener('click', () => hide('start-consult-overlay'));
+  document.getElementById('btn-close-cockpit')?.addEventListener('click', () => {
+    stopLiveTimer();
+    hide('cockpit-overlay');
+  });
+
+  // 5. Toggle All Historical Report Chips
+  document.getElementById('btn-toggle-reports')?.addEventListener('click', () => {
+    showAllReportChips = !showAllReportChips;
+    const btn = document.getElementById('btn-toggle-reports');
+    if (btn) btn.textContent = showAllReportChips ? 'Show Recent 4' : 'View All';
+    renderReportChips();
+  });
+
+  // 6. Compare Panel Toggle Button
+  document.getElementById('btn-toggle-compare')?.addEventListener('click', () => {
+    const panel = document.getElementById('compare-panel');
+    const btn = document.getElementById('btn-toggle-compare');
+    if (panel) {
+      panel.classList.toggle('hidden');
+      if (btn) btn.textContent = panel.classList.contains('hidden') ? '⚖️ Compare Last 2 Visits' : '✕ Hide Comparison';
     }
   });
 }
