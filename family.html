@@ -515,6 +515,53 @@
   </a>
 
   <main>
+    <!-- HOSPITAL COORDINATION & ESCORT BOOKING -->
+<div class="card">
+  <h2>🏥 Hospital Coordination & Escort Services</h2>
+  <div class="disclaimer-banner compact">
+    <strong>⚠️ Not an emergency service.</strong> For life-threatening symptoms, call <strong>112</strong> immediately.
+    Pricing shown is illustrative; doctor fees, tests & medicines are excluded.
+  </div>
+
+  <form id="hospital-request-form" style="margin-top:14px;">
+    <div class="grid">
+      <div class="form-group">
+        <label>Service Type</label>
+        <select id="hsv-type" required>
+          <option value="HOSPITAL_COORDINATION">📞 Hospital Coordination (Remote) — ~₹499</option>
+          <option value="HOSPITAL_ESCORT">🏥 Hospital Visit Escort (In-Person) — ~₹699</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Preferred Hospital (if known)</label>
+        <input type="text" id="hsv-hospital" placeholder="e.g. Apollo, AMRI...">
+      </div>
+      <div class="form-group">
+        <label>Specialty Needed</label>
+        <input type="text" id="hsv-specialty" placeholder="e.g. Cardiology, Orthopedics">
+      </div>
+      <div class="form-group">
+        <label>Preferred Date</label>
+        <input type="date" id="hsv-date" required>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Additional Notes</label>
+      <textarea id="hsv-notes" rows="2" placeholder="Any specific requirement or symptom context..."></textarea>
+    </div>
+    <button type="submit">Request Hospital Service</button>
+  </form>
+  <div id="hsv-result" class="message hidden" style="margin-top:12px;"></div>
+
+  <h3 style="margin-top:20px; font-size:15px; color:#1e5238;">My Hospital Service Requests</h3>
+  <table id="family-hospital-services-table">
+    <thead>
+      <tr><th>Service ID</th><th>Type</th><th>Hospital</th><th>Status</th></tr>
+    </thead>
+    <tbody><tr><td colspan="4">Loading...</td></tr></tbody>
+  </table>
+</div>
+
     <!-- EMERGENCY SOS NOTIFICATION BANNER -->
     <div class="emergency-banner">
       <div class="emergency-text">
