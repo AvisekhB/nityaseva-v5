@@ -79,6 +79,9 @@ async function loadAdminDashboard() {
     renderReviews(allData.reviews || []);
     renderAudit(allData.logs || []);
 
+    await loadCoordinators();        // 👈 ADD THIS
+    await loadHospitalServices();    // 👈 ADD THIS
+    
     setupTableSortAndSearch();
   } catch (err) {
     console.error('Dashboard load error:', err);
@@ -583,3 +586,209 @@ init().catch(err => {
   console.error('INIT FAILED:', err);
   alert('Dashboard initialization failed: ' + err.message);
 });
+// =================================================================
+// COORDINATORS MODULE
+// =================================================================
+
+async function loadCoordinators() {
+  const tbody = document.querySelector('#admin-coordinators-table tbody');
+  if (!tbody) return;
+
+  try {
+    const data = await callApi('adminGetCoordinators');
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:16px;">No coordinators added yet.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.map(c => {
+      const statusBadge = String(c.status).toUpperCase() === 'ACTIVE'
+        ? '<span class="badge badge-complete">ACTIVE</span>'
+        : '<span class="badge badge-cancelled">INACTIVE</span>';
+
+      return `
+        <tr>
+          <td><strong>${c.coordinator_id}</strong></td>
+          <td>${c.full_name}</td>
+          <td>${c.phone || '-'}</td>
+          <td>${c.email}</td>
+          <td>${c.role || 'Care Coordinator'}</td>
+          <td>
+            ${statusBadge}
+            <button class="sort-btn toggle-crd-status" data-id="${c.coordinator_id}" data-current="${c.status}" style="margin-left:8px;">
+              ${String(c.status).toUpperCase() === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    // Wire status toggle buttons
+    tbody.querySelectorAll('.toggle-crd-status').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        const current = btn.getAttribute('data-current');
+        const newStatus = current === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+
+        try {
+          await callApi('adminUpdateCoordinatorStatus', { coordinatorId: id, status: newStatus });
+          await loadCoordinators();
+        } catch (err) {
+          alert('Error updating status: ' + err.message);
+        }
+      });
+    });
+
+  } catch (err) {
+    console.error('Coordinator load error:', err);
+    tbody.innerHTML = `<tr><td colspan="6" style="color:red;">Error: ${err.message}</td></tr>`;
+  }
+}
+
+// Wire "Add New Coordinator" form submission
+document.getElementById('create-coordinator-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type="submit"]');
+  btn.disabled = true;
+  btn.textContent = 'Adding...';
+
+  try {
+    await callApi('adminCreateCoordinator', {
+      fullName: document.getElementById('crd-name').value.trim(),
+      phone: document.getElementById('crd-phone').value.trim(),
+      email: document.getElementById('crd-email').value.trim(),
+      role: document.getElementById('crd-role').value.trim()
+    });
+
+    alert('✅ Coordinator added successfully!');
+    document.getElementById('create-coordinator-form').reset();
+    document.getElementById('crd-role').value = 'Care Coordinator';
+    await loadCoordinators();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Add Coordinator';
+  }
+});
+
+// =================================================================
+// HOSPITAL COORDINATION & ESCORT SERVICES MODULE
+// =================================================================
+
+async function loadHospitalServices() {
+  const tbody = document.querySelector('#admin-hospital-services-table tbody');
+  if (!tbody) return;
+
+  try {
+    const data = await callApi('getHospitalServices', {});
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:16px;">No hospital service bookings yet.</td></tr>';
+      return;
+    }
+
+    // Sort newest first
+    const sorted = [...data].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
+    tbody.innerHTML = sorted.map(s => {
+      const typeLabel = s.service_type === 'HOSPITAL_ESCORT'
+        ? '<span class="badge badge-doctor-consult">🏥 Escort</span>'
+        : '<span class="badge badge-nurse-visit">📞 Coordination</span>';
+
+      const statusClass = {
+        'REQUESTED': 'badge-scheduled',
+        'CONFIRMED': 'badge-in-progress',
+        'IN_PROGRESS': 'badge-in-progress',
+        'COMPLETED': 'badge-complete',
+        'CANCELLED': 'badge-cancelled'
+      }[s.status] || 'badge-scheduled';
+
+      const assignedTo = s.assigned_staff_id
+        ? `Staff: ${getStaffName ? getStaffName(s.assigned_staff_id) : s.assigned_staff_id}`
+        : (s.assigned_coordinator_id ? `Coord: ${s.assigned_coordinator_id}` : '-');
+
+      // Action buttons based on current status
+      let actionBtns = '';
+      if (s.status === 'REQUESTED') {
+        actionBtns = `<button class="sort-btn btn-confirm-hospital" data-id="${s.service_id}">Confirm</button>`;
+      } else if (s.status === 'CONFIRMED' && s.service_type === 'HOSPITAL_ESCORT') {
+        actionBtns = `<button class="sort-btn btn-assign-escort" data-id="${s.service_id}">Assign Staff</button>`;
+      } else if (s.status === 'IN_PROGRESS' || s.status === 'CONFIRMED') {
+        actionBtns = `<button class="sort-btn btn-complete-hospital" data-id="${s.service_id}">Mark Complete</button>`;
+      }
+
+      return `
+        <tr>
+          <td><strong>${s.service_id}</strong></td>
+          <td>${getSeniorName ? getSeniorName(s.senior_id) : s.senior_id}</td>
+          <td>${typeLabel}</td>
+          <td>${s.preferred_hospital || '<em>Not set</em>'}</td>
+          <td><span class="badge ${statusClass}">${s.status}</span></td>
+          <td>${assignedTo}<br>${actionBtns}</td>
+        </tr>
+      `;
+    }).join('');
+
+    // Wire action buttons
+    tbody.querySelectorAll('.btn-confirm-hospital').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const hospitalName = prompt('Enter hospital name to confirm appointment:');
+        if (!hospitalName) return;
+
+        try {
+          await callApi('coordinatorConfirmHospitalAppointment', {
+            serviceId: btn.getAttribute('data-id'),
+            hospitalName: hospitalName,
+            appointmentDate: ''
+          });
+          alert('✅ Appointment confirmed & checklist email sent to family.');
+          await loadHospitalServices();
+        } catch (err) {
+          alert('Error: ' + err.message);
+        }
+      });
+    });
+
+    tbody.querySelectorAll('.btn-assign-escort').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const staffId = prompt('Enter Staff ID to assign as escort (e.g., STF-001):');
+        if (!staffId) return;
+
+        try {
+          await callApi('coordinatorAssignEscortStaff', {
+            serviceId: btn.getAttribute('data-id'),
+            staffId: staffId.trim(),
+            pickupTime: '',
+            travelArranged: true
+          });
+          alert('✅ Escort staff assigned.');
+          await loadHospitalServices();
+        } catch (err) {
+          alert('Error: ' + err.message);
+        }
+      });
+    });
+
+    tbody.querySelectorAll('.btn-complete-hospital').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Mark this hospital service as COMPLETED?\n\nNote: This marks the task complete — it does NOT mean treatment is completed.')) return;
+
+        try {
+          const res = await callApi('markHospitalServiceComplete', {
+            serviceId: btn.getAttribute('data-id')
+          });
+          alert('✅ ' + (res.note || 'Service marked complete.'));
+          await loadHospitalServices();
+        } catch (err) {
+          alert('Error: ' + err.message);
+        }
+      });
+    });
+
+  } catch (err) {
+    console.error('Hospital services load error:', err);
+    tbody.innerHTML = `<tr><td colspan="6" style="color:red;">Error: ${err.message}</td></tr>`;
+  }
+}
