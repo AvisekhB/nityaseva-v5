@@ -673,6 +673,26 @@ document.getElementById('create-coordinator-form')?.addEventListener('submit', a
   }
 });
 
+
+
+
+document.getElementById('admin-raise-hospital-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    const res = await callApi('createHospitalServiceRequest', {
+      seniorId: document.getElementById('hsv-admin-senior').value,
+      serviceType: document.getElementById('hsv-admin-type').value,
+      preferredHospital: document.getElementById('hsv-admin-hospital').value.trim(),
+      requestedDate: document.getElementById('hsv-admin-date').value
+    });
+    alert('✅ Booking raised! Service ID: ' + res.serviceId);
+    e.target.reset();
+    await loadHospitalServices();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+});
+
 // =================================================================
 // HOSPITAL COORDINATION & ESCORT SERVICES MODULE
 // =================================================================
