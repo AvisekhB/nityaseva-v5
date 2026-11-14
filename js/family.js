@@ -600,5 +600,84 @@ if (aptForm) {
     }
   });
 }
+// =================================================================
+// HOSPITAL COORDINATION & ESCORT SERVICE REQUESTS
+// =================================================================
+
+async function loadMyHospitalServices() {
+  const tbody = document.querySelector('#family-hospital-services-table tbody');
+  if (!tbody) return;
+
+  try {
+    const seniorId = (typeof currentSeniorId !== 'undefined' && currentSeniorId)
+      ? currentSeniorId
+      : (window.currentSeniorId || '');
+
+    const data = await callApi('getHospitalServices', { seniorId });
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="color:#94a3b8;">No requests yet.</td></tr>';
+      return;
+    }
+
+    const sorted = [...data].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    tbody.innerHTML = sorted.map(s => {
+      const typeLabel = s.service_type === 'HOSPITAL_ESCORT' ? '🏥 Escort' : '📞 Coordination';
+      const statusClass = {
+        'REQUESTED': 'badge-yellow', 'CONFIRMED': 'badge-blue',
+        'IN_PROGRESS': 'badge-blue', 'COMPLETED': 'badge-green', 'CANCELLED': 'badge-red'
+      }[s.status] || 'badge-yellow';
+
+      return `<tr>
+        <td><strong>${s.service_id}</strong></td>
+        <td>${typeLabel}</td>
+        <td>${s.preferred_hospital || '-'}</td>
+        <td><span class="badge ${statusClass}">${s.status}</span></td>
+      </tr>`;
+    }).join('');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="4" style="color:red;">${err.message}</td></tr>`;
+  }
+}
+
+document.getElementById('hospital-request-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const resDiv = document.getElementById('hsv-result');
+  const btn = e.target.querySelector('button[type="submit"]');
+  btn.disabled = true;
+
+  try {
+    const seniorId = (typeof currentSeniorId !== 'undefined' && currentSeniorId)
+      ? currentSeniorId
+      : (window.currentSeniorId || currentProfile?.senior_id || '');
+
+    if (!seniorId) throw new Error('No senior linked to this account.');
+
+    const res = await callApi('createHospitalServiceRequest', {
+      seniorId: seniorId,
+      serviceType: document.getElementById('hsv-type').value,
+      preferredHospital: document.getElementById('hsv-hospital').value.trim(),
+      specialty: document.getElementById('hsv-specialty').value.trim(),
+      requestedDate: document.getElementById('hsv-date').value,
+      notes: document.getElementById('hsv-notes').value.trim(),
+      familyContact: currentProfile?.email || ''
+    });
+
+    resDiv.className = 'message success';
+    resDiv.innerHTML = `✅ Request submitted! Service ID: <strong>${res.serviceId}</strong><br>Estimated price: ₹${res.estimatedPrice} (illustrative, not final)`;
+    resDiv.classList.remove('hidden');
+    e.target.reset();
+    await loadMyHospitalServices();
+  } catch (err) {
+    resDiv.className = 'message error';
+    resDiv.textContent = 'Error: ' + err.message;
+    resDiv.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// Call this wherever your family.js already loads the dashboard
+loadMyHospitalServices();
 
 init();
