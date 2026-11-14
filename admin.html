@@ -277,6 +277,37 @@
         <div class="disclaimer-banner compact">
           <strong>⚠️ Not an emergency service.</strong> For life-threatening symptoms, call <strong>112</strong> immediately.
         </div>
+
+<div class="card">
+  <h2>Raise New Hospital Service Booking</h2>
+  <form id="admin-raise-hospital-form">
+    <div class="grid">
+      <div class="form-group">
+        <label>Senior Patient</label>
+        <select id="hsv-admin-senior" required><option value="">-- Choose Senior --</option></select>
+      </div>
+      <div class="form-group">
+        <label>Service Type</label>
+        <select id="hsv-admin-type" required>
+          <option value="HOSPITAL_COORDINATION">📞 Hospital Coordination</option>
+          <option value="HOSPITAL_ESCORT">🏥 Hospital Visit Escort</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Preferred Hospital</label>
+        <input type="text" id="hsv-admin-hospital" placeholder="e.g. Apollo">
+      </div>
+      <div class="form-group">
+        <label>Requested Date</label>
+        <input type="date" id="hsv-admin-date">
+      </div>
+    </div>
+    <button type="submit">Raise Booking</button>
+  </form>
+</div>
+
+
+        
         <table id="admin-hospital-services-table">
           <thead>
             <tr>
