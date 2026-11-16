@@ -203,11 +203,16 @@ async function loadDashboard() {
     visitsCurrentPage = 1;
     renderVisitsTable();
 
+    // 5. Hospital & Companion Services (Outings/Errands)
+    await loadMyHospitalServices();
+    await loadCompanionServicesForFamily();   // 👈 ADDED HERE
+
   } catch (err) {
     console.error('loadDashboard error:', err);
     alert('Failed to load dashboard: ' + err.message);
   }
 }
+
 
 // -------------------------------------------------------------
 // BIND ALL 20 CLINICAL ASSESSMENT INDICATORS (SAFE SETTERS)
@@ -780,6 +785,7 @@ async function loadCompanionServicesForFamily() {
   }
 }
 
+
 // Call this inside your existing loadDashboard() function in family.js
 // loadCompanionServicesForFamily();
 
@@ -787,3 +793,4 @@ async function loadCompanionServicesForFamily() {
 loadMyHospitalServices();
 
 init();
+
