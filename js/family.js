@@ -676,6 +676,112 @@ document.getElementById('hospital-request-form')?.addEventListener('submit', asy
     btn.disabled = false;
   }
 });
+// =================================================================
+// COMPANION SERVICES — OUTINGS & ERRANDS (FAMILY SIDE)
+// =================================================================
+
+// Show "Items to Pickup" field only for pickup-type services
+document.getElementById('companion-type')?.addEventListener('change', (e) => {
+  const itemsWrapper = document.getElementById('companion-items-wrapper');
+  const pickupTypes = ['MEDICINE_PICKUP', 'MEDICAL_REPORT_PICKUP', 'SHOPPING_GROCERIES'];
+  if (itemsWrapper) {
+    itemsWrapper.style.display = pickupTypes.includes(e.target.value) ? 'block' : 'none';
+  }
+});
+
+document.getElementById('companion-request-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const resultDiv = document.getElementById('companion-result');
+  const btn = e.target.querySelector('button[type="submit"]');
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting Request...'; }
+
+  try {
+    const companionType = document.getElementById('companion-type').value;
+    if (!companionType) {
+      alert('Please select a service type.');
+      return;
+    }
+
+    const res = await callApi('createCompanionServiceRequest', {
+      seniorId: currentSeniorId,
+      companionType: companionType,
+      destination: document.getElementById('companion-destination').value.trim(),
+      requestedDate: document.getElementById('companion-date').value,
+      pickupTime: document.getElementById('companion-pickup-time').value,
+      itemsList: document.getElementById('companion-items-list').value.trim(),
+      travelPayer: document.getElementById('companion-travel-payer').value,
+      notes: document.getElementById('companion-notes').value.trim(),
+      familyContact: currentProfile?.email || ''
+    });
+
+    resultDiv.className = 'message success';
+    resultDiv.innerHTML = `✅ <strong>Request Submitted!</strong> Service ID: <code>${res.serviceId}</code><br>Estimated Price: ₹${res.estimatedPrice} <em>(illustrative, subject to final confirmation)</em>`;
+    resultDiv.classList.remove('hidden');
+
+    e.target.reset();
+    document.getElementById('companion-items-wrapper').style.display = 'none';
+    await loadCompanionServicesForFamily();
+
+  } catch (err) {
+    resultDiv.className = 'message error';
+    resultDiv.textContent = 'Error: ' + err.message;
+    resultDiv.classList.remove('hidden');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Request Companion Service'; }
+  }
+});
+
+async function loadCompanionServicesForFamily() {
+  const tbody = document.querySelector('#family-companion-table tbody');
+  if (!tbody || !currentSeniorId) return;
+
+  try {
+    const data = await callApi('getCompanionServices', { seniorId: currentSeniorId });
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8;">No requests yet.</td></tr>';
+      return;
+    }
+
+    const typeLabels = {
+      'OUTINGS': 'Outings',
+      'BANK_WORK': 'Bank Work',
+      'HOSPITAL_TRIP': 'Hospital Trip',
+      'SHOPPING_GROCERIES': 'Shopping/Groceries',
+      'RAILWAY_BUS_DROP': 'Railway/Bus Drop',
+      'MEDICINE_PICKUP': 'Medicine Pickup',
+      'MEDICAL_REPORT_PICKUP': 'Report Pickup'
+    };
+
+    const sorted = [...data].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
+    tbody.innerHTML = sorted.map(s => {
+      const statusColor = {
+        'REQUESTED': 'badge-scheduled',
+        'CONFIRMED': 'badge-in-progress',
+        'IN_PROGRESS': 'badge-in-progress',
+        'COMPLETED': 'badge-complete',
+        'CANCELLED': 'badge-cancelled'
+      }[s.status] || 'badge-scheduled';
+
+      return `
+        <tr>
+          <td><strong>${s.service_id}</strong></td>
+          <td>${typeLabels[s.companion_type] || s.companion_type}</td>
+          <td>${s.destination || '-'}</td>
+          <td><span class="badge ${statusColor}">${s.status}</span></td>
+          <td>${s.requested_date || '-'}</td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="5" style="color:red;">Error: ${err.message}</td></tr>`;
+  }
+}
+
+// Call this inside your existing loadDashboard() function in family.js
+// loadCompanionServicesForFamily();
 
 // Call this wherever your family.js already loads the dashboard
 loadMyHospitalServices();
