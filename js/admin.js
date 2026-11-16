@@ -812,3 +812,111 @@ async function loadHospitalServices() {
     tbody.innerHTML = `<tr><td colspan="6" style="color:red;">Error: ${err.message}</td></tr>`;
   }
 }
+// =================================================================
+// COMPANION SERVICES MODULE (Outings & Errands)
+// =================================================================
+
+async function loadCompanionServices() {
+  const tbody = document.querySelector('#admin-companion-services-table tbody');
+  if (!tbody) return;
+
+  try {
+    const data = await callApi('getCompanionServices', {});
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:16px;">No companion service bookings yet.</td></tr>';
+      return;
+    }
+
+    const typeLabels = {
+      'OUTINGS': '🚶 Outings',
+      'BANK_WORK': '🏦 Bank Work',
+      'HOSPITAL_TRIP': '🏥 Hospital Trip',
+      'SHOPPING_GROCERIES': '🛒 Shopping/Groceries',
+      'RAILWAY_BUS_DROP': '🚉 Railway/Bus Drop',
+      'MEDICINE_PICKUP': '💊 Medicine Pickup',
+      'MEDICAL_REPORT_PICKUP': '📄 Report Pickup'
+    };
+
+    const sorted = [...data].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
+    tbody.innerHTML = sorted.map(s => {
+      const typeLabel = typeLabels[s.companion_type] || s.companion_type;
+      const statusClass = {
+        'REQUESTED': 'badge-scheduled',
+        'CONFIRMED': 'badge-in-progress',
+        'IN_PROGRESS': 'badge-in-progress',
+        'COMPLETED': 'badge-complete',
+        'CANCELLED': 'badge-cancelled'
+      }[s.status] || 'badge-scheduled';
+
+      const assignedTo = s.assigned_staff_id
+        ? `Staff: ${getStaffName ? getStaffName(s.assigned_staff_id) : s.assigned_staff_id}`
+        : '-';
+
+      let actionBtns = '';
+      if (s.status === 'REQUESTED') {
+        actionBtns = `<button class="sort-btn btn-confirm-companion" data-id="${s.service_id}">Confirm</button>`;
+      } else if (s.status === 'CONFIRMED') {
+        actionBtns = `<button class="sort-btn btn-assign-companion" data-id="${s.service_id}">Assign Staff</button>`;
+      } else if (s.status === 'IN_PROGRESS') {
+        actionBtns = `<button class="sort-btn btn-complete-companion" data-id="${s.service_id}">Mark Complete</button>`;
+      }
+
+      return `
+        <tr>
+          <td><strong>${s.service_id}</strong></td>
+          <td>${getSeniorName ? getSeniorName(s.senior_id) : s.senior_id}</td>
+          <td><span class="badge badge-doctor-consult">${typeLabel}</span></td>
+          <td>${s.destination || '<em>Not set</em>'}</td>
+          <td><span class="badge ${statusClass}">${s.status}</span></td>
+          <td>${assignedTo}<br>${actionBtns}</td>
+        </tr>
+      `;
+    }).join('');
+
+    tbody.querySelectorAll('.btn-confirm-companion').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const pickupTime = prompt('Enter pickup time (e.g., 10:00 AM):');
+        try {
+          await callApi('coordinatorConfirmCompanionService', {
+            serviceId: btn.getAttribute('data-id'),
+            pickupTime: pickupTime || ''
+          });
+          alert('✅ Service confirmed.');
+          await loadCompanionServices();
+        } catch (err) { alert('Error: ' + err.message); }
+      });
+    });
+
+    tbody.querySelectorAll('.btn-assign-companion').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const staffId = prompt('Enter Staff ID to assign (e.g., STF-001):');
+        if (!staffId) return;
+        try {
+          await callApi('coordinatorAssignCompanionStaff', {
+            serviceId: btn.getAttribute('data-id'),
+            staffId: staffId.trim()
+          });
+          alert('✅ Staff assigned.');
+          await loadCompanionServices();
+        } catch (err) { alert('Error: ' + err.message); }
+      });
+    });
+
+    tbody.querySelectorAll('.btn-complete-companion').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Mark this errand/outing as COMPLETED?')) return;
+        try {
+          const res = await callApi('markCompanionServiceComplete', { serviceId: btn.getAttribute('data-id') });
+          alert('✅ ' + (res.note || 'Marked complete.'));
+          await loadCompanionServices();
+        } catch (err) { alert('Error: ' + err.message); }
+      });
+    });
+
+  } catch (err) {
+    console.error('Companion services load error:', err);
+    tbody.innerHTML = `<tr><td colspan="6" style="color:red;">Error: ${err.message}</td></tr>`;
+  }
+}
