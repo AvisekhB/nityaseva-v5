@@ -515,6 +515,91 @@
   </a>
 
   <main>
+
+
+
+<div class="card">
+  <h2>Request Companion for Outings & Errands</h2>
+  <div class="disclaimer-banner compact">
+    <strong>⚠️ Non-medical assistance only.</strong> For life-threatening symptoms, call <strong>112</strong>.
+  </div>
+  <form id="companion-request-form">
+    <div class="form-group">
+      <label>Select Errand/Outing Type</label>
+      <select id="companion-type" required>
+        <option value="">-- Choose Service --</option>
+        <option value="OUTINGS">Outings (Park / Temple / Social Visit)</option>
+        <option value="BANK_WORK">Bank Work</option>
+        <option value="HOSPITAL_TRIP">Hospital Trip</option>
+        <option value="SHOPPING_GROCERIES">Shopping / Groceries</option>
+        <option value="RAILWAY_BUS_DROP">Railway / Bus Drop</option>
+        <option value="MEDICINE_PICKUP">Medicine Pickup</option>
+        <option value="MEDICAL_REPORT_PICKUP">Medical Report Pickup</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Destination / Location</label>
+      <input type="text" id="companion-destination" placeholder="e.g., SBI Bank, Park Street branch">
+    </div>
+    <div class="form-group">
+      <label>Preferred Date</label>
+            <input type="date" id="companion-date">
+    </div>
+    <div class="form-group">
+      <label>Preferred Pickup Time</label>
+      <input type="time" id="companion-pickup-time">
+    </div>
+    <div class="form-group" id="companion-items-wrapper" style="display:none;">
+      <label>Items to Pickup / Purchase (if applicable)</label>
+      <textarea id="companion-items-list" rows="2" placeholder="e.g., Paracetamol 500mg, Insulin, Cotton rolls"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Who Pays for Travel?</label>
+      <select id="companion-travel-payer">
+        <option value="FAMILY">Family (We will pay)</option>
+        <option value="NITYASEVA">Ask Nityaseva to arrange & bill</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Additional Notes</label>
+      <textarea id="companion-notes" rows="2" placeholder="Any special instructions"></textarea>
+    </div>
+    <button type="submit">Request Companion Service</button>
+  </form>
+  <div id="companion-result" class="message hidden" style="margin-top: 14px;"></div>
+</div>
+
+<div class="card">
+  <h2>My Companion Service Requests</h2>
+  <table id="family-companion-table">
+    <thead>
+      <tr>
+        <th>Service ID</th>
+        <th>Type</th>
+        <th>Destination</th>
+        <th>Status</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody><tr><td colspan="5">Loading...</td></tr></tbody>
+  </table>
+</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+
+
+    
     <!-- HOSPITAL COORDINATION & ESCORT BOOKING -->
 <div class="card">
   <h2>🏥 Hospital Coordination & Escort Services</h2>
