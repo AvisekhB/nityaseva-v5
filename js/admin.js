@@ -81,6 +81,7 @@ async function loadAdminDashboard() {
 
     await loadCoordinators();        // 👈 ADD THIS
     await loadHospitalServices();    // 👈 ADD THIS
+    await loadCompanionServices();   // 👈 ADD THIS
     
     setupTableSortAndSearch();
   } catch (err) {
