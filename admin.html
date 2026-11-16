@@ -270,6 +270,7 @@
         </table>
       </div>
     </div>
+      
 
     <!-- TAB: HOSPITAL COORDINATION & ESCORT SERVICES -->
     <div id="tab-hospital" class="tab-content">
@@ -327,10 +328,65 @@
 <!-- TAB: COMPANION SERVICES (OUTINGS & ERRANDS) -->
 <div id="tab-companion" class="tab-content">
   <div class="card">
-    <h2>Companion Services — Outings & Errands</h2>
+    <h2>Book Companion Service — Outings & Errands</h2>
     <div class="disclaimer-banner compact">
       <strong>⚠️ Non-medical personal assistance.</strong> Staff accompanies senior for errands — not a medical or emergency service.
     </div>
+    <form id="admin-companion-form">
+      <div class="grid">
+        <div class="form-group">
+          <label>Select Senior</label>
+          <select id="adm-cmp-senior-id" required><option value="">-- Choose Senior --</option></select>
+        </div>
+        <div class="form-group">
+          <label>Companion Service Type</label>
+          <select id="adm-cmp-type" required>
+            <option value="">-- Choose Service --</option>
+            <option value="OUTINGS">Outings (Park / Temple / Social Visit)</option>
+            <option value="BANK_WORK">Bank Work</option>
+            <option value="HOSPITAL_TRIP">Hospital Trip</option>
+            <option value="SHOPPING_GROCERIES">Shopping / Groceries</option>
+            <option value="RAILWAY_BUS_DROP">Railway / Bus Drop</option>
+            <option value="MEDICINE_PICKUP">Medicine Pickup</option>
+            <option value="MEDICAL_REPORT_PICKUP">Medical Report Pickup</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Destination / Location</label>
+          <input type="text" id="adm-cmp-destination" placeholder="e.g., SBI Bank, Park Street branch">
+        </div>
+        <div class="form-group">
+          <label>Preferred Date</label>
+          <input type="date" id="adm-cmp-date">
+        </div>
+        <div class="form-group">
+          <label>Pickup Time</label>
+          <input type="time" id="adm-cmp-pickup-time">
+        </div>
+        <div class="form-group" id="adm-cmp-items-wrapper" style="display:none;">
+          <label>Items to Pickup/Buy</label>
+          <input type="text" id="adm-cmp-items-list" placeholder="e.g., Paracetamol 500mg">
+        </div>
+        <div class="form-group">
+          <label>Assign Staff (Optional, assign now or later)</label>
+          <div class="searchable-dropdown">
+            <input type="text" id="adm-cmp-staff-search" placeholder="Type to search staff..." autocomplete="off">
+            <input type="hidden" id="adm-cmp-staff-id">
+            <div class="suggestions-list" id="adm-cmp-staff-suggestions"></div>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="adm-cmp-notes" rows="2" placeholder="Any special instructions"></textarea>
+      </div>
+      <button type="submit">Book Companion Service</button>
+    </form>
+    <div id="adm-cmp-result" class="message hidden" style="margin-top: 14px;"></div>
+  </div>
+
+  <div class="card">
+    <h2>Companion Services Directory</h2>
     <table id="admin-companion-services-table">
       <thead>
         <tr>
@@ -347,6 +403,7 @@
   </div>
 </div>
 
+    
     <!-- TAB 6: ACTIVE SUBSCRIPTIONS -->
     <div id="tab-subscriptions" class="tab-content">
       <div class="card">
