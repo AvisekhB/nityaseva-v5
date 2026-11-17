@@ -10,6 +10,7 @@ let sortState = {};
 async function init() {
   setupTabs();
   setupSlicers();
+  setupUnifiedWorkOrderFormToggles();
 
   currentProfile = await requireAuth('admin');
   if (!currentProfile) return;
@@ -56,14 +57,52 @@ function setupSlicers() {
   });
 }
 
+// =================================================================
+// UNIFIED WORK ORDER TYPE TOGGLE (Reveals Specific Details)
+// =================================================================
+function setupUnifiedWorkOrderFormToggles() {
+  const typeSelect = document.getElementById('wo-type');
+  const hospBox = document.getElementById('wo-hospital-fields');
+  const compBox = document.getElementById('wo-companion-fields');
+  const staffInput = document.getElementById('wo-staff-search');
+
+  if (!typeSelect) return;
+
+  typeSelect.addEventListener('change', () => {
+    const val = typeSelect.value;
+    const isHospital = (val === 'HospitalCoordination' || val === 'HospitalEscort');
+    const isCompanion = (val === 'CompanionService');
+
+    if (hospBox) hospBox.style.display = isHospital ? 'block' : 'none';
+    if (compBox) compBox.style.display = isCompanion ? 'block' : 'none';
+
+    // Adjust placeholder based on service
+    if (staffInput) {
+      if (val === 'DoctorConsult') {
+        staffInput.placeholder = 'Search doctor directory...';
+      } else if (val === 'NurseVisit') {
+        staffInput.placeholder = 'Search nurse/staff directory...';
+      } else if (isHospital) {
+        staffInput.placeholder = 'Search escort nurse or coordinator...';
+      } else {
+        staffInput.placeholder = 'Search companion staff...';
+      }
+    }
+  });
+}
+
 async function loadAdminDashboard() {
   try {
     const data = await callApi('getAdminDashboard');
     allData = data || {};
 
+    let coordinators = [];
+    try { coordinators = await callApi('adminGetCoordinators') || []; } catch (e) {}
+
     practitionerList = [
-      ...(allData.staff || []).map(s => ({ id: String(s.staff_id || '').trim(), name: String(s.full_name || '').trim(), type: 'Nurse' })),
-      ...(allData.doctors || []).map(d => ({ id: String(d.doctor_id || '').trim(), name: String(d.full_name || '').trim(), type: 'Doctor' }))
+      ...(allData.staff || []).map(s => ({ id: String(s.staff_id || '').trim(), name: String(s.full_name || '').trim(), type: 'Staff/Nurse' })),
+      ...(allData.doctors || []).map(d => ({ id: String(d.doctor_id || '').trim(), name: String(d.full_name || '').trim(), type: 'Doctor' })),
+      ...coordinators.map(c => ({ id: String(c.coordinator_id || '').trim(), name: String(c.full_name || '').trim(), type: 'Coordinator' }))
     ];
 
     populateSeniorDropdowns(allData.seniors || []);
@@ -79,14 +118,13 @@ async function loadAdminDashboard() {
     renderReviews(allData.reviews || []);
     renderAudit(allData.logs || []);
 
-    await loadCoordinators();        // 👈 ADD THIS
-    await loadHospitalServices();    // 👈 ADD THIS
-    await loadCompanionServices();   // 👈 ADD THIS
+    await loadCoordinators();
+    await loadHospitalServices();
+    await loadCompanionServices();
     
     setupTableSortAndSearch();
   } catch (err) {
     console.error('Dashboard load error:', err);
-    alert('Dashboard load error: ' + err.message);
   }
 }
 
@@ -101,7 +139,9 @@ function getStaffName(id) {
   if (!cleanId) return '<span style="color:#a0aec0;">Unassigned</span>';
   const p = practitionerList.find(x => x.id === cleanId);
   if (!p) return cleanId;
-  return p.type === 'Doctor' ? `🩺 Dr. ${p.name}` : `👩‍⚕️ ${p.name}`;
+  if (p.type === 'Doctor') return `🩺 Dr. ${p.name}`;
+  if (p.type === 'Coordinator') return `🧑‍💼 ${p.name}`;
+  return `👩‍⚕️ ${p.name}`;
 }
 
 function populateSeniorDropdowns(seniors) {
@@ -125,12 +165,12 @@ function setupSearchableStaffDropdown() {
     hiddenInput.value = '';
     const matches = practitionerList.filter(p => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q));
     if (matches.length === 0) {
-      box.innerHTML = '<div class="suggestion-empty">No staff found</div>';
+      box.innerHTML = '<div class="suggestion-empty">No practitioner found</div>';
     } else {
       box.innerHTML = matches.map(p => `
         <div class="suggestion-item" data-id="${p.id}" data-name="${p.name}">
-          ${p.type === 'Doctor' ? 'Dr. ' : ''}${p.name} (${p.id})
-          <span class="tag ${p.type === 'Doctor' ? 'badge-doctor-consult' : 'badge-nurse-visit'}">${p.type}</span>
+          <span>${p.type === 'Doctor' ? 'Dr. ' : ''}${p.name} (${p.id})</span>
+          <span class="tag ${p.type === 'Doctor' ? 'badge-doctor-consult' : (p.type === 'Coordinator' ? 'badge-in-progress' : 'badge-nurse-visit')}">${p.type}</span>
         </div>
       `).join('');
     }
@@ -144,10 +184,27 @@ function setupSearchableStaffDropdown() {
     searchInput.value = item.getAttribute('data-name');
     box.classList.remove('open');
   };
-
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.searchable-dropdown')) box.classList.remove('open');
   });
+}
+
+function getServiceTypeBadge(type) {
+  const t = String(type || '').trim();
+  switch (t) {
+    case 'NurseVisit':
+      return '<span class="badge badge-nurse-visit">👩‍⚕️ Nurse Visit</span>';
+    case 'DoctorConsult':
+      return '<span class="badge badge-doctor-consult">🩺 Doctor Consult</span>';
+    case 'HospitalCoordination':
+      return '<span class="badge badge-nurse-visit" style="background:#e0f2fe; color:#0369a1; border-color:#bae6fd;">📞 Hospital Coord</span>';
+    case 'HospitalEscort':
+      return '<span class="badge badge-doctor-consult" style="background:#f3e8ff; color:#7e22ce; border-color:#e9d8fd;">🏥 Hospital Escort</span>';
+    case 'CompanionService':
+      return '<span class="badge badge-scheduled" style="background:#fef3c7; color:#92400e; border-color:#fde68a;">🚗 Companion Errand</span>';
+    default:
+      return `<span class="badge badge-nurse-visit">${t}</span>`;
+  }
 }
 
 function renderWorkOrders(orders) {
@@ -156,13 +213,18 @@ function renderWorkOrders(orders) {
   tbody.innerHTML = '';
 
   let filtered = [...orders];
-  if (activeSlicer === 'SCHEDULED') filtered = filtered.filter(w => String(w.status).toUpperCase() === 'SCHEDULED' || String(w.status).toUpperCase() === 'UNSCHEDULED');
-  else if (activeSlicer === 'IN_PROGRESS') filtered = filtered.filter(w => String(w.status).toUpperCase() === 'IN_PROGRESS');
-  else if (activeSlicer === 'COMPLETE') filtered = filtered.filter(w => String(w.status).toUpperCase() === 'COMPLETE' || String(w.status).toUpperCase() === 'CLOSE');
-  else if (activeSlicer === 'CANCELLED') filtered = filtered.filter(w => String(w.status).toUpperCase() === 'CANCELLED');
+  if (activeSlicer === 'SCHEDULED') {
+    filtered = filtered.filter(w => String(w.status).toUpperCase() === 'SCHEDULED' || String(w.status).toUpperCase() === 'UNSCHEDULED');
+  } else if (activeSlicer === 'IN_PROGRESS') {
+    filtered = filtered.filter(w => String(w.status).toUpperCase() === 'IN_PROGRESS');
+  } else if (activeSlicer === 'COMPLETE') {
+    filtered = filtered.filter(w => String(w.status).toUpperCase() === 'COMPLETE' || String(w.status).toUpperCase() === 'CLOSE');
+  } else if (activeSlicer === 'CANCELLED') {
+    filtered = filtered.filter(w => String(w.status).toUpperCase() === 'CANCELLED');
+  }
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6">No work orders in this view.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:18px; color:#94a3b8;">No work orders found in this view.</td></tr>';
     return;
   }
 
@@ -171,13 +233,19 @@ function renderWorkOrders(orders) {
     const stUpper = String(wo.status || '').toUpperCase();
     const isClosed = (stUpper === 'COMPLETE' || stUpper === 'CLOSE');
     const badgeColor = isClosed ? 'badge-complete' : (stUpper === 'IN_PROGRESS' ? 'badge-in-progress' : (stUpper === 'CANCELLED' ? 'badge-cancelled' : 'badge-scheduled'));
-    const typeBadge = wo.type === 'DoctorConsult' ? 'badge-doctor-consult' : 'badge-nurse-visit';
-    const displayTime = wo.created_at ? new Date(wo.created_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : '-';
+    const displayTime = wo.scheduled_at 
+      ? new Date(wo.scheduled_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) 
+      : (wo.created_at ? new Date(wo.created_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : '-');
+
+    const assignedDisplay = wo.assigned_doctor_id 
+      ? getStaffName(wo.assigned_doctor_id) 
+      : (wo.assigned_staff_id ? getStaffName(wo.assigned_staff_id) : '<span style="color:#a0aec0;">Unassigned</span>');
 
     tr.innerHTML = `
       <td><strong>${wo.work_order_id}</strong></td>
       <td>${getSeniorName(wo.senior_id)}</td>
-      <td><span class="badge ${typeBadge}">${wo.type}</span></td>
+      <td>${getServiceTypeBadge(wo.type)}</td>
+      <td>${assignedDisplay}</td>
       <td>${displayTime}</td>
       <td><span class="badge ${badgeColor}">${wo.status}</span></td>
       <td>
@@ -191,7 +259,7 @@ function renderWorkOrders(orders) {
 
   tbody.querySelectorAll('.override-btn').forEach(btn => {
     btn.onclick = async () => {
-      const reason = prompt('Cancellation reason:');
+      const reason = prompt('State cancellation reason:');
       if (!reason) return;
       try {
         await callApi('adminOverrideWorkOrder', { workOrderId: btn.getAttribute('data-id'), newStatus: 'CANCELLED', reason });
@@ -257,7 +325,6 @@ function renderReports(reports) {
     return;
   }
 
-  // 1. Group reports by senior_id
   const grouped = {};
   reports.forEach(r => {
     const sid = String(r.senior_id || '').trim();
@@ -265,15 +332,12 @@ function renderReports(reports) {
     grouped[sid].push(r);
   });
 
-  // 2. Sort each senior's reports by date (newest first) and keep only the LAST 4
   const finalReports = [];
   Object.keys(grouped).forEach(sid => {
     const seniorReports = grouped[sid].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-    const last4 = seniorReports.slice(0, 4); // Keep last 4 only
-    finalReports.push(...last4);
+    finalReports.push(...seniorReports.slice(0, 4));
   });
 
-  // 3. Render table rows
   tbody.innerHTML = finalReports.map(r => {
     const isCareJournal = (r.file_url === 'INTERNAL_CARE_JOURNAL');
     const docLink = isCareJournal
@@ -294,7 +358,6 @@ function renderReports(reports) {
     `;
   }).join('');
 
-  // 4. Bind Share Link button actions
   tbody.querySelectorAll('.share-btn').forEach(btn => {
     btn.onclick = async () => {
       const reportId = btn.getAttribute('data-id');
@@ -406,27 +469,13 @@ function setupTableSortAndSearch() {
   });
 }
 
-document.getElementById('create-senior-form')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  try {
-    const res = await callApi('adminCreateSenior', {
-      fullName: document.getElementById('snr-name').value.trim(),
-      dob: document.getElementById('snr-dob').value,
-      phone: document.getElementById('snr-phone').value.trim(),
-      email: document.getElementById('snr-email').value.trim(),
-      address: document.getElementById('snr-address').value.trim()
-    });
-    alert('Senior Created Successfully! ID: ' + res.seniorId);
-    document.getElementById('create-senior-form').reset();
-    await loadAdminDashboard();
-  } catch (err) {
-    alert('Enrollment error: ' + err.message);
-  }
-});
-
+// =================================================================
+// UNIFIED WORK ORDER SUBMIT HANDLER (SINGLE BOOKING CHANNEL)
+// =================================================================
 document.getElementById('create-wo-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const seniorId = String(document.getElementById('wo-senior-id')?.value || '').trim();
+  const serviceType = document.getElementById('wo-type')?.value;
   const resultDiv = document.getElementById('wo-result');
   resultDiv.className = 'message hidden';
 
@@ -435,28 +484,27 @@ document.getElementById('create-wo-form')?.addEventListener('submit', async (e) 
     return;
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Clinical services require an active subscription; on-demand companion/hospital can proceed
+  const isClinical = (serviceType === 'NurseVisit' || serviceType === 'DoctorConsult');
+  if (isClinical) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  const hasActiveSub = (allData.subscriptions || []).some(s => {
-    const sId = String(s.senior_id || '').trim();
-    const st = String(s.status || '').trim().toUpperCase();
-    if (sId !== seniorId || st !== 'ACTIVE') return false;
-    if (!s.end_date) return true;
+    const hasActiveSub = (allData.subscriptions || []).some(s => {
+      const sId = String(s.senior_id || '').trim();
+      const st = String(s.status || '').trim().toUpperCase();
+      if (sId !== seniorId || st !== 'ACTIVE') return false;
+      if (!s.end_date) return true;
 
-    let exp;
-    if (s.end_date instanceof Date) {
-      exp = new Date(s.end_date.getTime());
-    } else {
-      exp = new Date(String(s.end_date).trim());
+      let exp = (s.end_date instanceof Date) ? new Date(s.end_date.getTime()) : new Date(String(s.end_date).trim());
+      exp.setHours(23, 59, 59, 999);
+      return exp >= today;
+    });
+
+    if (!hasActiveSub) {
+      alert('ALERT: Senior ' + seniorId + ' has NO Active Subscription for clinical care. Please verify in Subscriptions tab.');
+      return;
     }
-    exp.setHours(23, 59, 59, 999);
-    return exp >= today;
-  });
-
-  if (!hasActiveSub) {
-    alert('ALERT: Senior ' + seniorId + ' has NO Active Subscription. Please verify dates in Subscriptions tab.');
-    return;
   }
 
   let staffId = String(document.getElementById('wo-staff-id')?.value || '').trim();
@@ -470,26 +518,74 @@ document.getElementById('create-wo-form')?.addEventListener('submit', async (e) 
     if (match) staffId = match.id;
   }
 
-  try {
-    const scheduledVal = document.getElementById('wo-scheduled-at').value;
-    const res = await callApi('createWorkOrder', {
-      seniorId,
-      type: document.getElementById('wo-type').value,
-      scheduledAt: scheduledVal ? new Date(scheduledVal).toISOString() : new Date().toISOString(),
-      staffId: staffId
-    });
+  const scheduledVal = document.getElementById('wo-scheduled-at').value;
+  const scheduledIso = scheduledVal ? new Date(scheduledVal).toISOString() : new Date().toISOString();
 
-    resultDiv.innerHTML = `<strong>Work Order Created!</strong> ID: <code>${res.workOrderId}</code> | Start: <strong>${res.startCode}</strong> | End: <strong>${res.endCode}</strong>`;
+  // Package all service-specific params into unified payload
+  const payload = {
+    seniorId: seniorId,
+    type: serviceType,
+    scheduledAt: scheduledIso,
+    staffId: staffId,
+    notes: document.getElementById('wo-notes')?.value.trim() || '',
+    
+    // Hospital Context
+    preferredHospital: document.getElementById('wo-hsv-hospital')?.value.trim() || '',
+    specialty: document.getElementById('wo-hsv-specialty')?.value.trim() || '',
+    hospitalTravelPayer: document.getElementById('wo-hsv-travel-payer')?.value || 'FAMILY',
+
+    // Companion Context
+    companionType: document.getElementById('wo-cmp-subtype')?.value || 'OUTINGS',
+    destination: document.getElementById('wo-cmp-destination')?.value.trim() || '',
+    itemsList: document.getElementById('wo-cmp-items')?.value.trim() || '',
+    companionTravelPayer: document.getElementById('wo-cmp-travel-payer')?.value || 'FAMILY'
+  };
+
+  try {
+    const res = await callApi('createWorkOrder', payload);
+
+    let extraNote = '';
+    if (res.hospitalServiceId) extraNote = ` | Linked Hospital Svc: <code>${res.hospitalServiceId}</code>`;
+    if (res.companionServiceId) extraNote = ` | Linked Companion Svc: <code>${res.companionServiceId}</code>`;
+
+    resultDiv.innerHTML = `<strong>Work Order Created!</strong> ID: <code>${res.workOrderId}</code> | Start PIN: <strong>${res.startCode}</strong> | End PIN: <strong>${res.endCode}</strong>${extraNote}`;
     resultDiv.className = 'message success';
     resultDiv.classList.remove('hidden');
 
+    document.getElementById('create-wo-form').reset();
     document.getElementById('wo-staff-search').value = '';
     document.getElementById('wo-staff-id').value = '';
+    document.getElementById('wo-hospital-fields').style.display = 'none';
+    document.getElementById('wo-companion-fields').style.display = 'none';
+
     await loadAdminDashboard();
   } catch (err) {
     resultDiv.innerHTML = 'Error: ' + err.message;
     resultDiv.className = 'message error';
     resultDiv.classList.remove('hidden');
+  }
+});
+
+// Helper form bindings
+document.getElementById('create-senior-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    const res = await callApi('adminCreateSenior', {
+      fullName: document.getElementById('snr-name').value.trim(),
+      dob: document.getElementById('snr-dob').value,
+      phone: document.getElementById('snr-phone').value.trim(),
+      email: document.getElementById('snr-email').value.trim(),
+      address: document.getElementById('snr-address').value.trim(),
+      familyName: document.getElementById('fam-name').value.trim(),
+      familyRelation: document.getElementById('fam-rel').value.trim(),
+      familyPhone: document.getElementById('fam-phone').value.trim(),
+      familyEmail: document.getElementById('fam-email').value.trim()
+    });
+    alert('Senior & Family Linked Successfully! Senior ID: ' + res.seniorId);
+    document.getElementById('create-senior-form').reset();
+    await loadAdminDashboard();
+  } catch (err) {
+    alert('Enrollment error: ' + err.message);
   }
 });
 
@@ -533,46 +629,28 @@ document.getElementById('create-report-form')?.addEventListener('submit', async 
   }
 });
 
-// Wire the Generate Clinical Care Summary Button (Green Card)
 document.getElementById('btn-gen-care-report')?.addEventListener('click', async () => {
   const seniorSelect = document.getElementById('gen-report-senior');
   const seniorId = seniorSelect ? seniorSelect.value.trim() : '';
-
-  if (!seniorId) {
-    alert('Please choose a Senior Patient first.');
-    return;
-  }
+  if (!seniorId) return alert('Please choose a Senior Patient first.');
 
   const btn = document.getElementById('btn-gen-care-report');
   btn.disabled = true;
   btn.textContent = 'Generating Care Summary...';
 
   try {
-    const res = await callApi('generateClinicalCareReport', { seniorId: seniorId });
-
+    const res = await callApi('generateClinicalCareReport', { seniorId });
     const shareUrl = `${window.location.origin}${window.location.pathname.replace('admin.html', '')}report.html?token=${res.token}`;
-    
-    // Refresh table so the newly generated Care Journal appears in the table
     await loadAdminDashboard();
 
-    const input = prompt(
-      `72-Hour Care Summary Generated for ${res.seniorName}!\n\n` +
-      `Secure Link:\n${shareUrl}\n\n` +
-      `Type 'copy' to copy the link, or enter an email address to send it to the family/doctor:`
-    );
-
+    const input = prompt(`72-Hour Care Summary Generated for ${res.seniorName}!\n\nSecure Link:\n${shareUrl}\n\nType 'copy' to copy, or enter email to send:`);
     if (input) {
       if (input.toLowerCase() === 'copy') {
         await navigator.clipboard.writeText(shareUrl);
         alert('Link copied to clipboard!');
       } else if (input.includes('@')) {
-        await callApi('shareReportByEmail', {
-          recipientEmail: input.trim(),
-          seniorName: res.seniorName,
-          reportType: 'Clinical Assessment & Care Journal',
-          secureUrl: shareUrl
-        });
-        alert('Care report link emailed to ' + input.trim());
+        await callApi('shareReportByEmail', { recipientEmail: input.trim(), seniorName: res.seniorName, reportType: 'Clinical Assessment & Care Journal', secureUrl: shareUrl });
+        alert('Report link emailed to ' + input.trim());
       }
     }
   } catch (err) {
@@ -583,77 +661,50 @@ document.getElementById('btn-gen-care-report')?.addEventListener('click', async 
   }
 });
 
-init().catch(err => {
-  console.error('INIT FAILED:', err);
-  alert('Dashboard initialization failed: ' + err.message);
-});
-// =================================================================
-// COORDINATORS MODULE
-// =================================================================
-
 async function loadCoordinators() {
   const tbody = document.querySelector('#admin-coordinators-table tbody');
   if (!tbody) return;
-
   try {
     const data = await callApi('adminGetCoordinators');
-
     if (!data || data.length === 0) {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:16px;">No coordinators added yet.</td></tr>';
       return;
     }
+    tbody.innerHTML = data.map(c => `
+      <tr>
+        <td><strong>${c.coordinator_id}</strong></td>
+        <td>${c.full_name}</td>
+        <td>${c.phone || '-'}</td>
+        <td>${c.email}</td>
+        <td>${c.role || 'Care Coordinator'}</td>
+        <td>
+          <span class="badge ${String(c.status).toUpperCase() === 'ACTIVE' ? 'badge-complete' : 'badge-cancelled'}">${c.status}</span>
+          <button class="sort-btn toggle-crd-status" data-id="${c.coordinator_id}" data-current="${c.status}" style="margin-left:8px;">
+            ${String(c.status).toUpperCase() === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+          </button>
+        </td>
+      </tr>
+    `).join('');
 
-    tbody.innerHTML = data.map(c => {
-      const statusBadge = String(c.status).toUpperCase() === 'ACTIVE'
-        ? '<span class="badge badge-complete">ACTIVE</span>'
-        : '<span class="badge badge-cancelled">INACTIVE</span>';
-
-      return `
-        <tr>
-          <td><strong>${c.coordinator_id}</strong></td>
-          <td>${c.full_name}</td>
-          <td>${c.phone || '-'}</td>
-          <td>${c.email}</td>
-          <td>${c.role || 'Care Coordinator'}</td>
-          <td>
-            ${statusBadge}
-            <button class="sort-btn toggle-crd-status" data-id="${c.coordinator_id}" data-current="${c.status}" style="margin-left:8px;">
-              ${String(c.status).toUpperCase() === 'ACTIVE' ? 'Deactivate' : 'Activate'}
-            </button>
-          </td>
-        </tr>
-      `;
-    }).join('');
-
-    // Wire status toggle buttons
     tbody.querySelectorAll('.toggle-crd-status').forEach(btn => {
-      btn.addEventListener('click', async () => {
+      btn.onclick = async () => {
         const id = btn.getAttribute('data-id');
         const current = btn.getAttribute('data-current');
-        const newStatus = current === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-
         try {
-          await callApi('adminUpdateCoordinatorStatus', { coordinatorId: id, status: newStatus });
+          await callApi('adminUpdateCoordinatorStatus', { coordinatorId: id, status: current === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' });
           await loadCoordinators();
         } catch (err) {
-          alert('Error updating status: ' + err.message);
+          alert('Error: ' + err.message);
         }
-      });
+      };
     });
-
   } catch (err) {
-    console.error('Coordinator load error:', err);
     tbody.innerHTML = `<tr><td colspan="6" style="color:red;">Error: ${err.message}</td></tr>`;
   }
 }
 
-// Wire "Add New Coordinator" form submission
 document.getElementById('create-coordinator-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const btn = e.target.querySelector('button[type="submit"]');
-  btn.disabled = true;
-  btn.textContent = 'Adding...';
-
   try {
     await callApi('adminCreateCoordinator', {
       fullName: document.getElementById('crd-name').value.trim(),
@@ -661,263 +712,62 @@ document.getElementById('create-coordinator-form')?.addEventListener('submit', a
       email: document.getElementById('crd-email').value.trim(),
       role: document.getElementById('crd-role').value.trim()
     });
-
     alert('✅ Coordinator added successfully!');
     document.getElementById('create-coordinator-form').reset();
-    document.getElementById('crd-role').value = 'Care Coordinator';
     await loadCoordinators();
   } catch (err) {
     alert('Error: ' + err.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Add Coordinator';
   }
 });
-
-
-
-
-document.getElementById('admin-raise-hospital-form')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  try {
-    const res = await callApi('createHospitalServiceRequest', {
-      seniorId: document.getElementById('hsv-admin-senior').value,
-      serviceType: document.getElementById('hsv-admin-type').value,
-      preferredHospital: document.getElementById('hsv-admin-hospital').value.trim(),
-      requestedDate: document.getElementById('hsv-admin-date').value
-    });
-    alert('✅ Booking raised! Service ID: ' + res.serviceId);
-    e.target.reset();
-    await loadHospitalServices();
-  } catch (err) {
-    alert('Error: ' + err.message);
-  }
-});
-
-// =================================================================
-// HOSPITAL COORDINATION & ESCORT SERVICES MODULE
-// =================================================================
 
 async function loadHospitalServices() {
   const tbody = document.querySelector('#admin-hospital-services-table tbody');
   if (!tbody) return;
-
   try {
     const data = await callApi('getHospitalServices', {});
-
     if (!data || data.length === 0) {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:16px;">No hospital service bookings yet.</td></tr>';
       return;
     }
-
-    // Sort newest first
     const sorted = [...data].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-
-    tbody.innerHTML = sorted.map(s => {
-      const typeLabel = s.service_type === 'HOSPITAL_ESCORT'
-        ? '<span class="badge badge-doctor-consult">🏥 Escort</span>'
-        : '<span class="badge badge-nurse-visit">📞 Coordination</span>';
-
-      const statusClass = {
-        'REQUESTED': 'badge-scheduled',
-        'CONFIRMED': 'badge-in-progress',
-        'IN_PROGRESS': 'badge-in-progress',
-        'COMPLETED': 'badge-complete',
-        'CANCELLED': 'badge-cancelled'
-      }[s.status] || 'badge-scheduled';
-
-      const assignedTo = s.assigned_staff_id
-        ? `Staff: ${getStaffName ? getStaffName(s.assigned_staff_id) : s.assigned_staff_id}`
-        : (s.assigned_coordinator_id ? `Coord: ${s.assigned_coordinator_id}` : '-');
-
-      // Action buttons based on current status
-      let actionBtns = '';
-      if (s.status === 'REQUESTED') {
-        actionBtns = `<button class="sort-btn btn-confirm-hospital" data-id="${s.service_id}">Confirm</button>`;
-      } else if (s.status === 'CONFIRMED' && s.service_type === 'HOSPITAL_ESCORT') {
-        actionBtns = `<button class="sort-btn btn-assign-escort" data-id="${s.service_id}">Assign Staff</button>`;
-      } else if (s.status === 'IN_PROGRESS' || s.status === 'CONFIRMED') {
-        actionBtns = `<button class="sort-btn btn-complete-hospital" data-id="${s.service_id}">Mark Complete</button>`;
-      }
-
-      return `
-        <tr>
-          <td><strong>${s.service_id}</strong></td>
-          <td>${getSeniorName ? getSeniorName(s.senior_id) : s.senior_id}</td>
-          <td>${typeLabel}</td>
-          <td>${s.preferred_hospital || '<em>Not set</em>'}</td>
-          <td><span class="badge ${statusClass}">${s.status}</span></td>
-          <td>${assignedTo}<br>${actionBtns}</td>
-        </tr>
-      `;
-    }).join('');
-
-    // Wire action buttons
-    tbody.querySelectorAll('.btn-confirm-hospital').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const hospitalName = prompt('Enter hospital name to confirm appointment:');
-        if (!hospitalName) return;
-
-        try {
-          await callApi('coordinatorConfirmHospitalAppointment', {
-            serviceId: btn.getAttribute('data-id'),
-            hospitalName: hospitalName,
-            appointmentDate: ''
-          });
-          alert('✅ Appointment confirmed & checklist email sent to family.');
-          await loadHospitalServices();
-        } catch (err) {
-          alert('Error: ' + err.message);
-        }
-      });
-    });
-
-    tbody.querySelectorAll('.btn-assign-escort').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const staffId = prompt('Enter Staff ID to assign as escort (e.g., STF-001):');
-        if (!staffId) return;
-
-        try {
-          await callApi('coordinatorAssignEscortStaff', {
-            serviceId: btn.getAttribute('data-id'),
-            staffId: staffId.trim(),
-            pickupTime: '',
-            travelArranged: true
-          });
-          alert('✅ Escort staff assigned.');
-          await loadHospitalServices();
-        } catch (err) {
-          alert('Error: ' + err.message);
-        }
-      });
-    });
-
-    tbody.querySelectorAll('.btn-complete-hospital').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        if (!confirm('Mark this hospital service as COMPLETED?\n\nNote: This marks the task complete — it does NOT mean treatment is completed.')) return;
-
-        try {
-          const res = await callApi('markHospitalServiceComplete', {
-            serviceId: btn.getAttribute('data-id')
-          });
-          alert('✅ ' + (res.note || 'Service marked complete.'));
-          await loadHospitalServices();
-        } catch (err) {
-          alert('Error: ' + err.message);
-        }
-      });
-    });
-
+    tbody.innerHTML = sorted.map(s => `
+      <tr>
+        <td><strong>${s.service_id}</strong></td>
+        <td>${getSeniorName(s.senior_id)}</td>
+        <td><span class="badge ${s.service_type === 'HOSPITAL_ESCORT' ? 'badge-doctor-consult' : 'badge-nurse-visit'}">${s.service_type === 'HOSPITAL_ESCORT' ? '🏥 Escort' : '📞 Coordination'}</span></td>
+        <td>${s.preferred_hospital || '-'}</td>
+        <td><span class="badge ${s.status === 'COMPLETED' ? 'badge-complete' : 'badge-scheduled'}">${s.status}</span></td>
+        <td>${s.assigned_staff_id ? getStaffName(s.assigned_staff_id) : (s.assigned_coordinator_id ? 'Coord: ' + s.assigned_coordinator_id : '-')}</td>
+      </tr>
+    `).join('');
   } catch (err) {
-    console.error('Hospital services load error:', err);
     tbody.innerHTML = `<tr><td colspan="6" style="color:red;">Error: ${err.message}</td></tr>`;
   }
 }
-// =================================================================
-// COMPANION SERVICES MODULE (Outings & Errands)
-// =================================================================
 
 async function loadCompanionServices() {
   const tbody = document.querySelector('#admin-companion-services-table tbody');
   if (!tbody) return;
-
   try {
     const data = await callApi('getCompanionServices', {});
-
     if (!data || data.length === 0) {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:16px;">No companion service bookings yet.</td></tr>';
       return;
     }
-
-    const typeLabels = {
-      'OUTINGS': '🚶 Outings',
-      'BANK_WORK': '🏦 Bank Work',
-      'HOSPITAL_TRIP': '🏥 Hospital Trip',
-      'SHOPPING_GROCERIES': '🛒 Shopping/Groceries',
-      'RAILWAY_BUS_DROP': '🚉 Railway/Bus Drop',
-      'MEDICINE_PICKUP': '💊 Medicine Pickup',
-      'MEDICAL_REPORT_PICKUP': '📄 Report Pickup'
-    };
-
     const sorted = [...data].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-
-    tbody.innerHTML = sorted.map(s => {
-      const typeLabel = typeLabels[s.companion_type] || s.companion_type;
-      const statusClass = {
-        'REQUESTED': 'badge-scheduled',
-        'CONFIRMED': 'badge-in-progress',
-        'IN_PROGRESS': 'badge-in-progress',
-        'COMPLETED': 'badge-complete',
-        'CANCELLED': 'badge-cancelled'
-      }[s.status] || 'badge-scheduled';
-
-      const assignedTo = s.assigned_staff_id
-        ? `Staff: ${getStaffName ? getStaffName(s.assigned_staff_id) : s.assigned_staff_id}`
-        : '-';
-
-      let actionBtns = '';
-      if (s.status === 'REQUESTED') {
-        actionBtns = `<button class="sort-btn btn-confirm-companion" data-id="${s.service_id}">Confirm</button>`;
-      } else if (s.status === 'CONFIRMED') {
-        actionBtns = `<button class="sort-btn btn-assign-companion" data-id="${s.service_id}">Assign Staff</button>`;
-      } else if (s.status === 'IN_PROGRESS') {
-        actionBtns = `<button class="sort-btn btn-complete-companion" data-id="${s.service_id}">Mark Complete</button>`;
-      }
-
-      return `
-        <tr>
-          <td><strong>${s.service_id}</strong></td>
-          <td>${getSeniorName ? getSeniorName(s.senior_id) : s.senior_id}</td>
-          <td><span class="badge badge-doctor-consult">${typeLabel}</span></td>
-          <td>${s.destination || '<em>Not set</em>'}</td>
-          <td><span class="badge ${statusClass}">${s.status}</span></td>
-          <td>${assignedTo}<br>${actionBtns}</td>
-        </tr>
-      `;
-    }).join('');
-
-    tbody.querySelectorAll('.btn-confirm-companion').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const pickupTime = prompt('Enter pickup time (e.g., 10:00 AM):');
-        try {
-          await callApi('coordinatorConfirmCompanionService', {
-            serviceId: btn.getAttribute('data-id'),
-            pickupTime: pickupTime || ''
-          });
-          alert('✅ Service confirmed.');
-          await loadCompanionServices();
-        } catch (err) { alert('Error: ' + err.message); }
-      });
-    });
-
-    tbody.querySelectorAll('.btn-assign-companion').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const staffId = prompt('Enter Staff ID to assign (e.g., STF-001):');
-        if (!staffId) return;
-        try {
-          await callApi('coordinatorAssignCompanionStaff', {
-            serviceId: btn.getAttribute('data-id'),
-            staffId: staffId.trim()
-          });
-          alert('✅ Staff assigned.');
-          await loadCompanionServices();
-        } catch (err) { alert('Error: ' + err.message); }
-      });
-    });
-
-    tbody.querySelectorAll('.btn-complete-companion').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        if (!confirm('Mark this errand/outing as COMPLETED?')) return;
-        try {
-          const res = await callApi('markCompanionServiceComplete', { serviceId: btn.getAttribute('data-id') });
-          alert('✅ ' + (res.note || 'Marked complete.'));
-          await loadCompanionServices();
-        } catch (err) { alert('Error: ' + err.message); }
-      });
-    });
-
+    tbody.innerHTML = sorted.map(s => `
+      <tr>
+        <td><strong>${s.service_id}</strong></td>
+        <td>${getSeniorName(s.senior_id)}</td>
+        <td><span class="badge badge-doctor-consult">${s.companion_type}</span></td>
+        <td>${s.destination || '-'}</td>
+        <td><span class="badge ${s.status === 'COMPLETED' ? 'badge-complete' : 'badge-scheduled'}">${s.status}</span></td>
+        <td>${s.assigned_staff_id ? getStaffName(s.assigned_staff_id) : '-'}</td>
+      </tr>
+    `).join('');
   } catch (err) {
-    console.error('Companion services load error:', err);
     tbody.innerHTML = `<tr><td colspan="6" style="color:red;">Error: ${err.message}</td></tr>`;
   }
 }
+
+init();
