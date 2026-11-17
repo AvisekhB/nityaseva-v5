@@ -2,18 +2,37 @@ import { requireAuth, signOut } from './auth.js';
 import { callApi } from './dataService.js';
 
 let currentProfile = null;
-let allData = { seniors: [], workOrders: [], staff: [], doctors: [], families: [], familyLinks: [], subscriptions: [], entitlements: [], reports: [], reviews: [], logs: [] };
+let allData = { seniors: [], workOrders: [], staff: [], doctors: [], coordinators: [], families: [], familyLinks: [], subscriptions: [], entitlements: [], reports: [], reviews: [], logs: [], hospitalServices: [], companionServices: [] };
 let practitionerList = [];
 let activeSlicer = 'ALL';
-let sortState = {};
+
+// 5 ENTRIES PER SCREEN FOR ALL TABLES
+const PAGE_SIZE = 5;
+const pageState = {
+  wo: 1,
+  seniors: 1,
+  families: 1,
+  staff: 1,
+  doctors: 1,
+  coordinators: 1,
+  subs: 1,
+  ent: 1,
+  reports: 1,
+  reviews: 1,
+  audit: 1,
+  hospital: 1,
+  companion: 1
+};
 
 async function init() {
   setupTabs();
   setupSlicers();
   setupUnifiedWorkOrderFormToggles();
+  setupEmployeeDirectoryViews();
+  setupEmployeeCreationForm();
 
   currentProfile = await requireAuth('admin');
-  if (!currentProfile) return;
+   if (!currentProfile) return;
 
   const userDisplay = document.getElementById('user-display');
   if (userDisplay) userDisplay.textContent = currentProfile.full_name || 'Admin';
@@ -34,6 +53,9 @@ async function init() {
   await loadAdminDashboard();
 }
 
+// -------------------------------------------------------------
+// NAVIGATION TABS & STATUS SLICERS
+// -------------------------------------------------------------
 function setupTabs() {
   document.querySelectorAll('.admin-nav .nav-tab').forEach(btn => {
     btn.onclick = () => {
@@ -49,17 +71,20 @@ function setupTabs() {
 function setupSlicers() {
   document.querySelectorAll('.sub-nav .sub-tab').forEach(btn => {
     btn.onclick = () => {
-      document.querySelectorAll('.sub-nav .sub-tab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      activeSlicer = btn.getAttribute('data-slicer');
-      renderWorkOrders(allData.workOrders || []);
+      if (btn.closest('.card')?.querySelector('#admin-wo-table')) {
+        document.querySelectorAll('.sub-nav .sub-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeSlicer = btn.getAttribute('data-slicer');
+        pageState.wo = 1;
+        renderWorkOrders(allData.workOrders || []);
+      }
     };
   });
 }
 
-// =================================================================
-// UNIFIED WORK ORDER TYPE TOGGLE (Reveals Specific Details)
-// =================================================================
+// -------------------------------------------------------------
+// WORK ORDER DYNAMIC FORM TOGGLES
+// -------------------------------------------------------------
 function setupUnifiedWorkOrderFormToggles() {
   const typeSelect = document.getElementById('wo-type');
   const hospBox = document.getElementById('wo-hospital-fields');
@@ -76,21 +101,163 @@ function setupUnifiedWorkOrderFormToggles() {
     if (hospBox) hospBox.style.display = isHospital ? 'block' : 'none';
     if (compBox) compBox.style.display = isCompanion ? 'block' : 'none';
 
-    // Adjust placeholder based on service
     if (staffInput) {
-      if (val === 'DoctorConsult') {
-        staffInput.placeholder = 'Search doctor directory...';
-      } else if (val === 'NurseVisit') {
-        staffInput.placeholder = 'Search nurse/staff directory...';
-      } else if (isHospital) {
-        staffInput.placeholder = 'Search escort nurse or coordinator...';
-      } else {
-        staffInput.placeholder = 'Search companion staff...';
-      }
+      if (val === 'DoctorConsult') staffInput.placeholder = 'Search doctor directory...';
+      else if (val === 'NurseVisit') staffInput.placeholder = 'Search nurse/staff directory...';
+      else if (isHospital) staffInput.placeholder = 'Search escort nurse or coordinator...';
+      else staffInput.placeholder = 'Search companion staff...';
     }
   });
 }
 
+// -------------------------------------------------------------
+// EMPLOYEE DIRECTORY SUB-TABS & CREATION FORM
+// -------------------------------------------------------------
+function setupEmployeeDirectoryViews() {
+  const btnStaff = document.getElementById('btn-show-staff');
+  const btnDoctors = document.getElementById('btn-show-doctors');
+  const btnCoordinators = document.getElementById('btn-show-coordinators');
+
+  const viewStaff = document.getElementById('view-emp-staff');
+  const viewDoctors = document.getElementById('view-emp-doctors');
+  const viewCoordinators = document.getElementById('view-emp-coordinators');
+
+  btnStaff?.addEventListener('click', () => {
+    btnStaff.classList.add('active');
+    btnDoctors?.classList.remove('active');
+    btnCoordinators?.classList.remove('active');
+
+    viewStaff?.classList.remove('hidden');
+    viewDoctors?.classList.add('hidden');
+    viewCoordinators?.classList.add('hidden');
+  });
+
+  btnDoctors?.addEventListener('click', () => {
+    btnDoctors.classList.add('active');
+    btnStaff?.classList.remove('active');
+    btnCoordinators?.classList.remove('active');
+
+    viewDoctors?.classList.remove('hidden');
+    viewStaff?.classList.add('hidden');
+    viewCoordinators?.classList.add('hidden');
+  });
+
+  btnCoordinators?.addEventListener('click', () => {
+    btnCoordinators.classList.add('active');
+    btnStaff?.classList.remove('active');
+    btnDoctors?.classList.remove('active');
+
+    viewCoordinators?.classList.remove('hidden');
+    viewStaff?.classList.add('hidden');
+    viewDoctors?.classList.add('hidden');
+  });
+
+  // Dynamic field label switch based on employee category
+  const categorySelect = document.getElementById('emp-category');
+  const detailLabel = document.getElementById('emp-detail-label');
+  const detailInput = document.getElementById('emp-detail');
+
+  categorySelect?.addEventListener('change', () => {
+    const cat = categorySelect.value;
+    if (cat === 'STAFF') {
+      detailLabel.textContent = 'Designation / Staff Role';
+      detailInput.value = 'Field Nurse';
+      detailInput.placeholder = 'e.g. Field Nurse, General Nurse';
+    } else if (cat === 'DOCTOR') {
+      detailLabel.textContent = 'Medical Specialty';
+      detailInput.value = 'General Medicine';
+      detailInput.placeholder = 'e.g. Cardiology, Geriatrics, General Physician';
+    } else if (cat === 'COORDINATOR') {
+      detailLabel.textContent = 'Coordinator Job Title';
+      detailInput.value = 'Care Coordinator';
+      detailInput.placeholder = 'e.g. Care Coordinator, Operations Lead';
+    }
+  });
+}
+
+function setupEmployeeCreationForm() {
+  const form = document.getElementById('create-employee-form');
+  const resultDiv = document.getElementById('emp-result');
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Registering Employee...';
+
+    const category = document.getElementById('emp-category').value;
+    const fullName = document.getElementById('emp-name').value.trim();
+    const phone = document.getElementById('emp-phone').value.trim();
+    const email = document.getElementById('emp-email').value.trim().toLowerCase();
+    const detail = document.getElementById('emp-detail').value.trim();
+
+    try {
+      const res = await callApi('adminCreateEmployee', {
+        category,
+        fullName,
+        phone,
+        email,
+        detail
+      });
+
+      resultDiv.className = 'message success';
+      resultDiv.innerHTML = `✅ <strong>Employee Created!</strong> Generated ID: <code>${res.id}</code> (Saved to tab: <strong>${res.targetTab}</strong>)`;
+      resultDiv.classList.remove('hidden');
+
+      form.reset();
+      document.getElementById('emp-category').value = category;
+      document.getElementById('emp-category').dispatchEvent(new Event('change'));
+
+      await loadAdminDashboard();
+    } catch (err) {
+      resultDiv.className = 'message error';
+      resultDiv.textContent = 'Registration error: ' + err.message;
+      resultDiv.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Create Employee ID';
+    }
+  });
+}
+
+// -------------------------------------------------------------
+// UNIVERSAL PAGINATION COMPONENT (5 ENTRIES PER SCREEN)
+// -------------------------------------------------------------
+function renderPaginationBar(containerId, totalItems, currentPage, onPageChange) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const totalPages = Math.ceil(totalItems / PAGE_SIZE) || 1;
+  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const endItem = Math.min(currentPage * PAGE_SIZE, totalItems);
+
+  let buttonsHtml = '';
+  buttonsHtml += `<button class="page-num-btn" ${currentPage === 1 ? 'disabled' : ''} data-page="${currentPage - 1}">« Prev</button>`;
+
+  for (let i = 1; i <= totalPages; i++) {
+    buttonsHtml += `<button class="page-num-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+  }
+
+  buttonsHtml += `<button class="page-num-btn ${currentPage === totalPages ? 'disabled' : ''} data-page="${currentPage + 1}">Next »</button>`;
+
+  container.innerHTML = `
+    <div class="pagination-info">Showing ${startItem}–${endItem} of ${totalItems} entries (5 per screen)</div>
+    <div class="pagination-buttons">${buttonsHtml}</div>
+  `;
+
+  container.querySelectorAll('.page-num-btn').forEach(btn => {
+    btn.onclick = () => {
+      const p = Number(btn.getAttribute('data-page'));
+      if (p >= 1 && p <= totalPages && p !== currentPage) {
+        onPageChange(p);
+      }
+    };
+  });
+}
+
+// -------------------------------------------------------------
+// DATA LOADING & RENDERING
+// -------------------------------------------------------------
 async function loadAdminDashboard() {
   try {
     const data = await callApi('getAdminDashboard');
@@ -98,12 +265,29 @@ async function loadAdminDashboard() {
 
     let coordinators = [];
     try { coordinators = await callApi('adminGetCoordinators') || []; } catch (e) {}
+    allData.coordinators = coordinators;
+
+    let hospitalSvcs = [];
+    try { hospitalSvcs = await callApi('getHospitalServices', {}) || []; } catch (e) {}
+    allData.hospitalServices = hospitalSvcs;
+
+    let companionSvcs = [];
+    try { companionSvcs = await callApi('getCompanionServices', {}) || []; } catch (e) {}
+    allData.companionServices = companionSvcs;
 
     practitionerList = [
-      ...(allData.staff || []).map(s => ({ id: String(s.staff_id || '').trim(), name: String(s.full_name || '').trim(), type: 'Staff/Nurse' })),
+      ...(allData.staff || []).map(s => ({ id: String(s.staff_id || '').trim(), name: String(s.full_name || '').trim(), type: 'Nurse' })),
       ...(allData.doctors || []).map(d => ({ id: String(d.doctor_id || '').trim(), name: String(d.full_name || '').trim(), type: 'Doctor' })),
-      ...coordinators.map(c => ({ id: String(c.coordinator_id || '').trim(), name: String(c.full_name || '').trim(), type: 'Coordinator' }))
+      ...(allData.coordinators || []).map(c => ({ id: String(c.coordinator_id || '').trim(), name: String(c.full_name || '').trim(), type: 'Coordinator' }))
     ];
+
+    // Counts for employee directory sub-tabs
+    const countStaff = document.getElementById('count-staff');
+    if (countStaff) countStaff.textContent = (allData.staff || []).length;
+    const countDocs = document.getElementById('count-doctors');
+    if (countDocs) countDocs.textContent = (allData.doctors || []).length;
+    const countCrds = document.getElementById('count-coordinators');
+    if (countCrds) countCrds.textContent = (allData.coordinators || []).length;
 
     populateSeniorDropdowns(allData.seniors || []);
 
@@ -112,17 +296,16 @@ async function loadAdminDashboard() {
     renderFamilies(allData.families || [], allData.familyLinks || []);
     renderStaff(allData.staff || []);
     renderDoctors(allData.doctors || []);
+    renderCoordinators(allData.coordinators || []);
     renderSubscriptions(allData.subscriptions || []);
     renderEntitlements(allData.entitlements || []);
     renderReports(allData.reports || []);
     renderReviews(allData.reviews || []);
     renderAudit(allData.logs || []);
+    renderHospitalServices(allData.hospitalServices || []);
+    renderCompanionServices(allData.companionServices || []);
 
-    await loadCoordinators();
-    await loadHospitalServices();
-    await loadCompanionServices();
-    
-    setupTableSortAndSearch();
+    setupTableSearches();
   } catch (err) {
     console.error('Dashboard load error:', err);
   }
@@ -165,7 +348,7 @@ function setupSearchableStaffDropdown() {
     hiddenInput.value = '';
     const matches = practitionerList.filter(p => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q));
     if (matches.length === 0) {
-      box.innerHTML = '<div class="suggestion-empty">No practitioner found</div>';
+      box.innerHTML = '<div class="suggestion-empty">No employee found</div>';
     } else {
       box.innerHTML = matches.map(p => `
         <div class="suggestion-item" data-id="${p.id}" data-name="${p.name}">
@@ -184,6 +367,7 @@ function setupSearchableStaffDropdown() {
     searchInput.value = item.getAttribute('data-name');
     box.classList.remove('open');
   };
+
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.searchable-dropdown')) box.classList.remove('open');
   });
@@ -197,20 +381,22 @@ function getServiceTypeBadge(type) {
     case 'DoctorConsult':
       return '<span class="badge badge-doctor-consult">🩺 Doctor Consult</span>';
     case 'HospitalCoordination':
-      return '<span class="badge badge-nurse-visit" style="background:#e0f2fe; color:#0369a1; border-color:#bae6fd;">📞 Hospital Coord</span>';
+      return '<span class="badge badge-nurse-visit" style="background:#e0f2fe; color:#0369a1;">📞 Hospital Coord</span>';
     case 'HospitalEscort':
-      return '<span class="badge badge-doctor-consult" style="background:#f3e8ff; color:#7e22ce; border-color:#e9d8fd;">🏥 Hospital Escort</span>';
+      return '<span class="badge badge-doctor-consult" style="background:#f3e8ff; color:#7e22ce;">🏥 Hospital Escort</span>';
     case 'CompanionService':
-      return '<span class="badge badge-scheduled" style="background:#fef3c7; color:#92400e; border-color:#fde68a;">🚗 Companion Errand</span>';
+      return '<span class="badge badge-scheduled" style="background:#fef3c7; color:#92400e;">🚗 Companion Errand</span>';
     default:
       return `<span class="badge badge-nurse-visit">${t}</span>`;
   }
 }
 
+// -------------------------------------------------------------
+// PAGINATED TABLE RENDERERS (5 ENTRIES PER PAGE)
+// -------------------------------------------------------------
 function renderWorkOrders(orders) {
   const tbody = document.querySelector('#admin-wo-table tbody');
   if (!tbody) return;
-  tbody.innerHTML = '';
 
   let filtered = [...orders];
   if (activeSlicer === 'SCHEDULED') {
@@ -223,13 +409,19 @@ function renderWorkOrders(orders) {
     filtered = filtered.filter(w => String(w.status).toUpperCase() === 'CANCELLED');
   }
 
-  if (filtered.length === 0) {
+  filtered.reverse();
+  const total = filtered.length;
+  const page = pageState.wo;
+  const start = (page - 1) * PAGE_SIZE;
+  const slice = filtered.slice(start, start + PAGE_SIZE);
+
+  if (slice.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:18px; color:#94a3b8;">No work orders found in this view.</td></tr>';
+    renderPaginationBar('wo-pagination', total, page, () => {});
     return;
   }
 
-  filtered.reverse().forEach(wo => {
-    const tr = document.createElement('tr');
+  tbody.innerHTML = slice.map(wo => {
     const stUpper = String(wo.status || '').toUpperCase();
     const isClosed = (stUpper === 'COMPLETE' || stUpper === 'CLOSE');
     const badgeColor = isClosed ? 'badge-complete' : (stUpper === 'IN_PROGRESS' ? 'badge-in-progress' : (stUpper === 'CANCELLED' ? 'badge-cancelled' : 'badge-scheduled'));
@@ -241,25 +433,26 @@ function renderWorkOrders(orders) {
       ? getStaffName(wo.assigned_doctor_id) 
       : (wo.assigned_staff_id ? getStaffName(wo.assigned_staff_id) : '<span style="color:#a0aec0;">Unassigned</span>');
 
-    tr.innerHTML = `
-      <td><strong>${wo.work_order_id}</strong></td>
-      <td>${getSeniorName(wo.senior_id)}</td>
-      <td>${getServiceTypeBadge(wo.type)}</td>
-      <td>${assignedDisplay}</td>
-      <td>${displayTime}</td>
-      <td><span class="badge ${badgeColor}">${wo.status}</span></td>
-      <td>
-        ${!isClosed && stUpper !== 'CANCELLED'
-          ? `<button class="override-btn danger" data-id="${wo.work_order_id}">Cancel</button>`
-          : `<span style="color:#a0aec0;font-size:12px;">Locked</span>`}
-      </td>
+    return `
+      <tr>
+        <td><strong>${wo.work_order_id}</strong></td>
+        <td>${getSeniorName(wo.senior_id)}</td>
+        <td>${getServiceTypeBadge(wo.type)}</td>
+        <td>${assignedDisplay}</td>
+        <td>${displayTime}</td>
+        <td><span class="badge ${badgeColor}">${wo.status}</span></td>
+        <td>
+          ${!isClosed && stUpper !== 'CANCELLED'
+            ? `<button class="override-btn danger" data-id="${wo.work_order_id}">Cancel</button>`
+            : `<span style="color:#a0aec0;font-size:12px;">Locked</span>`}
+        </td>
+      </tr>
     `;
-    tbody.appendChild(tr);
-  });
+  }).join('');
 
   tbody.querySelectorAll('.override-btn').forEach(btn => {
     btn.onclick = async () => {
-      const reason = prompt('State cancellation reason:');
+      const reason = prompt('Cancellation reason:');
       if (!reason) return;
       try {
         await callApi('adminOverrideWorkOrder', { workOrderId: btn.getAttribute('data-id'), newStatus: 'CANCELLED', reason });
@@ -269,44 +462,300 @@ function renderWorkOrders(orders) {
       }
     };
   });
+
+  renderPaginationBar('wo-pagination', total, page, (newPage) => {
+    pageState.wo = newPage;
+    renderWorkOrders(orders);
+  });
+}
+
+function renderSeniors(seniors) {
+  const tbody = document.querySelector('#admin-seniors-table tbody');
+  if (!tbody) return;
+
+  const total = seniors.length;
+  const page = pageState.seniors;
+  const slice = seniors.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  if (slice.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6">No seniors registered.</td></tr>';
+    renderPaginationBar('seniors-pagination', 0, 1, () => {});
+    return;
+  }
+
+  tbody.innerHTML = slice.map(s => `
+    <tr>
+      <td><strong>${s.senior_id}</strong></td>
+      <td>${s.full_name}</td>
+      <td>${s.phone || '-'}</td>
+      <td>${s.email || '-'}</td>
+      <td>${s.address || '-'}</td>
+      <td><span class="badge badge-complete">${s.status || 'ACTIVE'}</span></td>
+    </tr>
+  `).join('');
+
+  renderPaginationBar('seniors-pagination', total, page, (p) => {
+    pageState.seniors = p;
+    renderSeniors(seniors);
+  });
+}
+
+function renderFamilies(families, links) {
+  const tbody = document.querySelector('#admin-families-table tbody');
+  if (!tbody) return;
+
+  const total = families.length;
+  const page = pageState.families;
+  const slice = families.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  if (slice.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6">No families recorded.</td></tr>';
+    renderPaginationBar('families-pagination', 0, 1, () => {});
+    return;
+  }
+
+  tbody.innerHTML = slice.map(f => {
+    const link = (links || []).find(l => l.family_id === f.family_id);
+    return `
+      <tr>
+        <td><strong>${f.family_id}</strong></td>
+        <td>${f.full_name}</td>
+        <td>${f.relationship || '-'}</td>
+        <td>${link ? getSeniorName(link.senior_id) : 'Unlinked'}</td>
+        <td>${f.email || '-'}</td>
+        <td>${f.phone || '-'}</td>
+      </tr>
+    `;
+  }).join('');
+
+  renderPaginationBar('families-pagination', total, page, (p) => {
+    pageState.families = p;
+    renderFamilies(families, links);
+  });
+}
+
+// Separate unmerged tables for Employee Directory
+function renderStaff(staff) {
+  const tbody = document.querySelector('#admin-staff-table tbody');
+  if (!tbody) return;
+
+  const total = staff.length;
+  const page = pageState.staff;
+  const slice = staff.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  if (slice.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6">No staff recorded.</td></tr>';
+    renderPaginationBar('staff-pagination', 0, 1, () => {});
+    return;
+  }
+
+  tbody.innerHTML = slice.map(st => `
+    <tr>
+      <td><strong>${st.staff_id}</strong></td>
+      <td>${st.full_name}</td>
+      <td>${st.role || 'Staff'}</td>
+      <td>${st.email}</td>
+      <td>${st.phone || '-'}</td>
+      <td><span class="badge badge-complete">${st.status || 'ACTIVE'}</span></td>
+    </tr>
+  `).join('');
+
+  renderPaginationBar('staff-pagination', total, page, (p) => {
+    pageState.staff = p;
+    renderStaff(staff);
+  });
+}
+
+function renderDoctors(doctors) {
+  const tbody = document.querySelector('#admin-doctors-table tbody');
+  if (!tbody) return;
+
+  const total = doctors.length;
+  const page = pageState.doctors;
+  const slice = doctors.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  if (slice.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6">No doctors recorded.</td></tr>';
+    renderPaginationBar('doctors-pagination', 0, 1, () => {});
+    return;
+  }
+
+  tbody.innerHTML = slice.map(d => `
+    <tr>
+      <td><strong>${d.doctor_id}</strong></td>
+      <td>${d.full_name}</td>
+      <td>${d.specialty || 'General'}</td>
+      <td>${d.email}</td>
+      <td>${d.phone || '-'}</td>
+      <td><span class="badge badge-complete">${d.status || 'ACTIVE'}</span></td>
+    </tr>
+  `).join('');
+
+  renderPaginationBar('doctors-pagination', total, page, (p) => {
+    pageState.doctors = p;
+    renderDoctors(doctors);
+  });
+}
+
+function renderCoordinators(coordinators) {
+  const tbody = document.querySelector('#admin-coordinators-table tbody');
+  if (!tbody) return;
+
+  const total = coordinators.length;
+  const page = pageState.coordinators;
+  const slice = coordinators.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  if (slice.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6">No coordinators recorded.</td></tr>';
+    renderPaginationBar('coordinators-pagination', 0, 1, () => {});
+    return;
+  }
+
+  tbody.innerHTML = slice.map(c => `
+    <tr>
+      <td><strong>${c.coordinator_id}</strong></td>
+      <td>${c.full_name}</td>
+      <td>${c.phone || '-'}</td>
+      <td>${c.email}</td>
+      <td>${c.role || 'Care Coordinator'}</td>
+      <td>
+        <span class="badge ${String(c.status).toUpperCase() === 'ACTIVE' ? 'badge-complete' : 'badge-cancelled'}">${c.status || 'ACTIVE'}</span>
+        <button class="sort-btn toggle-crd-status" data-id="${c.coordinator_id}" data-current="${c.status}" style="margin-left:6px;">
+          ${String(c.status).toUpperCase() === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+        </button>
+      </td>
+    </tr>
+  `).join('');
+
+  tbody.querySelectorAll('.toggle-crd-status').forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.getAttribute('data-id');
+      const current = btn.getAttribute('data-current');
+      try {
+        await callApi('adminUpdateCoordinatorStatus', { coordinatorId: id, status: current === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' });
+        await loadAdminDashboard();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    };
+  });
+
+  renderPaginationBar('coordinators-pagination', total, page, (p) => {
+    pageState.coordinators = p;
+    renderCoordinators(coordinators);
+  });
+}
+
+function renderHospitalServices(services) {
+  const tbody = document.querySelector('#admin-hospital-services-table tbody');
+  if (!tbody) return;
+
+  const total = services.length;
+  const page = pageState.hospital;
+  const sorted = [...services].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  const slice = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  if (slice.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:16px; color:#94a3b8;">No hospital bookings yet.</td></tr>';
+    renderPaginationBar('hospital-pagination', 0, 1, () => {});
+    return;
+  }
+
+  tbody.innerHTML = slice.map(s => `
+    <tr>
+      <td><strong>${s.service_id}</strong></td>
+      <td>${getSeniorName(s.senior_id)}</td>
+      <td><span class="badge ${s.service_type === 'HOSPITAL_ESCORT' ? 'badge-doctor-consult' : 'badge-nurse-visit'}">${s.service_type === 'HOSPITAL_ESCORT' ? '🏥 Escort' : '📞 Coordination'}</span></td>
+      <td>${s.preferred_hospital || '-'}</td>
+      <td><span class="badge ${s.status === 'COMPLETED' ? 'badge-complete' : 'badge-scheduled'}">${s.status}</span></td>
+      <td>${s.assigned_staff_id ? getStaffName(s.assigned_staff_id) : (s.assigned_coordinator_id ? 'Coord: ' + s.assigned_coordinator_id : '-')}</td>
+    </tr>
+  `).join('');
+
+  renderPaginationBar('hospital-pagination', total, page, (p) => {
+    pageState.hospital = p;
+    renderHospitalServices(services);
+  });
+}
+
+function renderCompanionServices(services) {
+  const tbody = document.querySelector('#admin-companion-services-table tbody');
+  if (!tbody) return;
+
+  const total = services.length;
+  const page = pageState.companion;
+  const sorted = [...services].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  const slice = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  if (slice.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:16px; color:#94a3b8;">No companion bookings yet.</td></tr>';
+    renderPaginationBar('companion-pagination', 0, 1, () => {});
+    return;
+  }
+
+  tbody.innerHTML = slice.map(s => `
+    <tr>
+      <td><strong>${s.service_id}</strong></td>
+      <td>${getSeniorName(s.senior_id)}</td>
+      <td><span class="badge badge-doctor-consult">${s.companion_type}</span></td>
+      <td>${s.destination || '-'}</td>
+      <td><span class="badge ${s.status === 'COMPLETED' ? 'badge-complete' : 'badge-scheduled'}">${s.status}</span></td>
+      <td>${s.assigned_staff_id ? getStaffName(s.assigned_staff_id) : '-'}</td>
+    </tr>
+  `).join('');
+
+  renderPaginationBar('companion-pagination', total, page, (p) => {
+    pageState.companion = p;
+    renderCompanionServices(services);
+  });
 }
 
 function renderSubscriptions(subs) {
   const tbody = document.querySelector('#admin-subs-table tbody');
   if (!tbody) return;
-  if (!subs || subs.length === 0) {
+
+  const total = subs.length;
+  const page = pageState.subs;
+  const slice = subs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  if (slice.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6">No active subscriptions found.</td></tr>';
+    renderPaginationBar('subs-pagination', 0, 1, () => {});
     return;
   }
-  tbody.innerHTML = subs.map(s => {
-    let sDate = '-';
-    let eDate = '-';
-    try {
-      if (s.start_date) sDate = new Date(s.start_date).toISOString().slice(0, 10);
-      if (s.end_date) eDate = new Date(s.end_date).toISOString().slice(0, 10);
-    } catch (e) {}
 
-    return `
-      <tr>
-        <td><strong>${s.subscription_id}</strong></td>
-        <td>${getSeniorName(s.senior_id)}</td>
-        <td>${s.plan_name}</td>
-        <td>${sDate}</td>
-        <td><strong>${eDate}</strong></td>
-        <td><span class="badge badge-complete">${s.status || 'ACTIVE'}</span></td>
-      </tr>
-    `;
-  }).join('');
+  tbody.innerHTML = slice.map(s => `
+    <tr>
+      <td><strong>${s.subscription_id}</strong></td>
+      <td>${getSeniorName(s.senior_id)}</td>
+      <td>${s.plan_name}</td>
+      <td>${s.start_date ? s.start_date.slice(0, 10) : '-'}</td>
+      <td><strong>${s.end_date ? s.end_date.slice(0, 10) : '-'}</strong></td>
+      <td><span class="badge badge-complete">${s.status || 'ACTIVE'}</span></td>
+    </tr>
+  `).join('');
+
+  renderPaginationBar('subs-pagination', total, page, (p) => {
+    pageState.subs = p;
+    renderSubscriptions(subs);
+  });
 }
 
 function renderEntitlements(ents) {
   const tbody = document.querySelector('#admin-entitlements-table tbody');
   if (!tbody) return;
-  if (!ents || ents.length === 0) {
+
+  const total = ents.length;
+  const page = pageState.ent;
+  const slice = ents.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  if (slice.length === 0) {
     tbody.innerHTML = '<tr><td colspan="4">No entitlement records found.</td></tr>';
+    renderPaginationBar('ent-pagination', 0, 1, () => {});
     return;
   }
-  tbody.innerHTML = ents.map(e => `
+
+  tbody.innerHTML = slice.map(e => `
     <tr>
       <td><strong>${getSeniorName(e.senior_id)}</strong></td>
       <td>${e.month}</td>
@@ -314,46 +763,41 @@ function renderEntitlements(ents) {
       <td>${e.doctor_used} / ${e.doctor_allowed}</td>
     </tr>
   `).join('');
+
+  renderPaginationBar('ent-pagination', total, page, (p) => {
+    pageState.ent = p;
+    renderEntitlements(ents);
+  });
 }
 
 function renderReports(reports) {
   const tbody = document.querySelector('#admin-reports-table tbody');
   if (!tbody) return;
 
-  if (!reports || reports.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6">No diagnostic reports recorded yet.</td></tr>';
+  const total = reports.length;
+  const page = pageState.reports;
+  const slice = reports.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  if (slice.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6">No diagnostic reports uploaded yet.</td></tr>';
+    renderPaginationBar('reports-pagination', 0, 1, () => {});
     return;
   }
 
-  const grouped = {};
-  reports.forEach(r => {
-    const sid = String(r.senior_id || '').trim();
-    if (!grouped[sid]) grouped[sid] = [];
-    grouped[sid].push(r);
-  });
-
-  const finalReports = [];
-  Object.keys(grouped).forEach(sid => {
-    const seniorReports = grouped[sid].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-    finalReports.push(...seniorReports.slice(0, 4));
-  });
-
-  tbody.innerHTML = finalReports.map(r => {
+  tbody.innerHTML = slice.map(r => {
     const isCareJournal = (r.file_url === 'INTERNAL_CARE_JOURNAL');
     const docLink = isCareJournal
-      ? `<span class="badge badge-doctor-consult">Interactive Care Journal</span>`
-      : `<a href="${r.file_url}" target="_blank" rel="noopener">Open Document ↗</a>`;
+      ? `<span class="badge badge-doctor-consult">Care Journal</span>`
+      : `<a href="${r.file_url}" target="_blank" rel="noopener">Open Doc ↗</a>`;
 
     return `
       <tr>
         <td><strong>${r.report_id}</strong></td>
-        <td><strong>${getSeniorName(r.senior_id)}</strong> <br><small style="color:#718096;">(${r.senior_id})</small></td>
+        <td><strong>${getSeniorName(r.senior_id)}</strong></td>
         <td><span class="badge ${isCareJournal ? 'badge-complete' : 'badge-nurse-visit'}">${r.type}</span></td>
         <td>${docLink}</td>
         <td>${r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN') : '-'}</td>
-        <td>
-          <button class="share-btn" data-id="${r.report_id}" data-senior="${r.senior_id}" data-type="${r.type}">Share 72h Link</button>
-        </td>
+        <td><button class="share-btn" data-id="${r.report_id}" data-senior="${r.senior_id}">Share 72h</button></td>
       </tr>
     `;
   }).join('');
@@ -361,413 +805,24 @@ function renderReports(reports) {
   tbody.querySelectorAll('.share-btn').forEach(btn => {
     btn.onclick = async () => {
       const reportId = btn.getAttribute('data-id');
-      const seniorId = btn.getAttribute('data-senior');
-      const type = btn.getAttribute('data-type');
       try {
         const res = await callApi('createReportLink', { reportId, expiryHours: 72 });
         const shareUrl = `${window.location.origin}${window.location.pathname.replace('admin.html', '')}report.html?token=${res.token}`;
-        const input = prompt(`72-Hour Secure Link Created:\n\n${shareUrl}\n\nType 'copy' to copy to clipboard, or enter an email address to send directly:`);
-        if (!input) return;
-        if (input.toLowerCase() === 'copy') {
-          await navigator.clipboard.writeText(shareUrl);
-          alert('Link copied to clipboard!');
-        } else if (input.includes('@')) {
-          await callApi('shareReportByEmail', {
-            recipientEmail: input.trim(),
-            seniorName: getSeniorName(seniorId),
-            reportType: type,
-            secureUrl: shareUrl
-          });
-          alert('Report link emailed to ' + input.trim());
-        }
+        prompt('72-Hour Link Created. Copy below:', shareUrl);
       } catch (err) {
         alert('Share error: ' + err.message);
       }
     };
   });
-}
 
-function renderSeniors(seniors) {
-  const tbody = document.querySelector('#admin-seniors-table tbody');
-  if (!tbody) return;
-  tbody.innerHTML = !seniors || seniors.length === 0 ? '<tr><td colspan="6">No seniors registered.</td></tr>' :
-    seniors.map(s => `<tr><td><strong>${s.senior_id}</strong></td><td>${s.full_name}</td><td>${s.phone||'-'}</td><td>${s.email||'-'}</td><td>${s.address||'-'}</td><td><span class="badge badge-complete">${s.status||'ACTIVE'}</span></td></tr>`).join('');
-}
-
-function renderFamilies(families, links) {
-  const tbody = document.querySelector('#admin-families-table tbody');
-  if (!tbody) return;
-  tbody.innerHTML = !families || families.length === 0 ? '<tr><td colspan="6">No families recorded.</td></tr>' :
-    families.map(f => {
-      const link = (links || []).find(l => l.family_id === f.family_id);
-      return `<tr><td><strong>${f.family_id}</strong></td><td>${f.full_name}</td><td>${f.relationship||'-'}</td><td>${link ? getSeniorName(link.senior_id) : 'Unlinked'}</td><td>${f.email||'-'}</td><td>${f.phone||'-'}</td></tr>`;
-    }).join('');
-}
-
-function renderStaff(staff) {
-  const tbody = document.querySelector('#admin-staff-table tbody');
-  if (!tbody) return;
-  tbody.innerHTML = !staff || staff.length === 0 ? '<tr><td colspan="6">No staff recorded.</td></tr>' :
-    staff.map(st => `<tr><td><strong>${st.staff_id}</strong></td><td>${st.full_name}</td><td>${st.role}</td><td>${st.email}</td><td>${st.phone||'-'}</td><td><span class="badge badge-complete">${st.status}</span></td></tr>`).join('');
-}
-
-function renderDoctors(doctors) {
-  const tbody = document.querySelector('#admin-doctors-table tbody');
-  if (!tbody) return;
-  tbody.innerHTML = !doctors || doctors.length === 0 ? '<tr><td colspan="6">No doctors recorded.</td></tr>' :
-    doctors.map(d => `<tr><td><strong>${d.doctor_id}</strong></td><td>${d.full_name}</td><td>${d.specialty||'General'}</td><td>${d.email}</td><td>${d.phone||'-'}</td><td><span class="badge badge-complete">${d.status}</span></td></tr>`).join('');
+  renderPaginationBar('reports-pagination', total, page, (p) => {
+    pageState.reports = p;
+    renderReports(reports);
+  });
 }
 
 function renderReviews(revs) {
   const tbody = document.querySelector('#admin-reviews-table tbody');
   if (!tbody) return;
-  tbody.innerHTML = !revs || revs.length === 0 ? '<tr><td colspan="6">No reviews pending.</td></tr>' :
-    revs.map(r => {
-      const color = r.priority === 'EMERGENCY' ? 'badge-cancelled' : (r.priority === 'URGENT' ? 'badge-scheduled' : 'badge-doctor-consult');
-      return `<tr><td><strong>${r.review_id}</strong></td><td>${getSeniorName(r.senior_id)}</td><td><span class="badge ${color}">${r.priority}</span></td><td>${r.reason}</td><td>${getStaffName(r.assigned_doctor_id)}</td><td><span class="badge badge-scheduled">${r.status}</span></td></tr>`;
-    }).join('');
-}
 
-function renderAudit(logs) {
-  const tbody = document.querySelector('#admin-audit-table tbody');
-  if (!tbody) return;
-  tbody.innerHTML = !logs || logs.length === 0 ? '<tr><td colspan="6">No audit records found.</td></tr>' :
-    [...logs].reverse().slice(0, 100).map(l => `<tr><td><small>${l.timestamp ? new Date(l.timestamp).toLocaleTimeString() : '-'}</small></td><td>${l.actor_id}</td><td>${l.actor_role}</td><td><strong>${l.event}</strong></td><td>${l.work_order_id || '-'}</td><td><small>${l.reason || ''}</small></td></tr>`).join('');
-}
-
-function setupTableSortAndSearch() {
-  const tables = [
-    { searchId: 'search-wo', ascId: 'sort-wo-asc', descId: 'sort-wo-desc', getData: () => allData.workOrders || [], render: renderWorkOrders, sortKey: 'created_at' },
-    { searchId: 'search-seniors', ascId: 'sort-seniors-asc', descId: 'sort-seniors-desc', getData: () => allData.seniors || [], render: renderSeniors, sortKey: 'full_name' },
-    { searchId: 'search-families', ascId: 'sort-families-asc', descId: 'sort-families-desc', getData: () => allData.families || [], render: f => renderFamilies(f, allData.familyLinks || []), sortKey: 'full_name' },
-    { searchId: 'search-staff', ascId: 'sort-staff-asc', descId: 'sort-staff-desc', getData: () => allData.staff || [], render: renderStaff, sortKey: 'full_name' },
-    { searchId: 'search-doctors', ascId: 'sort-doctors-asc', descId: 'sort-doctors-desc', getData: () => allData.doctors || [], render: renderDoctors, sortKey: 'full_name' },
-    { searchId: 'search-subs', ascId: 'sort-subs-asc', descId: 'sort-subs-desc', getData: () => allData.subscriptions || [], render: renderSubscriptions, sortKey: 'start_date' },
-    { searchId: 'search-ent', ascId: 'sort-ent-asc', descId: 'sort-ent-desc', getData: () => allData.entitlements || [], render: renderEntitlements, sortKey: 'month' },
-    { searchId: 'search-reports', ascId: 'sort-reports-asc', descId: 'sort-reports-desc', getData: () => allData.reports || [], render: renderReports, sortKey: 'created_at' }
-  ];
-
-  tables.forEach(({ searchId, ascId, descId, getData, render, sortKey }) => {
-    const sInput = document.getElementById(searchId);
-    if (sInput && !sInput.dataset.bound) {
-      sInput.dataset.bound = 'true';
-      sInput.oninput = () => {
-        const q = sInput.value.trim().toLowerCase();
-        render(getData().filter(row => JSON.stringify(row).toLowerCase().includes(q)));
-      };
-    }
-    const aBtn = document.getElementById(ascId);
-    if (aBtn && !aBtn.dataset.bound) {
-      aBtn.dataset.bound = 'true';
-      aBtn.onclick = () => render([...getData()].sort((a, b) => String(a[sortKey] || '').localeCompare(String(b[sortKey] || ''))));
-    }
-    const dBtn = document.getElementById(descId);
-    if (dBtn && !dBtn.dataset.bound) {
-      dBtn.dataset.bound = 'true';
-      dBtn.onclick = () => render([...getData()].sort((a, b) => String(b[sortKey] || '').localeCompare(String(a[sortKey] || ''))));
-    }
-  });
-}
-
-// =================================================================
-// UNIFIED WORK ORDER SUBMIT HANDLER (SINGLE BOOKING CHANNEL)
-// =================================================================
-document.getElementById('create-wo-form')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const seniorId = String(document.getElementById('wo-senior-id')?.value || '').trim();
-  const serviceType = document.getElementById('wo-type')?.value;
-  const resultDiv = document.getElementById('wo-result');
-  resultDiv.className = 'message hidden';
-
-  if (!seniorId) {
-    alert('Please choose a Senior Patient.');
-    return;
-  }
-
-  // Clinical services require an active subscription; on-demand companion/hospital can proceed
-  const isClinical = (serviceType === 'NurseVisit' || serviceType === 'DoctorConsult');
-  if (isClinical) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const hasActiveSub = (allData.subscriptions || []).some(s => {
-      const sId = String(s.senior_id || '').trim();
-      const st = String(s.status || '').trim().toUpperCase();
-      if (sId !== seniorId || st !== 'ACTIVE') return false;
-      if (!s.end_date) return true;
-
-      let exp = (s.end_date instanceof Date) ? new Date(s.end_date.getTime()) : new Date(String(s.end_date).trim());
-      exp.setHours(23, 59, 59, 999);
-      return exp >= today;
-    });
-
-    if (!hasActiveSub) {
-      alert('ALERT: Senior ' + seniorId + ' has NO Active Subscription for clinical care. Please verify in Subscriptions tab.');
-      return;
-    }
-  }
-
-  let staffId = String(document.getElementById('wo-staff-id')?.value || '').trim();
-  const staffSearchText = String(document.getElementById('wo-staff-search')?.value || '').trim().toLowerCase();
-  if (!staffId && staffSearchText) {
-    const match = practitionerList.find(p =>
-      p.name.toLowerCase() === staffSearchText ||
-      p.id.toLowerCase() === staffSearchText ||
-      `dr. ${p.name.toLowerCase()}` === staffSearchText
-    );
-    if (match) staffId = match.id;
-  }
-
-  const scheduledVal = document.getElementById('wo-scheduled-at').value;
-  const scheduledIso = scheduledVal ? new Date(scheduledVal).toISOString() : new Date().toISOString();
-
-  // Package all service-specific params into unified payload
-  const payload = {
-    seniorId: seniorId,
-    type: serviceType,
-    scheduledAt: scheduledIso,
-    staffId: staffId,
-    notes: document.getElementById('wo-notes')?.value.trim() || '',
-    
-    // Hospital Context
-    preferredHospital: document.getElementById('wo-hsv-hospital')?.value.trim() || '',
-    specialty: document.getElementById('wo-hsv-specialty')?.value.trim() || '',
-    hospitalTravelPayer: document.getElementById('wo-hsv-travel-payer')?.value || 'FAMILY',
-
-    // Companion Context
-    companionType: document.getElementById('wo-cmp-subtype')?.value || 'OUTINGS',
-    destination: document.getElementById('wo-cmp-destination')?.value.trim() || '',
-    itemsList: document.getElementById('wo-cmp-items')?.value.trim() || '',
-    companionTravelPayer: document.getElementById('wo-cmp-travel-payer')?.value || 'FAMILY'
-  };
-
-  try {
-    const res = await callApi('createWorkOrder', payload);
-
-    let extraNote = '';
-    if (res.hospitalServiceId) extraNote = ` | Linked Hospital Svc: <code>${res.hospitalServiceId}</code>`;
-    if (res.companionServiceId) extraNote = ` | Linked Companion Svc: <code>${res.companionServiceId}</code>`;
-
-    resultDiv.innerHTML = `<strong>Work Order Created!</strong> ID: <code>${res.workOrderId}</code> | Start PIN: <strong>${res.startCode}</strong> | End PIN: <strong>${res.endCode}</strong>${extraNote}`;
-    resultDiv.className = 'message success';
-    resultDiv.classList.remove('hidden');
-
-    document.getElementById('create-wo-form').reset();
-    document.getElementById('wo-staff-search').value = '';
-    document.getElementById('wo-staff-id').value = '';
-    document.getElementById('wo-hospital-fields').style.display = 'none';
-    document.getElementById('wo-companion-fields').style.display = 'none';
-
-    await loadAdminDashboard();
-  } catch (err) {
-    resultDiv.innerHTML = 'Error: ' + err.message;
-    resultDiv.className = 'message error';
-    resultDiv.classList.remove('hidden');
-  }
-});
-
-// Helper form bindings
-document.getElementById('create-senior-form')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  try {
-    const res = await callApi('adminCreateSenior', {
-      fullName: document.getElementById('snr-name').value.trim(),
-      dob: document.getElementById('snr-dob').value,
-      phone: document.getElementById('snr-phone').value.trim(),
-      email: document.getElementById('snr-email').value.trim(),
-      address: document.getElementById('snr-address').value.trim(),
-      familyName: document.getElementById('fam-name').value.trim(),
-      familyRelation: document.getElementById('fam-rel').value.trim(),
-      familyPhone: document.getElementById('fam-phone').value.trim(),
-      familyEmail: document.getElementById('fam-email').value.trim()
-    });
-    alert('Senior & Family Linked Successfully! Senior ID: ' + res.seniorId);
-    document.getElementById('create-senior-form').reset();
-    await loadAdminDashboard();
-  } catch (err) {
-    alert('Enrollment error: ' + err.message);
-  }
-});
-
-document.getElementById('create-sub-form')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const resDiv = document.getElementById('sub-result');
-  try {
-    const res = await callApi('adminCreateSubscription', {
-      seniorId: document.getElementById('sub-senior-id').value,
-      planName: document.getElementById('sub-plan-name').value.trim(),
-      startDate: document.getElementById('sub-start-date').value,
-      nurseVisits: Number(document.getElementById('sub-nurse-visits').value),
-      doctorConsults: Number(document.getElementById('sub-doctor-consults').value)
-    });
-    resDiv.innerHTML = `<strong>Subscription created!</strong> Valid 30 days until ${res.endDate}`;
-    resDiv.className = 'message success';
-    resDiv.classList.remove('hidden');
-    document.getElementById('create-sub-form').reset();
-    document.getElementById('sub-start-date').value = new Date().toISOString().slice(0, 10);
-    await loadAdminDashboard();
-  } catch (err) {
-    resDiv.innerHTML = 'Error: ' + err.message;
-    resDiv.className = 'message error';
-    resDiv.classList.remove('hidden');
-  }
-});
-
-document.getElementById('create-report-form')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  try {
-    await callApi('adminCreateReport', {
-      seniorId: document.getElementById('report-senior-id').value,
-      type: document.getElementById('report-type').value,
-      fileUrl: document.getElementById('report-url').value.trim()
-    });
-    alert('Diagnostic report registered successfully!');
-    document.getElementById('create-report-form').reset();
-    await loadAdminDashboard();
-  } catch (err) {
-    alert('Report registration error: ' + err.message);
-  }
-});
-
-document.getElementById('btn-gen-care-report')?.addEventListener('click', async () => {
-  const seniorSelect = document.getElementById('gen-report-senior');
-  const seniorId = seniorSelect ? seniorSelect.value.trim() : '';
-  if (!seniorId) return alert('Please choose a Senior Patient first.');
-
-  const btn = document.getElementById('btn-gen-care-report');
-  btn.disabled = true;
-  btn.textContent = 'Generating Care Summary...';
-
-  try {
-    const res = await callApi('generateClinicalCareReport', { seniorId });
-    const shareUrl = `${window.location.origin}${window.location.pathname.replace('admin.html', '')}report.html?token=${res.token}`;
-    await loadAdminDashboard();
-
-    const input = prompt(`72-Hour Care Summary Generated for ${res.seniorName}!\n\nSecure Link:\n${shareUrl}\n\nType 'copy' to copy, or enter email to send:`);
-    if (input) {
-      if (input.toLowerCase() === 'copy') {
-        await navigator.clipboard.writeText(shareUrl);
-        alert('Link copied to clipboard!');
-      } else if (input.includes('@')) {
-        await callApi('shareReportByEmail', { recipientEmail: input.trim(), seniorName: res.seniorName, reportType: 'Clinical Assessment & Care Journal', secureUrl: shareUrl });
-        alert('Report link emailed to ' + input.trim());
-      }
-    }
-  } catch (err) {
-    alert('Error generating summary: ' + err.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Generate 72-Hour Shareable Care Summary';
-  }
-});
-
-async function loadCoordinators() {
-  const tbody = document.querySelector('#admin-coordinators-table tbody');
-  if (!tbody) return;
-  try {
-    const data = await callApi('adminGetCoordinators');
-    if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:16px;">No coordinators added yet.</td></tr>';
-      return;
-    }
-    tbody.innerHTML = data.map(c => `
-      <tr>
-        <td><strong>${c.coordinator_id}</strong></td>
-        <td>${c.full_name}</td>
-        <td>${c.phone || '-'}</td>
-        <td>${c.email}</td>
-        <td>${c.role || 'Care Coordinator'}</td>
-        <td>
-          <span class="badge ${String(c.status).toUpperCase() === 'ACTIVE' ? 'badge-complete' : 'badge-cancelled'}">${c.status}</span>
-          <button class="sort-btn toggle-crd-status" data-id="${c.coordinator_id}" data-current="${c.status}" style="margin-left:8px;">
-            ${String(c.status).toUpperCase() === 'ACTIVE' ? 'Deactivate' : 'Activate'}
-          </button>
-        </td>
-      </tr>
-    `).join('');
-
-    tbody.querySelectorAll('.toggle-crd-status').forEach(btn => {
-      btn.onclick = async () => {
-        const id = btn.getAttribute('data-id');
-        const current = btn.getAttribute('data-current');
-        try {
-          await callApi('adminUpdateCoordinatorStatus', { coordinatorId: id, status: current === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' });
-          await loadCoordinators();
-        } catch (err) {
-          alert('Error: ' + err.message);
-        }
-      };
-    });
-  } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="6" style="color:red;">Error: ${err.message}</td></tr>`;
-  }
-}
-
-document.getElementById('create-coordinator-form')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  try {
-    await callApi('adminCreateCoordinator', {
-      fullName: document.getElementById('crd-name').value.trim(),
-      phone: document.getElementById('crd-phone').value.trim(),
-      email: document.getElementById('crd-email').value.trim(),
-      role: document.getElementById('crd-role').value.trim()
-    });
-    alert('✅ Coordinator added successfully!');
-    document.getElementById('create-coordinator-form').reset();
-    await loadCoordinators();
-  } catch (err) {
-    alert('Error: ' + err.message);
-  }
-});
-
-async function loadHospitalServices() {
-  const tbody = document.querySelector('#admin-hospital-services-table tbody');
-  if (!tbody) return;
-  try {
-    const data = await callApi('getHospitalServices', {});
-    if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:16px;">No hospital service bookings yet.</td></tr>';
-      return;
-    }
-    const sorted = [...data].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-    tbody.innerHTML = sorted.map(s => `
-      <tr>
-        <td><strong>${s.service_id}</strong></td>
-        <td>${getSeniorName(s.senior_id)}</td>
-        <td><span class="badge ${s.service_type === 'HOSPITAL_ESCORT' ? 'badge-doctor-consult' : 'badge-nurse-visit'}">${s.service_type === 'HOSPITAL_ESCORT' ? '🏥 Escort' : '📞 Coordination'}</span></td>
-        <td>${s.preferred_hospital || '-'}</td>
-        <td><span class="badge ${s.status === 'COMPLETED' ? 'badge-complete' : 'badge-scheduled'}">${s.status}</span></td>
-        <td>${s.assigned_staff_id ? getStaffName(s.assigned_staff_id) : (s.assigned_coordinator_id ? 'Coord: ' + s.assigned_coordinator_id : '-')}</td>
-      </tr>
-    `).join('');
-  } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="6" style="color:red;">Error: ${err.message}</td></tr>`;
-  }
-}
-
-async function loadCompanionServices() {
-  const tbody = document.querySelector('#admin-companion-services-table tbody');
-  if (!tbody) return;
-  try {
-    const data = await callApi('getCompanionServices', {});
-    if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:16px;">No companion service bookings yet.</td></tr>';
-      return;
-    }
-    const sorted = [...data].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-    tbody.innerHTML = sorted.map(s => `
-      <tr>
-        <td><strong>${s.service_id}</strong></td>
-        <td>${getSeniorName(s.senior_id)}</td>
-        <td><span class="badge badge-doctor-consult">${s.companion_type}</span></td>
-        <td>${s.destination || '-'}</td>
-        <td><span class="badge ${s.status === 'COMPLETED' ? 'badge-complete' : 'badge-scheduled'}">${s.status}</span></td>
-        <td>${s.assigned_staff_id ? getStaffName(s.assigned_staff_id) : '-'}</td>
-      </tr>
-    `).join('');
-  } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="6" style="color:red;">Error: ${err.message}</td></tr>`;
-  }
-}
-
-init();
+  const total
