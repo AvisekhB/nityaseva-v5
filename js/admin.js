@@ -2,7 +2,22 @@ import { requireAuth, signOut } from './auth.js';
 import { callApi } from './dataService.js';
 
 let currentProfile = null;
-let allData = { seniors: [], workOrders: [], staff: [], doctors: [], coordinators: [], families: [], familyLinks: [], subscriptions: [], entitlements: [], reports: [], reviews: [], logs: [], hospitalServices: [], companionServices: [] };
+let allData = { 
+  seniors: [], 
+  workOrders: [], 
+  staff: [], 
+  doctors: [], 
+  coordinators: [], 
+  families: [], 
+  familyLinks: [], 
+  subscriptions: [], 
+  entitlements: [], 
+  reports: [], 
+  reviews: [], 
+  logs: [], 
+  hospitalServices: [], 
+  companionServices: [] 
+};
 let practitionerList = [];
 let activeSlicer = 'ALL';
 
@@ -32,7 +47,7 @@ async function init() {
   setupEmployeeCreationForm();
 
   currentProfile = await requireAuth('admin');
-   if (!currentProfile) return;
+  if (!currentProfile) return;
 
   const userDisplay = document.getElementById('user-display');
   if (userDisplay) userDisplay.textContent = currentProfile.full_name || 'Admin';
@@ -62,7 +77,8 @@ function setupTabs() {
       document.querySelectorAll('.admin-nav .nav-tab').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       btn.classList.add('active');
-      const target = document.getElementById(btn.getAttribute('data-tab'));
+      const targetId = btn.getAttribute('data-tab');
+      const target = document.getElementById(targetId);
       if (target) target.classList.add('active');
     };
   });
@@ -152,7 +168,6 @@ function setupEmployeeDirectoryViews() {
     viewDoctors?.classList.add('hidden');
   });
 
-  // Dynamic field label switch based on employee category
   const categorySelect = document.getElementById('emp-category');
   const detailLabel = document.getElementById('emp-detail-label');
   const detailInput = document.getElementById('emp-detail');
@@ -281,7 +296,6 @@ async function loadAdminDashboard() {
       ...(allData.coordinators || []).map(c => ({ id: String(c.coordinator_id || '').trim(), name: String(c.full_name || '').trim(), type: 'Coordinator' }))
     ];
 
-    // Counts for employee directory sub-tabs
     const countStaff = document.getElementById('count-staff');
     if (countStaff) countStaff.textContent = (allData.staff || []).length;
     const countDocs = document.getElementById('count-doctors');
@@ -534,7 +548,6 @@ function renderFamilies(families, links) {
   });
 }
 
-// Separate unmerged tables for Employee Directory
 function renderStaff(staff) {
   const tbody = document.querySelector('#admin-staff-table tbody');
   if (!tbody) return;
@@ -768,61 +781,3 @@ function renderEntitlements(ents) {
     pageState.ent = p;
     renderEntitlements(ents);
   });
-}
-
-function renderReports(reports) {
-  const tbody = document.querySelector('#admin-reports-table tbody');
-  if (!tbody) return;
-
-  const total = reports.length;
-  const page = pageState.reports;
-  const slice = reports.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  if (slice.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6">No diagnostic reports uploaded yet.</td></tr>';
-    renderPaginationBar('reports-pagination', 0, 1, () => {});
-    return;
-  }
-
-  tbody.innerHTML = slice.map(r => {
-    const isCareJournal = (r.file_url === 'INTERNAL_CARE_JOURNAL');
-    const docLink = isCareJournal
-      ? `<span class="badge badge-doctor-consult">Care Journal</span>`
-      : `<a href="${r.file_url}" target="_blank" rel="noopener">Open Doc ↗</a>`;
-
-    return `
-      <tr>
-        <td><strong>${r.report_id}</strong></td>
-        <td><strong>${getSeniorName(r.senior_id)}</strong></td>
-        <td><span class="badge ${isCareJournal ? 'badge-complete' : 'badge-nurse-visit'}">${r.type}</span></td>
-        <td>${docLink}</td>
-        <td>${r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN') : '-'}</td>
-        <td><button class="share-btn" data-id="${r.report_id}" data-senior="${r.senior_id}">Share 72h</button></td>
-      </tr>
-    `;
-  }).join('');
-
-  tbody.querySelectorAll('.share-btn').forEach(btn => {
-    btn.onclick = async () => {
-      const reportId = btn.getAttribute('data-id');
-      try {
-        const res = await callApi('createReportLink', { reportId, expiryHours: 72 });
-        const shareUrl = `${window.location.origin}${window.location.pathname.replace('admin.html', '')}report.html?token=${res.token}`;
-        prompt('72-Hour Link Created. Copy below:', shareUrl);
-      } catch (err) {
-        alert('Share error: ' + err.message);
-      }
-    };
-  });
-
-  renderPaginationBar('reports-pagination', total, page, (p) => {
-    pageState.reports = p;
-    renderReports(reports);
-  });
-}
-
-function renderReviews(revs) {
-  const tbody = document.querySelector('#admin-reviews-table tbody');
-  if (!tbody) return;
-
-  const total
