@@ -6,6 +6,100 @@
   <title>Admin Operations — Nityaseva</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
+    /* Executive Metric Tiles */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .metric-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      position: relative;
+      overflow: hidden;
+    }
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      width: 4px;
+      background: #1b4332;
+    }
+    .metric-card.accent-yellow::before { background: #d97706; }
+    .metric-card.accent-blue::before { background: #0284c7; }
+    .metric-card.accent-red::before { background: #dc2626; }
+    .metric-card.accent-purple::before { background: #7c3aed; }
+
+    .metric-val {
+      font-size: 28px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1;
+      margin-top: 4px;
+    }
+    .metric-lbl {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #64748b;
+      letter-spacing: 0.5px;
+    }
+    .metric-sub {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 6px;
+    }
+
+    /* Quick Jump Action Grid */
+    .jump-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .jump-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .jump-card:hover {
+      background: #ffffff;
+      border-color: #1b4332;
+      box-shadow: 0 4px 12px rgba(27,67,50,0.08);
+      transform: translateY(-2px);
+    }
+    .jump-icon {
+      font-size: 24px;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: #e8f5e9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .jump-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .jump-desc {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
     /* 5-Item Numbered Pagination Styles */
     .pagination-bar {
       display: flex;
@@ -68,7 +162,8 @@
   </header>
 
   <div class="admin-nav">
-    <button class="nav-tab active" data-tab="tab-operations">📋 Operational Work Orders</button>
+    <button class="nav-tab active" data-tab="tab-dashboard">🏠 Home / Dashboard</button>
+    <button class="nav-tab" data-tab="tab-operations">📋 Operational Work Orders</button>
     <button class="nav-tab" data-tab="tab-seniors">👴 All Registered Seniors</button>
     <button class="nav-tab" data-tab="tab-families">👨‍👩‍👧 Family Links</button>
     <button class="nav-tab" data-tab="tab-employees">👥 Employee Directory</button>
@@ -90,8 +185,120 @@
   </div>
 
   <main>
+    <!-- TAB 0: HOME / OPERATIONAL MONITORING DASHBOARD -->
+    <div id="tab-dashboard" class="tab-content active">
+      <div class="card" style="background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%); color:#ffffff; padding:22px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div>
+            <h2 style="color:#ffffff; margin:0; border:none; padding:0; font-size:22px;">Executive Operations Overview</h2>
+            <p style="margin:4px 0 0 0; font-size:12px; color:#b7e4c7;">Real-time operational monitoring & clinical dispatch status</p>
+          </div>
+          <button id="btn-refresh-dashboard" style="background:#ffffff; color:#1b4332; font-weight:800; padding:8px 16px; border-radius:8px;">🔄 Refresh Telemetry</button>
+        </div>
+      </div>
+
+      <!-- KEY METRIC SUMMARY TILES -->
+      <div class="metric-grid">
+        <div class="metric-card">
+          <div class="metric-lbl">Active Seniors</div>
+          <div class="metric-val" id="dash-stat-seniors">0</div>
+          <div class="metric-sub">Registered patients</div>
+        </div>
+        <div class="metric-card accent-yellow">
+          <div class="metric-lbl">Scheduled / Pending</div>
+          <div class="metric-val" id="dash-stat-scheduled">0</div>
+          <div class="metric-sub">Pending verification</div>
+        </div>
+        <div class="metric-card accent-blue">
+          <div class="metric-lbl">In Progress Now</div>
+          <div class="metric-val" id="dash-stat-inprogress">0</div>
+          <div class="metric-sub">Active visits/calls</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-lbl">Completed Visits</div>
+          <div class="metric-val" id="dash-stat-complete">0</div>
+          <div class="metric-sub">Concluded & closed</div>
+        </div>
+        <div class="metric-card accent-red">
+          <div class="metric-lbl">Doctor Alerts</div>
+          <div class="metric-val" id="dash-stat-alerts">0</div>
+          <div class="metric-sub">Urgent/Emergency reviews</div>
+        </div>
+        <div class="metric-card accent-purple">
+          <div class="metric-lbl">Care Plans</div>
+          <div class="metric-val" id="dash-stat-subs">0</div>
+          <div class="metric-sub">Active subscriptions</div>
+        </div>
+      </div>
+
+      <!-- LIVE OPERATION RADAR & RECENT AUDIT ACTIVITY -->
+      <div class="grid" style="grid-template-columns: 1.4fr 1fr; margin-bottom: 20px;">
+        <div class="card" style="margin:0;">
+          <h2>🚨 Live Field Operations (Active & Immediate)</h2>
+          <table id="dash-live-ops-table">
+            <thead>
+              <tr><th>WO ID</th><th>Senior</th><th>Service</th><th>Assigned Staff</th><th>Status</th></tr>
+            </thead>
+            <tbody><tr><td colspan="5">Scanning active visits...</td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="card" style="margin:0;">
+          <h2>🔒 Recent Compliance Activity</h2>
+          <table id="dash-recent-audit-table">
+            <thead>
+              <tr><th>Time</th><th>Actor</th><th>Event</th></tr>
+            </thead>
+            <tbody><tr><td colspan="3">Loading audit trail...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- QUICK-JUMP ACTION NAVIGATION -->
+      <div class="card">
+        <h2>Quick Operational Actions</h2>
+        <div class="jump-grid">
+          <div class="jump-card" data-jump="tab-operations">
+            <div class="jump-icon">📋</div>
+            <div>
+              <div class="jump-title">Generate Work Order</div>
+              <div class="jump-desc">Dispatch nurse, doctor, escort, or companion</div>
+            </div>
+          </div>
+          <div class="jump-card" data-jump="tab-seniors">
+            <div class="jump-icon">👴</div>
+            <div>
+              <div class="jump-title">Enroll Senior Patient</div>
+              <div class="jump-desc">Add patient profile & link primary family contact</div>
+            </div>
+          </div>
+          <div class="jump-card" data-jump="tab-employees">
+            <div class="jump-icon">👥</div>
+            <div>
+              <div class="jump-title">Employee Directory</div>
+              <div class="jump-desc">Create Staff, Doctor, or Coordinator accounts</div>
+            </div>
+          </div>
+          <div class="jump-card" data-jump="tab-clinical">
+            <div class="jump-icon">🩺</div>
+            <div>
+              <div class="jump-title">Clinical Escalations</div>
+              <div class="jump-desc">Review urgent vitals flags & doctor queues</div>
+            </div>
+          </div>
+          <div class="jump-card" data-jump="tab-reports">
+            <div class="jump-icon">📑</div>
+            <div>
+              <div class="jump-title">Reports & Sharing</div>
+              <div class="jump-desc">Generate 72-hour Care Summary links</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- TAB 1: WORK ORDERS (UNIFIED BOOKING CHANNEL) -->
-    <div id="tab-operations" class="tab-content active">
+    <div id="tab-operations" class="tab-content">
       <div class="card">
         <h2>Generate Operational Work Order (Unified Booking Channel)</h2>
         <form id="create-wo-form">
@@ -252,7 +459,7 @@
       </div>
     </div>
 
-    <!-- TAB 4: UNIFIED EMPLOYEE DIRECTORY (SINGLE WINDOW CREATION + SEPARATE TABS) -->
+    <!-- TAB 4: UNIFIED EMPLOYEE DIRECTORY -->
     <div id="tab-employees" class="tab-content">
       <div class="card">
         <h2>Register Employee (Single Window)</h2>
@@ -302,37 +509,28 @@
           </div>
         </div>
 
-        <!-- 1. Staff Sub-Table -->
         <div id="view-emp-staff">
           <div class="table-toolbar"><div class="search-box"><input type="text" id="search-staff" placeholder="Search staff..."></div></div>
           <table id="admin-staff-table">
-            <thead>
-              <tr><th>Staff ID</th><th>Name</th><th>Role</th><th>Email</th><th>Phone</th><th>Status</th></tr>
-            </thead>
+            <thead><tr><th>Staff ID</th><th>Name</th><th>Role</th><th>Email</th><th>Phone</th><th>Status</th></tr></thead>
             <tbody><tr><td colspan="6">Loading staff...</td></tr></tbody>
           </table>
           <div id="staff-pagination" class="pagination-bar"></div>
         </div>
 
-        <!-- 2. Doctors Sub-Table -->
         <div id="view-emp-doctors" class="hidden">
           <div class="table-toolbar"><div class="search-box"><input type="text" id="search-doctors" placeholder="Search doctors..."></div></div>
           <table id="admin-doctors-table">
-            <thead>
-              <tr><th>Doctor ID</th><th>Name</th><th>Specialty</th><th>Email</th><th>Phone</th><th>Status</th></tr>
-            </thead>
+            <thead><tr><th>Doctor ID</th><th>Name</th><th>Specialty</th><th>Email</th><th>Phone</th><th>Status</th></tr></thead>
             <tbody><tr><td colspan="6">Loading doctors...</td></tr></tbody>
           </table>
           <div id="doctors-pagination" class="pagination-bar"></div>
         </div>
 
-        <!-- 3. Coordinators Sub-Table -->
         <div id="view-emp-coordinators" class="hidden">
           <div class="table-toolbar"><div class="search-box"><input type="text" id="search-coordinators" placeholder="Search coordinators..."></div></div>
           <table id="admin-coordinators-table">
-            <thead>
-              <tr><th>Coordinator ID</th><th>Name</th><th>Phone</th><th>Email</th><th>Role</th><th>Status</th></tr>
-            </thead>
+            <thead><tr><th>Coordinator ID</th><th>Name</th><th>Phone</th><th>Email</th><th>Role</th><th>Status</th></tr></thead>
             <tbody><tr><td colspan="6">Loading coordinators...</td></tr></tbody>
           </table>
           <div id="coordinators-pagination" class="pagination-bar"></div>
@@ -344,13 +542,8 @@
     <div id="tab-hospital" class="tab-content">
       <div class="card">
         <h2>Hospital Coordination & Escort Bookings</h2>
-        <div class="disclaimer-banner compact">
-          <strong>⚠️ Not an emergency service.</strong> For life-threatening symptoms, call <strong>112</strong> immediately.
-        </div>
         <table id="admin-hospital-services-table">
-          <thead>
-            <tr><th>Service ID</th><th>Senior</th><th>Type</th><th>Hospital</th><th>Status</th><th>Assigned</th></tr>
-          </thead>
+          <thead><tr><th>Service ID</th><th>Senior</th><th>Type</th><th>Hospital</th><th>Status</th><th>Assigned</th></tr></thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
         <div id="hospital-pagination" class="pagination-bar"></div>
@@ -361,13 +554,8 @@
     <div id="tab-companion" class="tab-content">
       <div class="card">
         <h2>Companion Services Directory (Outings & Errands)</h2>
-        <div class="disclaimer-banner compact">
-          <strong>⚠️ Non-medical personal assistance.</strong> Staff accompanies senior for errands — not a medical service.
-        </div>
         <table id="admin-companion-services-table">
-          <thead>
-            <tr><th>Service ID</th><th>Senior</th><th>Type</th><th>Destination</th><th>Status</th><th>Assigned</th></tr>
-          </thead>
+          <thead><tr><th>Service ID</th><th>Senior</th><th>Type</th><th>Destination</th><th>Status</th><th>Assigned</th></tr></thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
         <div id="companion-pagination" class="pagination-bar"></div>
@@ -392,9 +580,7 @@
       <div class="card">
         <h2>Active Subscriptions</h2>
         <table id="admin-subs-table">
-          <thead>
-            <tr><th>Sub ID</th><th>Senior</th><th>Plan</th><th>Start Date</th><th>End Date</th><th>Status</th></tr>
-          </thead>
+          <thead><tr><th>Sub ID</th><th>Senior</th><th>Plan</th><th>Start Date</th><th>End Date</th><th>Status</th></tr></thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
         <div id="subs-pagination" class="pagination-bar"></div>
@@ -406,9 +592,7 @@
       <div class="card">
         <h2>Monthly Entitlements (Used / Allowed)</h2>
         <table id="admin-entitlements-table">
-          <thead>
-            <tr><th>Senior</th><th>Month</th><th>Nurse Visits</th><th>Doctor Consults</th></tr>
-          </thead>
+          <thead><tr><th>Senior</th><th>Month</th><th>Nurse Visits</th><th>Doctor Consults</th></tr></thead>
           <tbody><tr><td colspan="4">Loading...</td></tr></tbody>
         </table>
         <div id="ent-pagination" class="pagination-bar"></div>
@@ -437,13 +621,10 @@
           <button type="submit">Record Diagnostic Report</button>
         </form>
       </div>
-
       <div class="card">
         <h2>Past Diagnostic Reports & Secure Share Links</h2>
         <table id="admin-reports-table">
-          <thead>
-            <tr><th>Report ID</th><th>Senior</th><th>Type</th><th>Document</th><th>Created Date</th><th>Share Link</th></tr>
-          </thead>
+          <thead><tr><th>Report ID</th><th>Senior</th><th>Type</th><th>Document</th><th>Created Date</th><th>Share Link</th></tr></thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
         <div id="reports-pagination" class="pagination-bar"></div>
@@ -455,9 +636,7 @@
       <div class="card">
         <h2>Doctor Clinical Escalations & Reviews</h2>
         <table id="admin-reviews-table">
-          <thead>
-            <tr><th>Review ID</th><th>Senior</th><th>Priority</th><th>Reason</th><th>Assigned Doctor</th><th>Status</th></tr>
-          </thead>
+          <thead><tr><th>Review ID</th><th>Senior</th><th>Priority</th><th>Reason</th><th>Assigned Doctor</th><th>Status</th></tr></thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
         <div id="reviews-pagination" class="pagination-bar"></div>
@@ -469,9 +648,7 @@
       <div class="card">
         <h2>System Compliance Audit Trail (Last 100 Events)</h2>
         <table id="admin-audit-table">
-          <thead>
-            <tr><th>Time</th><th>Actor</th><th>Role</th><th>Event</th><th>Target ID</th><th>Details</th></tr>
-          </thead>
+          <thead><tr><th>Time</th><th>Actor</th><th>Role</th><th>Event</th><th>Target ID</th><th>Details</th></tr></thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
         <div id="audit-pagination" class="pagination-bar"></div>
