@@ -5,6 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Operations — Nityaseva</title>
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* 5-Item Numbered Pagination Styles */
+    .pagination-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 6px 4px;
+      margin-top: 8px;
+      border-top: 1px dashed #e2e8f0;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .pagination-info {
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+    }
+    .pagination-buttons {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .page-num-btn {
+      min-width: 32px;
+      height: 32px;
+      padding: 0 8px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #334155;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+    .page-num-btn:hover:not(:disabled) {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+    }
+    .page-num-btn.active {
+      background: #1b4332;
+      color: #ffffff;
+      border-color: #1b4332;
+    }
+    .page-num-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -19,9 +71,7 @@
     <button class="nav-tab active" data-tab="tab-operations">📋 Operational Work Orders</button>
     <button class="nav-tab" data-tab="tab-seniors">👴 All Registered Seniors</button>
     <button class="nav-tab" data-tab="tab-families">👨‍👩‍👧 Family Links</button>
-    <button class="nav-tab" data-tab="tab-staff">👩‍⚕️ Healthcare Staff</button>
-    <button class="nav-tab" data-tab="tab-doctors">🩺 Doctors Directory</button>
-    <button class="nav-tab" data-tab="tab-coordinators">🧑‍💼 Coordinators</button>
+    <button class="nav-tab" data-tab="tab-employees">👥 Employee Directory</button>
     <button class="nav-tab" data-tab="tab-hospital">🏥 Hospital Services</button>
     <button class="nav-tab" data-tab="tab-companion">🚗 Companion Services</button>
     <button class="nav-tab" data-tab="tab-subscriptions">💳 Active Subscriptions</button>
@@ -40,7 +90,7 @@
   </div>
 
   <main>
-    <!-- TAB 1: UNIFIED OPERATIONAL WORK ORDERS (SINGLE CHANNEL BOOKING) -->
+    <!-- TAB 1: WORK ORDERS (UNIFIED BOOKING CHANNEL) -->
     <div id="tab-operations" class="tab-content active">
       <div class="card">
         <h2>Generate Operational Work Order (Unified Booking Channel)</h2>
@@ -50,7 +100,6 @@
               <label>Senior Patient</label>
               <select id="wo-senior-id" required><option value="">-- Choose Senior --</option></select>
             </div>
-            
             <div class="form-group">
               <label>Service Type</label>
               <select id="wo-type" required>
@@ -67,34 +116,25 @@
                 </optgroup>
               </select>
             </div>
-
             <div class="form-group">
               <label>Scheduled Date & Time</label>
               <input type="datetime-local" id="wo-scheduled-at" required>
             </div>
-
             <div class="form-group">
               <label>Assigned Staff / Doctor / Coordinator</label>
               <div class="searchable-dropdown">
-                <input type="text" id="wo-staff-search" placeholder="Type to search staff, doctor, coordinator..." autocomplete="off">
+                <input type="text" id="wo-staff-search" placeholder="Type to search employee..." autocomplete="off">
                 <input type="hidden" id="wo-staff-id">
                 <div class="suggestions-list" id="wo-staff-suggestions"></div>
               </div>
             </div>
           </div>
 
-          <!-- DYNAMIC CONDITIONAL: HOSPITAL COORDINATION & ESCORT -->
           <div id="wo-hospital-fields" class="conditional-section" style="display:none; background:#f0fdf4; border:1px solid #bbf7d0; padding:14px; border-radius:10px; margin-top:12px;">
             <div class="section-divider" style="margin-top:0; color:#166534;">🏥 Hospital Booking Specifics</div>
             <div class="grid" style="margin-top:10px;">
-              <div class="form-group">
-                <label>Preferred Hospital</label>
-                <input type="text" id="wo-hsv-hospital" placeholder="e.g. Apollo, AMRI, Fortis">
-              </div>
-              <div class="form-group">
-                <label>Specialty Needed</label>
-                <input type="text" id="wo-hsv-specialty" placeholder="e.g. Cardiology, Orthopedics">
-              </div>
+              <div class="form-group"><label>Preferred Hospital</label><input type="text" id="wo-hsv-hospital" placeholder="e.g. Apollo, AMRI"></div>
+              <div class="form-group"><label>Specialty Needed</label><input type="text" id="wo-hsv-specialty" placeholder="e.g. Cardiology"></div>
               <div class="form-group">
                 <label>Travel Payer</label>
                 <select id="wo-hsv-travel-payer">
@@ -105,53 +145,38 @@
             </div>
           </div>
 
-          <!-- DYNAMIC CONDITIONAL: COMPANION SERVICES (OUTINGS & ERRANDS) -->
           <div id="wo-companion-fields" class="conditional-section" style="display:none; background:#fefce8; border:1px solid #fef08a; padding:14px; border-radius:10px; margin-top:12px;">
             <div class="section-divider" style="margin-top:0; color:#854d0e;">🚗 Companion & Errand Details</div>
             <div class="grid" style="margin-top:10px;">
               <div class="form-group">
                 <label>Companion Errand Type</label>
                 <select id="wo-cmp-subtype">
-                  <option value="OUTINGS">🚶 Outings (Park / Temple / Social Visit)</option>
+                  <option value="OUTINGS">🚶 Outings (Park / Temple)</option>
                   <option value="BANK_WORK">🏦 Bank Work</option>
                   <option value="HOSPITAL_TRIP">🏥 Hospital Trip (General)</option>
                   <option value="SHOPPING_GROCERIES">🛒 Shopping / Groceries</option>
                   <option value="RAILWAY_BUS_DROP">🚉 Railway / Bus Drop</option>
                   <option value="MEDICINE_PICKUP">💊 Medicine Pickup</option>
-                  <option value="MEDICAL_REPORT_PICKUP">📄 Medical Report Pickup</option>
+                  <option value="MEDICAL_REPORT_PICKUP">📄 Report Pickup</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label>Destination / Location</label>
-                <input type="text" id="wo-cmp-destination" placeholder="e.g. SBI Bank Park Street Branch">
-              </div>
-              <div class="form-group" id="wo-cmp-items-wrapper">
-                <label>Items to Pickup / Purchase</label>
-                <input type="text" id="wo-cmp-items" placeholder="e.g. Monthly cardiac medicines, Lab report file">
-              </div>
-              <div class="form-group">
-                <label>Travel Cost Covered By</label>
-                <select id="wo-cmp-travel-payer">
-                  <option value="FAMILY">Family Pays Directly</option>
-                  <option value="NITYASEVA">Nityaseva to Arrange & Bill</option>
-                </select>
-              </div>
+              <div class="form-group"><label>Destination / Location</label><input type="text" id="wo-cmp-destination" placeholder="e.g. SBI Bank"></div>
+              <div class="form-group"><label>Items to Pickup / Purchase</label><input type="text" id="wo-cmp-items" placeholder="e.g. Medicines"></div>
             </div>
           </div>
 
           <div class="form-group" style="margin-top:12px;">
-            <label>Instructions & Care Notes (Shared with Assigned Staff)</label>
-            <textarea id="wo-notes" rows="2" placeholder="Specific notes, gate code, medical instructions, or transit details..."></textarea>
+            <label>Care Instructions & Notes</label>
+            <textarea id="wo-notes" rows="2" placeholder="Instructions for staff..."></textarea>
           </div>
 
-          <button type="submit" style="margin-top:8px;">Generate Work Order & Issue Verification Codes</button>
+          <button type="submit" style="margin-top:8px;">Generate Work Order & Send Codes</button>
         </form>
         <div id="wo-result" class="message hidden" style="margin-top: 14px;"></div>
       </div>
 
       <div class="card">
         <h2>Operational Work Orders</h2>
-
         <div class="sub-nav">
           <button class="sub-tab active" data-slicer="ALL">All</button>
           <button class="sub-tab" data-slicer="SCHEDULED">SCHEDULED</button>
@@ -159,29 +184,18 @@
           <button class="sub-tab" data-slicer="COMPLETE">Complete</button>
           <button class="sub-tab" data-slicer="CANCELLED">Cancelled</button>
         </div>
-
         <div class="table-toolbar">
-          <div class="search-box"><input type="text" id="search-wo" placeholder="Search by ID, Senior, Staff, Service..."></div>
-          <div class="sort-controls">
-            <button class="sort-btn" id="sort-wo-asc">Sort ▲</button>
-            <button class="sort-btn" id="sort-wo-desc">Sort ▼</button>
-          </div>
+          <div class="search-box"><input type="text" id="search-wo" placeholder="Search work orders..."></div>
         </div>
-
         <table id="admin-wo-table">
           <thead>
             <tr>
-              <th data-key="work_order_id">ID</th>
-              <th data-key="senior">Senior</th>
-              <th data-key="type">Service Type</th>
-              <th data-key="assigned">Assigned Staff</th>
-              <th data-key="created_at">Scheduled Time</th>
-              <th data-key="status">Status</th>
-              <th>Action</th>
+              <th>ID</th><th>Senior</th><th>Type</th><th>Assigned</th><th>Scheduled</th><th>Status</th><th>Override</th>
             </tr>
           </thead>
-          <tbody><tr><td colspan="7">Loading work orders...</td></tr></tbody>
+          <tbody><tr><td colspan="7">Loading...</td></tr></tbody>
         </table>
+        <div id="wo-pagination" class="pagination-bar"></div>
       </div>
     </div>
 
@@ -206,33 +220,20 @@
             <div class="form-group"><label>Family Phone</label><input type="tel" id="fam-phone" required></div>
             <div class="form-group"><label>Family Email</label><input type="email" id="fam-email" required></div>
           </div>
-
           <button type="submit" style="margin-top:12px;">Enroll Senior & Link Family</button>
         </form>
       </div>
 
       <div class="card">
         <h2>All Registered Seniors</h2>
-        <div class="table-toolbar">
-          <div class="search-box"><input type="text" id="search-seniors" placeholder="Search seniors..."></div>
-          <div class="sort-controls">
-            <button class="sort-btn" id="sort-seniors-asc">Sort ▲</button>
-            <button class="sort-btn" id="sort-seniors-desc">Sort ▼</button>
-          </div>
-        </div>
+        <div class="table-toolbar"><div class="search-box"><input type="text" id="search-seniors" placeholder="Search seniors..."></div></div>
         <table id="admin-seniors-table">
           <thead>
-            <tr>
-              <th data-key="senior_id">ID</th>
-              <th data-key="full_name">Full Name</th>
-              <th data-key="phone">Phone</th>
-              <th data-key="email">Email</th>
-              <th data-key="address">Address</th>
-              <th data-key="status">Status</th>
-            </tr>
+            <tr><th>ID</th><th>Full Name</th><th>Phone</th><th>Email</th><th>Address</th><th>Status</th></tr>
           </thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
+        <div id="seniors-pagination" class="pagination-bar"></div>
       </div>
     </div>
 
@@ -240,112 +241,106 @@
     <div id="tab-families" class="tab-content">
       <div class="card">
         <h2>Family Members & Senior Links</h2>
-        <div class="table-toolbar">
-          <div class="search-box"><input type="text" id="search-families" placeholder="Search family links..."></div>
-          <div class="sort-controls">
-            <button class="sort-btn" id="sort-families-asc">Sort ▲</button>
-            <button class="sort-btn" id="sort-families-desc">Sort ▼</button>
-          </div>
-        </div>
+        <div class="table-toolbar"><div class="search-box"><input type="text" id="search-families" placeholder="Search family links..."></div></div>
         <table id="admin-families-table">
           <thead>
-            <tr>
-              <th data-key="family_id">Family ID</th>
-              <th data-key="full_name">Name</th>
-              <th data-key="relationship">Relationship</th>
-              <th>Linked Senior</th>
-              <th data-key="email">Email</th>
-              <th data-key="phone">Phone</th>
-            </tr>
+            <tr><th>Family ID</th><th>Name</th><th>Relationship</th><th>Linked Senior</th><th>Email</th><th>Phone</th></tr>
           </thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
+        <div id="families-pagination" class="pagination-bar"></div>
       </div>
     </div>
 
-    <!-- TAB 4: STAFF DIRECTORY -->
-    <div id="tab-staff" class="tab-content">
+    <!-- TAB 4: UNIFIED EMPLOYEE DIRECTORY (SINGLE WINDOW CREATION + SEPARATE TABS) -->
+    <div id="tab-employees" class="tab-content">
       <div class="card">
-        <h2>Healthcare Staff / Nurses Directory</h2>
-        <div class="table-toolbar">
-          <div class="search-box"><input type="text" id="search-staff" placeholder="Search staff..."></div>
-          <div class="sort-controls">
-            <button class="sort-btn" id="sort-staff-asc">Sort ▲</button>
-            <button class="sort-btn" id="sort-staff-desc">Sort ▼</button>
-          </div>
-        </div>
-        <table id="admin-staff-table">
-          <thead>
-            <tr>
-              <th data-key="staff_id">Staff ID</th>
-              <th data-key="full_name">Name</th>
-              <th data-key="role">Role</th>
-              <th data-key="email">Email</th>
-              <th data-key="phone">Phone</th>
-              <th data-key="status">Status</th>
-            </tr>
-          </thead>
-          <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- TAB 5: DOCTORS DIRECTORY -->
-    <div id="tab-doctors" class="tab-content">
-      <div class="card">
-        <h2>Doctors Directory</h2>
-        <div class="table-toolbar">
-          <div class="search-box"><input type="text" id="search-doctors" placeholder="Search doctors..."></div>
-          <div class="sort-controls">
-            <button class="sort-btn" id="sort-doctors-asc">Sort ▲</button>
-            <button class="sort-btn" id="sort-doctors-desc">Sort ▼</button>
-          </div>
-        </div>
-        <table id="admin-doctors-table">
-          <thead>
-            <tr>
-              <th data-key="doctor_id">Doctor ID</th>
-              <th data-key="full_name">Name</th>
-              <th data-key="specialty">Specialty</th>
-              <th data-key="email">Email</th>
-              <th data-key="phone">Phone</th>
-              <th data-key="status">Status</th>
-            </tr>
-          </thead>
-          <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- TAB 6: COORDINATORS -->
-    <div id="tab-coordinators" class="tab-content">
-      <div class="card">
-        <h2>Add New Coordinator</h2>
-        <form id="create-coordinator-form">
+        <h2>Register Employee (Single Window)</h2>
+        <p style="font-size:13px; color:#64748b; margin-bottom:14px;">
+          Create IDs for Staff/Nurses (<code>STF-</code>), Doctors (<code>DOC-</code>), or Coordinators (<code>CRD-</code>). Records are routed into their respective separate sheets automatically.
+        </p>
+        <form id="create-employee-form">
           <div class="grid">
-            <div class="form-group"><label>Full Name</label><input type="text" id="crd-name" required></div>
-            <div class="form-group"><label>Phone</label><input type="tel" id="crd-phone" required></div>
-            <div class="form-group"><label>Email</label><input type="email" id="crd-email" required></div>
-            <div class="form-group"><label>Job Title</label><input type="text" id="crd-role" value="Care Coordinator"></div>
+            <div class="form-group">
+              <label>Employee Category</label>
+              <select id="emp-category" required>
+                <option value="STAFF">👩‍⚕️ Healthcare Staff / Field Nurse (STF)</option>
+                <option value="DOCTOR">🩺 Doctor / Consulting Physician (DOC)</option>
+                <option value="COORDINATOR">🧑‍💼 Care Coordinator (CRD)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="emp-name" placeholder="Full name" required>
+            </div>
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="tel" id="emp-phone" placeholder="+91..." required>
+            </div>
+            <div class="form-group">
+              <label>Official Email</label>
+              <input type="email" id="emp-email" placeholder="employee@domain.com" required>
+            </div>
+            <div class="form-group" id="emp-detail-group">
+              <label id="emp-detail-label">Designation / Staff Role</label>
+              <input type="text" id="emp-detail" value="Field Nurse" placeholder="Designation" required>
+            </div>
           </div>
-          <button type="submit" style="margin-top:12px;">Add Coordinator</button>
+          <button type="submit" style="margin-top:12px;">Create Employee ID</button>
         </form>
+        <div id="emp-result" class="message hidden" style="margin-top: 14px;"></div>
       </div>
 
+      <!-- SEPARATE TABS FOR VIEWING UNMERGED IDs -->
       <div class="card">
-        <h2>Coordinators Directory</h2>
-        <table id="admin-coordinators-table">
-          <thead>
-            <tr>
-              <th>ID</th><th>Name</th><th>Phone</th><th>Email</th><th>Role</th><th>Status</th>
-            </tr>
-          </thead>
-          <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
-        </table>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+          <h2 style="margin:0; border:none; padding:0;">Employee Rosters</h2>
+          <div class="sub-nav" style="margin:0; padding:0; border:none;">
+            <button class="sub-tab active" id="btn-show-staff">👩‍⚕️ Staff (<span id="count-staff">0</span>)</button>
+            <button class="sub-tab" id="btn-show-doctors">🩺 Doctors (<span id="count-doctors">0</span>)</button>
+            <button class="sub-tab" id="btn-show-coordinators">🧑‍💼 Coordinators (<span id="count-coordinators">0</span>)</button>
+          </div>
+        </div>
+
+        <!-- 1. Staff Sub-Table -->
+        <div id="view-emp-staff">
+          <div class="table-toolbar"><div class="search-box"><input type="text" id="search-staff" placeholder="Search staff..."></div></div>
+          <table id="admin-staff-table">
+            <thead>
+              <tr><th>Staff ID</th><th>Name</th><th>Role</th><th>Email</th><th>Phone</th><th>Status</th></tr>
+            </thead>
+            <tbody><tr><td colspan="6">Loading staff...</td></tr></tbody>
+          </table>
+          <div id="staff-pagination" class="pagination-bar"></div>
+        </div>
+
+        <!-- 2. Doctors Sub-Table -->
+        <div id="view-emp-doctors" class="hidden">
+          <div class="table-toolbar"><div class="search-box"><input type="text" id="search-doctors" placeholder="Search doctors..."></div></div>
+          <table id="admin-doctors-table">
+            <thead>
+              <tr><th>Doctor ID</th><th>Name</th><th>Specialty</th><th>Email</th><th>Phone</th><th>Status</th></tr>
+            </thead>
+            <tbody><tr><td colspan="6">Loading doctors...</td></tr></tbody>
+          </table>
+          <div id="doctors-pagination" class="pagination-bar"></div>
+        </div>
+
+        <!-- 3. Coordinators Sub-Table -->
+        <div id="view-emp-coordinators" class="hidden">
+          <div class="table-toolbar"><div class="search-box"><input type="text" id="search-coordinators" placeholder="Search coordinators..."></div></div>
+          <table id="admin-coordinators-table">
+            <thead>
+              <tr><th>Coordinator ID</th><th>Name</th><th>Phone</th><th>Email</th><th>Role</th><th>Status</th></tr>
+            </thead>
+            <tbody><tr><td colspan="6">Loading coordinators...</td></tr></tbody>
+          </table>
+          <div id="coordinators-pagination" class="pagination-bar"></div>
+        </div>
       </div>
     </div>
 
-    <!-- TAB 7: HOSPITAL SERVICES -->
+    <!-- TAB 5: HOSPITAL SERVICES -->
     <div id="tab-hospital" class="tab-content">
       <div class="card">
         <h2>Hospital Coordination & Escort Bookings</h2>
@@ -354,21 +349,15 @@
         </div>
         <table id="admin-hospital-services-table">
           <thead>
-            <tr>
-              <th>Service ID</th>
-              <th>Senior</th>
-              <th>Type</th>
-              <th>Hospital</th>
-              <th>Status</th>
-              <th>Assigned</th>
-            </tr>
+            <tr><th>Service ID</th><th>Senior</th><th>Type</th><th>Hospital</th><th>Status</th><th>Assigned</th></tr>
           </thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
+        <div id="hospital-pagination" class="pagination-bar"></div>
       </div>
     </div>
 
-    <!-- TAB 8: COMPANION SERVICES -->
+    <!-- TAB 6: COMPANION SERVICES -->
     <div id="tab-companion" class="tab-content">
       <div class="card">
         <h2>Companion Services Directory (Outings & Errands)</h2>
@@ -377,30 +366,21 @@
         </div>
         <table id="admin-companion-services-table">
           <thead>
-            <tr>
-              <th>Service ID</th>
-              <th>Senior</th>
-              <th>Type</th>
-              <th>Destination</th>
-              <th>Status</th>
-              <th>Assigned</th>
-            </tr>
+            <tr><th>Service ID</th><th>Senior</th><th>Type</th><th>Destination</th><th>Status</th><th>Assigned</th></tr>
           </thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
+        <div id="companion-pagination" class="pagination-bar"></div>
       </div>
     </div>
 
-    <!-- TAB 9: ACTIVE SUBSCRIPTIONS -->
+    <!-- TAB 7: SUBSCRIPTIONS -->
     <div id="tab-subscriptions" class="tab-content">
       <div class="card">
         <h2>Create Subscription Plan (Auto 30-Day Expiry)</h2>
         <form id="create-sub-form">
           <div class="grid">
-            <div class="form-group">
-              <label>Select Senior</label>
-              <select id="sub-senior-id" required><option value="">-- Choose Senior --</option></select>
-            </div>
+            <div class="form-group"><label>Select Senior</label><select id="sub-senior-id" required></select></div>
             <div class="form-group"><label>Plan Name</label><input type="text" id="sub-plan-name" value="Standard Care" required></div>
             <div class="form-group"><label>Start Date</label><input type="date" id="sub-start-date" required></div>
             <div class="form-group"><label>Nurse Visits / Mo</label><input type="number" id="sub-nurse-visits" value="2" required></div>
@@ -408,69 +388,40 @@
           </div>
           <button type="submit">Create Subscription</button>
         </form>
-        <div id="sub-result" class="message hidden" style="margin-top: 14px;"></div>
       </div>
-
       <div class="card">
         <h2>Active Subscriptions</h2>
-        <div class="table-toolbar">
-          <div class="search-box"><input type="text" id="search-subs" placeholder="Search subscriptions..."></div>
-          <div class="sort-controls">
-            <button class="sort-btn" id="sort-subs-asc">Sort ▲</button>
-            <button class="sort-btn" id="sort-subs-desc">Sort ▼</button>
-          </div>
-        </div>
         <table id="admin-subs-table">
           <thead>
-            <tr>
-              <th data-key="subscription_id">Sub ID</th>
-              <th data-key="senior">Senior</th>
-              <th data-key="plan_name">Plan</th>
-              <th data-key="start_date">Start Date</th>
-              <th data-key="end_date">End Date (+30d)</th>
-              <th data-key="status">Status</th>
-            </tr>
+            <tr><th>Sub ID</th><th>Senior</th><th>Plan</th><th>Start Date</th><th>End Date</th><th>Status</th></tr>
           </thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
+        <div id="subs-pagination" class="pagination-bar"></div>
       </div>
     </div>
 
-    <!-- TAB 10: MONTHLY ENTITLEMENTS -->
+    <!-- TAB 8: ENTITLEMENTS -->
     <div id="tab-entitlements" class="tab-content">
       <div class="card">
         <h2>Monthly Entitlements (Used / Allowed)</h2>
-        <div class="table-toolbar">
-          <div class="search-box"><input type="text" id="search-ent" placeholder="Search entitlements..."></div>
-          <div class="sort-controls">
-            <button class="sort-btn" id="sort-ent-asc">Sort ▲</button>
-            <button class="sort-btn" id="sort-ent-desc">Sort ▼</button>
-          </div>
-        </div>
         <table id="admin-entitlements-table">
           <thead>
-            <tr>
-              <th data-key="senior">Senior</th>
-              <th data-key="month">Month</th>
-              <th data-key="nurse_used">Nurse Visits (Used/Allowed)</th>
-              <th data-key="doctor_used">Doctor Consults (Used/Allowed)</th>
-            </tr>
+            <tr><th>Senior</th><th>Month</th><th>Nurse Visits</th><th>Doctor Consults</th></tr>
           </thead>
           <tbody><tr><td colspan="4">Loading...</td></tr></tbody>
         </table>
+        <div id="ent-pagination" class="pagination-bar"></div>
       </div>
     </div>
 
-    <!-- TAB 11: DIAGNOSTIC REPORTS & SHARING -->
+    <!-- TAB 9: REPORTS -->
     <div id="tab-reports" class="tab-content">
       <div class="card">
         <h2>Register Clinical Diagnosis Report</h2>
         <form id="create-report-form">
           <div class="grid">
-            <div class="form-group">
-              <label>Select Senior</label>
-              <select id="report-senior-id" required><option value="">-- Choose Senior --</option></select>
-            </div>
+            <div class="form-group"><label>Select Senior</label><select id="report-senior-id" required></select></div>
             <div class="form-group">
               <label>Report Type</label>
               <select id="report-type">
@@ -481,88 +432,49 @@
                 <option value="Other Diagnostics">Other Diagnostics</option>
               </select>
             </div>
-            <div class="form-group">
-              <label>Report Document / Drive URL</label>
-              <input type="url" id="report-url" placeholder="https://drive.google.com/..." required>
-            </div>
+            <div class="form-group"><label>Document URL</label><input type="url" id="report-url" required></div>
           </div>
           <button type="submit">Record Diagnostic Report</button>
         </form>
       </div>
 
-      <div class="card" style="background: #f0fff4; border: 1px solid #c6f6d5;">
-        <h2>Generate Patient Clinical Care Summary (Assessments + Journal)</h2>
-        <p style="font-size: 13px; color: #4a5568;">
-          Compiles all past nurse vitals, doctor recommendations, and family visit requests into a single shareable link with an interactive chat-style Care Journal.
-        </p>
-        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-          <select id="gen-report-senior" style="max-width:300px;"><option value="">-- Choose Senior --</option></select>
-          <button id="btn-gen-care-report" style="background:#2c6e49;">Generate 72-Hour Shareable Care Summary</button>
-        </div>
-      </div>
-
       <div class="card">
         <h2>Past Diagnostic Reports & Secure Share Links</h2>
-        <div class="table-toolbar">
-          <div class="search-box"><input type="text" id="search-reports" placeholder="Search reports..."></div>
-          <div class="sort-controls">
-            <button class="sort-btn" id="sort-reports-asc">Sort ▲</button>
-            <button class="sort-btn" id="sort-reports-desc">Sort ▼</button>
-          </div>
-        </div>
         <table id="admin-reports-table">
           <thead>
-            <tr>
-              <th data-key="report_id">Report ID</th>
-              <th data-key="senior">Senior Patient</th>
-              <th data-key="type">Type</th>
-              <th>Document</th>
-              <th data-key="created_at">Created Date</th>
-              <th>Share Link (72-Hour Token)</th>
-            </tr>
+            <tr><th>Report ID</th><th>Senior</th><th>Type</th><th>Document</th><th>Created Date</th><th>Share Link</th></tr>
           </thead>
-          <tbody><tr><td colspan="6">Loading reports...</td></tr></tbody>
+          <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
+        <div id="reports-pagination" class="pagination-bar"></div>
       </div>
     </div>
 
-    <!-- TAB 12: CLINICAL REVIEWS -->
+    <!-- TAB 10: CLINICAL REVIEWS -->
     <div id="tab-clinical" class="tab-content">
       <div class="card">
         <h2>Doctor Clinical Escalations & Reviews</h2>
         <table id="admin-reviews-table">
           <thead>
-            <tr>
-              <th data-key="review_id">Review ID</th>
-              <th data-key="senior">Senior</th>
-              <th data-key="priority">Priority</th>
-              <th>Reason</th>
-              <th>Assigned Doctor</th>
-              <th data-key="status">Status</th>
-            </tr>
+            <tr><th>Review ID</th><th>Senior</th><th>Priority</th><th>Reason</th><th>Assigned Doctor</th><th>Status</th></tr>
           </thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
+        <div id="reviews-pagination" class="pagination-bar"></div>
       </div>
     </div>
 
-    <!-- TAB 13: AUDIT TRAIL -->
+    <!-- TAB 11: AUDIT TRAIL -->
     <div id="tab-audit" class="tab-content">
       <div class="card">
         <h2>System Compliance Audit Trail (Last 100 Events)</h2>
         <table id="admin-audit-table">
           <thead>
-            <tr>
-              <th>Time</th>
-              <th>Actor</th>
-              <th>Role</th>
-              <th>Event</th>
-              <th>Target ID</th>
-              <th>Details</th>
-            </tr>
+            <tr><th>Time</th><th>Actor</th><th>Role</th><th>Event</th><th>Target ID</th><th>Details</th></tr>
           </thead>
           <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
+        <div id="audit-pagination" class="pagination-bar"></div>
       </div>
     </div>
   </main>
