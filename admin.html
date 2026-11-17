@@ -31,47 +31,120 @@
     <button class="nav-tab" data-tab="tab-audit">🔒 Audit Trail</button>
   </div>
 
-
-<div class="disclaimer-banner">
-  <strong>⚠️ Service Boundary Notice:</strong><br>
-  • Pricing shown is <strong>illustrative only</strong> — not final until approved.<br>
-  • Doctor consultation fees, diagnostic tests, and medicines are <strong>excluded</strong> — paid directly to provider.<br>
-  • This is <strong>NOT an ambulance or emergency medical service</strong>. For life-threatening symptoms, call <strong>112</strong> immediately.<br>
-  • Appointment confirmation depends on the hospital/doctor — Nityaseva cannot guarantee booking.
-</div>
+  <div class="disclaimer-banner">
+    <strong>⚠️ Service Boundary Notice:</strong><br>
+    • Pricing shown is <strong>illustrative only</strong> — not final until approved.<br>
+    • Doctor consultation fees, diagnostic tests, and medicines are <strong>excluded</strong> — paid directly to provider.<br>
+    • This is <strong>NOT an ambulance or emergency medical service</strong>. For life-threatening symptoms, call <strong>112</strong> immediately.<br>
+    • Appointment confirmation depends on the hospital/doctor — Nityaseva cannot guarantee booking.
+  </div>
 
   <main>
-    <!-- TAB 1: WORK ORDERS WITH DYNAMIC SLICERS -->
+    <!-- TAB 1: UNIFIED OPERATIONAL WORK ORDERS (SINGLE CHANNEL BOOKING) -->
     <div id="tab-operations" class="tab-content active">
       <div class="card">
-        <h2>Generate Work Order (Nurse Visit / Doctor Consult)</h2>
+        <h2>Generate Operational Work Order (Unified Booking Channel)</h2>
         <form id="create-wo-form">
           <div class="grid">
             <div class="form-group">
               <label>Senior Patient</label>
               <select id="wo-senior-id" required><option value="">-- Choose Senior --</option></select>
             </div>
+            
             <div class="form-group">
               <label>Service Type</label>
-              <select id="wo-type">
-                <option value="NurseVisit">NurseVisit</option>
-                <option value="DoctorConsult">DoctorConsult</option>
+              <select id="wo-type" required>
+                <optgroup label="Clinical Care">
+                  <option value="NurseVisit">👩‍⚕️ Nurse Home Visit</option>
+                  <option value="DoctorConsult">🩺 Doctor Teleconsult</option>
+                </optgroup>
+                <optgroup label="Hospital Care">
+                  <option value="HospitalCoordination">📞 Hospital Coordination (Remote)</option>
+                  <option value="HospitalEscort">🏥 Hospital Visit Escort (In-Person)</option>
+                </optgroup>
+                <optgroup label="Non-Medical Personal Assistance">
+                  <option value="CompanionService">🚗 Companion Service (Outings & Errands)</option>
+                </optgroup>
               </select>
             </div>
+
             <div class="form-group">
               <label>Scheduled Date & Time</label>
               <input type="datetime-local" id="wo-scheduled-at" required>
             </div>
+
             <div class="form-group">
-              <label>Assigned Staff / Doctor</label>
+              <label>Assigned Staff / Doctor / Coordinator</label>
               <div class="searchable-dropdown">
-                <input type="text" id="wo-staff-search" placeholder="Type to search staff/doctor..." autocomplete="off">
+                <input type="text" id="wo-staff-search" placeholder="Type to search staff, doctor, coordinator..." autocomplete="off">
                 <input type="hidden" id="wo-staff-id">
                 <div class="suggestions-list" id="wo-staff-suggestions"></div>
               </div>
             </div>
           </div>
-          <button type="submit">Generate Work Order & Send Codes</button>
+
+          <!-- DYNAMIC CONDITIONAL: HOSPITAL COORDINATION & ESCORT -->
+          <div id="wo-hospital-fields" class="conditional-section" style="display:none; background:#f0fdf4; border:1px solid #bbf7d0; padding:14px; border-radius:10px; margin-top:12px;">
+            <div class="section-divider" style="margin-top:0; color:#166534;">🏥 Hospital Booking Specifics</div>
+            <div class="grid" style="margin-top:10px;">
+              <div class="form-group">
+                <label>Preferred Hospital</label>
+                <input type="text" id="wo-hsv-hospital" placeholder="e.g. Apollo, AMRI, Fortis">
+              </div>
+              <div class="form-group">
+                <label>Specialty Needed</label>
+                <input type="text" id="wo-hsv-specialty" placeholder="e.g. Cardiology, Orthopedics">
+              </div>
+              <div class="form-group">
+                <label>Travel Payer</label>
+                <select id="wo-hsv-travel-payer">
+                  <option value="FAMILY">Family will arrange/pay</option>
+                  <option value="NITYASEVA">Nityaseva Arranged & Billed</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- DYNAMIC CONDITIONAL: COMPANION SERVICES (OUTINGS & ERRANDS) -->
+          <div id="wo-companion-fields" class="conditional-section" style="display:none; background:#fefce8; border:1px solid #fef08a; padding:14px; border-radius:10px; margin-top:12px;">
+            <div class="section-divider" style="margin-top:0; color:#854d0e;">🚗 Companion & Errand Details</div>
+            <div class="grid" style="margin-top:10px;">
+              <div class="form-group">
+                <label>Companion Errand Type</label>
+                <select id="wo-cmp-subtype">
+                  <option value="OUTINGS">🚶 Outings (Park / Temple / Social Visit)</option>
+                  <option value="BANK_WORK">🏦 Bank Work</option>
+                  <option value="HOSPITAL_TRIP">🏥 Hospital Trip (General)</option>
+                  <option value="SHOPPING_GROCERIES">🛒 Shopping / Groceries</option>
+                  <option value="RAILWAY_BUS_DROP">🚉 Railway / Bus Drop</option>
+                  <option value="MEDICINE_PICKUP">💊 Medicine Pickup</option>
+                  <option value="MEDICAL_REPORT_PICKUP">📄 Medical Report Pickup</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Destination / Location</label>
+                <input type="text" id="wo-cmp-destination" placeholder="e.g. SBI Bank Park Street Branch">
+              </div>
+              <div class="form-group" id="wo-cmp-items-wrapper">
+                <label>Items to Pickup / Purchase</label>
+                <input type="text" id="wo-cmp-items" placeholder="e.g. Monthly cardiac medicines, Lab report file">
+              </div>
+              <div class="form-group">
+                <label>Travel Cost Covered By</label>
+                <select id="wo-cmp-travel-payer">
+                  <option value="FAMILY">Family Pays Directly</option>
+                  <option value="NITYASEVA">Nityaseva to Arrange & Bill</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top:12px;">
+            <label>Instructions & Care Notes (Shared with Assigned Staff)</label>
+            <textarea id="wo-notes" rows="2" placeholder="Specific notes, gate code, medical instructions, or transit details..."></textarea>
+          </div>
+
+          <button type="submit" style="margin-top:8px;">Generate Work Order & Issue Verification Codes</button>
         </form>
         <div id="wo-result" class="message hidden" style="margin-top: 14px;"></div>
       </div>
@@ -79,7 +152,6 @@
       <div class="card">
         <h2>Operational Work Orders</h2>
 
-        <!-- Slicer Buttons on Top -->
         <div class="sub-nav">
           <button class="sub-tab active" data-slicer="ALL">All</button>
           <button class="sub-tab" data-slicer="SCHEDULED">SCHEDULED</button>
@@ -89,7 +161,7 @@
         </div>
 
         <div class="table-toolbar">
-          <div class="search-box"><input type="text" id="search-wo" placeholder="Search by ID, Senior, Staff..."></div>
+          <div class="search-box"><input type="text" id="search-wo" placeholder="Search by ID, Senior, Staff, Service..."></div>
           <div class="sort-controls">
             <button class="sort-btn" id="sort-wo-asc">Sort ▲</button>
             <button class="sort-btn" id="sort-wo-desc">Sort ▼</button>
@@ -101,18 +173,19 @@
             <tr>
               <th data-key="work_order_id">ID</th>
               <th data-key="senior">Senior</th>
-              <th data-key="type">Type</th>
+              <th data-key="type">Service Type</th>
+              <th data-key="assigned">Assigned Staff</th>
               <th data-key="created_at">Scheduled Time</th>
               <th data-key="status">Status</th>
-              <th>Override</th>
+              <th>Action</th>
             </tr>
           </thead>
-          <tbody><tr><td colspan="6">Loading work orders...</td></tr></tbody>
+          <tbody><tr><td colspan="7">Loading work orders...</td></tr></tbody>
         </table>
       </div>
     </div>
 
-    <!-- TAB 2: SENIORS + COMBINED FAMILY ENROLLMENT -->
+    <!-- TAB 2: SENIORS -->
     <div id="tab-seniors" class="tab-content">
       <div class="card">
         <h2>Enroll Senior & Primary Family Contact</h2>
@@ -163,7 +236,7 @@
       </div>
     </div>
 
-    <!-- TAB 3: FAMILY LINKS DIRECTORY -->
+    <!-- TAB 3: FAMILY LINKS -->
     <div id="tab-families" class="tab-content">
       <div class="card">
         <h2>Family Members & Senior Links</h2>
@@ -243,7 +316,8 @@
         </table>
       </div>
     </div>
-    <!-- TAB: COORDINATORS -->
+
+    <!-- TAB 6: COORDINATORS -->
     <div id="tab-coordinators" class="tab-content">
       <div class="card">
         <h2>Add New Coordinator</h2>
@@ -270,46 +344,14 @@
         </table>
       </div>
     </div>
-      
 
-    <!-- TAB: HOSPITAL COORDINATION & ESCORT SERVICES -->
+    <!-- TAB 7: HOSPITAL SERVICES -->
     <div id="tab-hospital" class="tab-content">
       <div class="card">
         <h2>Hospital Coordination & Escort Bookings</h2>
         <div class="disclaimer-banner compact">
           <strong>⚠️ Not an emergency service.</strong> For life-threatening symptoms, call <strong>112</strong> immediately.
         </div>
-
-<div class="card">
-  <h2>Raise New Hospital Service Booking</h2>
-  <form id="admin-raise-hospital-form">
-    <div class="grid">
-      <div class="form-group">
-        <label>Senior Patient</label>
-        <select id="hsv-admin-senior" required><option value="">-- Choose Senior --</option></select>
-      </div>
-      <div class="form-group">
-        <label>Service Type</label>
-        <select id="hsv-admin-type" required>
-          <option value="HOSPITAL_COORDINATION">📞 Hospital Coordination</option>
-          <option value="HOSPITAL_ESCORT">🏥 Hospital Visit Escort</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Preferred Hospital</label>
-        <input type="text" id="hsv-admin-hospital" placeholder="e.g. Apollo">
-      </div>
-      <div class="form-group">
-        <label>Requested Date</label>
-        <input type="date" id="hsv-admin-date">
-      </div>
-    </div>
-    <button type="submit">Raise Booking</button>
-  </form>
-</div>
-
-
-        
         <table id="admin-hospital-services-table">
           <thead>
             <tr>
@@ -325,86 +367,31 @@
         </table>
       </div>
     </div>
-<!-- TAB: COMPANION SERVICES (OUTINGS & ERRANDS) -->
-<div id="tab-companion" class="tab-content">
-  <div class="card">
-    <h2>Book Companion Service — Outings & Errands</h2>
-    <div class="disclaimer-banner compact">
-      <strong>⚠️ Non-medical personal assistance.</strong> Staff accompanies senior for errands — not a medical or emergency service.
+
+    <!-- TAB 8: COMPANION SERVICES -->
+    <div id="tab-companion" class="tab-content">
+      <div class="card">
+        <h2>Companion Services Directory (Outings & Errands)</h2>
+        <div class="disclaimer-banner compact">
+          <strong>⚠️ Non-medical personal assistance.</strong> Staff accompanies senior for errands — not a medical service.
+        </div>
+        <table id="admin-companion-services-table">
+          <thead>
+            <tr>
+              <th>Service ID</th>
+              <th>Senior</th>
+              <th>Type</th>
+              <th>Destination</th>
+              <th>Status</th>
+              <th>Assigned</th>
+            </tr>
+          </thead>
+          <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
+        </table>
+      </div>
     </div>
-    <form id="admin-companion-form">
-      <div class="grid">
-        <div class="form-group">
-          <label>Select Senior</label>
-          <select id="adm-cmp-senior-id" required><option value="">-- Choose Senior --</option></select>
-        </div>
-        <div class="form-group">
-          <label>Companion Service Type</label>
-          <select id="adm-cmp-type" required>
-            <option value="">-- Choose Service --</option>
-            <option value="OUTINGS">Outings (Park / Temple / Social Visit)</option>
-            <option value="BANK_WORK">Bank Work</option>
-            <option value="HOSPITAL_TRIP">Hospital Trip</option>
-            <option value="SHOPPING_GROCERIES">Shopping / Groceries</option>
-            <option value="RAILWAY_BUS_DROP">Railway / Bus Drop</option>
-            <option value="MEDICINE_PICKUP">Medicine Pickup</option>
-            <option value="MEDICAL_REPORT_PICKUP">Medical Report Pickup</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Destination / Location</label>
-          <input type="text" id="adm-cmp-destination" placeholder="e.g., SBI Bank, Park Street branch">
-        </div>
-        <div class="form-group">
-          <label>Preferred Date</label>
-          <input type="date" id="adm-cmp-date">
-        </div>
-        <div class="form-group">
-          <label>Pickup Time</label>
-          <input type="time" id="adm-cmp-pickup-time">
-        </div>
-        <div class="form-group" id="adm-cmp-items-wrapper" style="display:none;">
-          <label>Items to Pickup/Buy</label>
-          <input type="text" id="adm-cmp-items-list" placeholder="e.g., Paracetamol 500mg">
-        </div>
-        <div class="form-group">
-          <label>Assign Staff (Optional, assign now or later)</label>
-          <div class="searchable-dropdown">
-            <input type="text" id="adm-cmp-staff-search" placeholder="Type to search staff..." autocomplete="off">
-            <input type="hidden" id="adm-cmp-staff-id">
-            <div class="suggestions-list" id="adm-cmp-staff-suggestions"></div>
-          </div>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Notes</label>
-        <textarea id="adm-cmp-notes" rows="2" placeholder="Any special instructions"></textarea>
-      </div>
-      <button type="submit">Book Companion Service</button>
-    </form>
-    <div id="adm-cmp-result" class="message hidden" style="margin-top: 14px;"></div>
-  </div>
 
-  <div class="card">
-    <h2>Companion Services Directory</h2>
-    <table id="admin-companion-services-table">
-      <thead>
-        <tr>
-          <th>Service ID</th>
-          <th>Senior</th>
-          <th>Type</th>
-          <th>Destination</th>
-          <th>Status</th>
-          <th>Assigned</th>
-        </tr>
-      </thead>
-      <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
-    </table>
-  </div>
-</div>
-
-    
-    <!-- TAB 6: ACTIVE SUBSCRIPTIONS -->
+    <!-- TAB 9: ACTIVE SUBSCRIPTIONS -->
     <div id="tab-subscriptions" class="tab-content">
       <div class="card">
         <h2>Create Subscription Plan (Auto 30-Day Expiry)</h2>
@@ -449,7 +436,7 @@
       </div>
     </div>
 
-    <!-- TAB 7: MONTHLY ENTITLEMENTS -->
+    <!-- TAB 10: MONTHLY ENTITLEMENTS -->
     <div id="tab-entitlements" class="tab-content">
       <div class="card">
         <h2>Monthly Entitlements (Used / Allowed)</h2>
@@ -474,7 +461,7 @@
       </div>
     </div>
 
-    <!-- TAB 8: DIAGNOSTIC REPORTS & SHARING -->
+    <!-- TAB 11: DIAGNOSTIC REPORTS & SHARING -->
     <div id="tab-reports" class="tab-content">
       <div class="card">
         <h2>Register Clinical Diagnosis Report</h2>
@@ -502,16 +489,17 @@
           <button type="submit">Record Diagnostic Report</button>
         </form>
       </div>
-<div class="card" style="background: #f0fff4; border: 1px solid #c6f6d5;">
-  <h2>Generate Patient Clinical Care Summary (Assessments + Journal)</h2>
-  <p style="font-size: 13px; color: #4a5568;">
-    Compiles all past nurse vitals, doctor recommendations, and family visit requests into a single shareable link with an interactive chat-style Care Journal.
-  </p>
-  <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-    <select id="gen-report-senior" style="max-width:300px;"><option value="">-- Choose Senior --</option></select>
-    <button id="btn-gen-care-report" style="background:#2c6e49;">Generate 72-Hour Shareable Care Summary</button>
-  </div>
-</div>
+
+      <div class="card" style="background: #f0fff4; border: 1px solid #c6f6d5;">
+        <h2>Generate Patient Clinical Care Summary (Assessments + Journal)</h2>
+        <p style="font-size: 13px; color: #4a5568;">
+          Compiles all past nurse vitals, doctor recommendations, and family visit requests into a single shareable link with an interactive chat-style Care Journal.
+        </p>
+        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+          <select id="gen-report-senior" style="max-width:300px;"><option value="">-- Choose Senior --</option></select>
+          <button id="btn-gen-care-report" style="background:#2c6e49;">Generate 72-Hour Shareable Care Summary</button>
+        </div>
+      </div>
 
       <div class="card">
         <h2>Past Diagnostic Reports & Secure Share Links</h2>
@@ -538,7 +526,7 @@
       </div>
     </div>
 
-    <!-- TAB 9: CLINICAL REVIEWS -->
+    <!-- TAB 12: CLINICAL REVIEWS -->
     <div id="tab-clinical" class="tab-content">
       <div class="card">
         <h2>Doctor Clinical Escalations & Reviews</h2>
@@ -558,7 +546,7 @@
       </div>
     </div>
 
-    <!-- TAB 10: AUDIT TRAIL -->
+    <!-- TAB 13: AUDIT TRAIL -->
     <div id="tab-audit" class="tab-content">
       <div class="card">
         <h2>System Compliance Audit Trail (Last 100 Events)</h2>
