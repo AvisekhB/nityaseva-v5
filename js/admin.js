@@ -65,6 +65,7 @@ async function init() {
   if (subDate) subDate.value = new Date().toISOString().slice(0, 10);
 
   setupSearchableStaffDropdown();
+  setupActionForms();
   await loadAdminDashboard();
 }
 
@@ -216,7 +217,7 @@ function setupEmployeeCreationForm() {
       });
 
       resultDiv.className = 'message success';
-      resultDiv.innerHTML = `✅ <strong>Employee Created!</strong> Generated ID: <code>${res.id}</code> (Saved to tab: <strong>${res.targetTab}</strong>)`;
+      resultDiv.innerHTML = `✅ <strong>Employee Created!</strong> ID: <code>${res.id}</code> (Saved to tab: <strong>${res.targetTab}</strong>)`;
       resultDiv.classList.remove('hidden');
 
       form.reset();
@@ -319,7 +320,6 @@ async function loadAdminDashboard() {
     renderHospitalServices(allData.hospitalServices || []);
     renderCompanionServices(allData.companionServices || []);
 
-    setupTableSearches();
   } catch (err) {
     console.error('Dashboard load error:', err);
   }
@@ -678,106 +678,4 @@ function renderHospitalServices(services) {
     <tr>
       <td><strong>${s.service_id}</strong></td>
       <td>${getSeniorName(s.senior_id)}</td>
-      <td><span class="badge ${s.service_type === 'HOSPITAL_ESCORT' ? 'badge-doctor-consult' : 'badge-nurse-visit'}">${s.service_type === 'HOSPITAL_ESCORT' ? '🏥 Escort' : '📞 Coordination'}</span></td>
-      <td>${s.preferred_hospital || '-'}</td>
-      <td><span class="badge ${s.status === 'COMPLETED' ? 'badge-complete' : 'badge-scheduled'}">${s.status}</span></td>
-      <td>${s.assigned_staff_id ? getStaffName(s.assigned_staff_id) : (s.assigned_coordinator_id ? 'Coord: ' + s.assigned_coordinator_id : '-')}</td>
-    </tr>
-  `).join('');
-
-  renderPaginationBar('hospital-pagination', total, page, (p) => {
-    pageState.hospital = p;
-    renderHospitalServices(services);
-  });
-}
-
-function renderCompanionServices(services) {
-  const tbody = document.querySelector('#admin-companion-services-table tbody');
-  if (!tbody) return;
-
-  const total = services.length;
-  const page = pageState.companion;
-  const sorted = [...services].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-  const slice = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  if (slice.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:16px; color:#94a3b8;">No companion bookings yet.</td></tr>';
-    renderPaginationBar('companion-pagination', 0, 1, () => {});
-    return;
-  }
-
-  tbody.innerHTML = slice.map(s => `
-    <tr>
-      <td><strong>${s.service_id}</strong></td>
-      <td>${getSeniorName(s.senior_id)}</td>
-      <td><span class="badge badge-doctor-consult">${s.companion_type}</span></td>
-      <td>${s.destination || '-'}</td>
-      <td><span class="badge ${s.status === 'COMPLETED' ? 'badge-complete' : 'badge-scheduled'}">${s.status}</span></td>
-      <td>${s.assigned_staff_id ? getStaffName(s.assigned_staff_id) : '-'}</td>
-    </tr>
-  `).join('');
-
-  renderPaginationBar('companion-pagination', total, page, (p) => {
-    pageState.companion = p;
-    renderCompanionServices(services);
-  });
-}
-
-function renderSubscriptions(subs) {
-  const tbody = document.querySelector('#admin-subs-table tbody');
-  if (!tbody) return;
-
-  const total = subs.length;
-  const page = pageState.subs;
-  const slice = subs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  if (slice.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6">No active subscriptions found.</td></tr>';
-    renderPaginationBar('subs-pagination', 0, 1, () => {});
-    return;
-  }
-
-  tbody.innerHTML = slice.map(s => `
-    <tr>
-      <td><strong>${s.subscription_id}</strong></td>
-      <td>${getSeniorName(s.senior_id)}</td>
-      <td>${s.plan_name}</td>
-      <td>${s.start_date ? s.start_date.slice(0, 10) : '-'}</td>
-      <td><strong>${s.end_date ? s.end_date.slice(0, 10) : '-'}</strong></td>
-      <td><span class="badge badge-complete">${s.status || 'ACTIVE'}</span></td>
-    </tr>
-  `).join('');
-
-  renderPaginationBar('subs-pagination', total, page, (p) => {
-    pageState.subs = p;
-    renderSubscriptions(subs);
-  });
-}
-
-function renderEntitlements(ents) {
-  const tbody = document.querySelector('#admin-entitlements-table tbody');
-  if (!tbody) return;
-
-  const total = ents.length;
-  const page = pageState.ent;
-  const slice = ents.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  if (slice.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4">No entitlement records found.</td></tr>';
-    renderPaginationBar('ent-pagination', 0, 1, () => {});
-    return;
-  }
-
-  tbody.innerHTML = slice.map(e => `
-    <tr>
-      <td><strong>${getSeniorName(e.senior_id)}</strong></td>
-      <td>${e.month}</td>
-      <td>${e.nurse_used} / ${e.nurse_allowed}</td>
-      <td>${e.doctor_used} / ${e.doctor_allowed}</td>
-    </tr>
-  `).join('');
-
-  renderPaginationBar('ent-pagination', total, page, (p) => {
-    pageState.ent = p;
-    renderEntitlements(ents);
-  });
+      <td><span class="badge ${s.service_type === 'HOSPITAL_ESCORT' ? 'badge-doctor-consult' : 'badge-nurse-visit'}">${s.service_type
