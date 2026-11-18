@@ -21,7 +21,6 @@ let allData = {
 let practitionerList = [];
 let activeSlicer = 'ALL';
 
-// 5 ENTRIES PER SCREEN FOR ALL TABLES
 const PAGE_SIZE = 5;
 const pageState = {
   wo: 1,
@@ -41,6 +40,7 @@ const pageState = {
 
 async function init() {
   setupTabs();
+  setupDashboardJumps();
   setupSlicers();
   setupUnifiedWorkOrderFormToggles();
   setupEmployeeDirectoryViews();
@@ -64,14 +64,15 @@ async function init() {
   const subDate = document.getElementById('sub-start-date');
   if (subDate) subDate.value = new Date().toISOString().slice(0, 10);
 
+  const refreshBtn = document.getElementById('btn-refresh-dashboard');
+  if (refreshBtn) refreshBtn.addEventListener('click', loadAdminDashboard);
+
   setupSearchableStaffDropdown();
+  setupTableSearches();
   setupActionForms();
   await loadAdminDashboard();
 }
 
-// -------------------------------------------------------------
-// NAVIGATION TABS & STATUS SLICERS
-// -------------------------------------------------------------
 function setupTabs() {
   document.querySelectorAll('.admin-nav .nav-tab').forEach(btn => {
     btn.onclick = () => {
@@ -81,6 +82,19 @@ function setupTabs() {
       const targetId = btn.getAttribute('data-tab');
       const target = document.getElementById(targetId);
       if (target) target.classList.add('active');
+    };
+  });
+}
+
+function setupDashboardJumps() {
+  document.querySelectorAll('.jump-card').forEach(card => {
+    card.onclick = () => {
+      const targetTabId = card.getAttribute('data-jump');
+      const navBtn = document.querySelector(`.admin-nav .nav-tab[data-tab="${targetTabId}"]`);
+      if (navBtn) {
+        navBtn.click();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     };
   });
 }
@@ -99,9 +113,6 @@ function setupSlicers() {
   });
 }
 
-// -------------------------------------------------------------
-// WORK ORDER DYNAMIC FORM TOGGLES
-// -------------------------------------------------------------
 function setupUnifiedWorkOrderFormToggles() {
   const typeSelect = document.getElementById('wo-type');
   const hospBox = document.getElementById('wo-hospital-fields');
@@ -127,9 +138,6 @@ function setupUnifiedWorkOrderFormToggles() {
   });
 }
 
-// -------------------------------------------------------------
-// EMPLOYEE DIRECTORY SUB-TABS & CREATION FORM
-// -------------------------------------------------------------
 function setupEmployeeDirectoryViews() {
   const btnStaff = document.getElementById('btn-show-staff');
   const btnDoctors = document.getElementById('btn-show-doctors');
@@ -143,7 +151,6 @@ function setupEmployeeDirectoryViews() {
     btnStaff.classList.add('active');
     btnDoctors?.classList.remove('active');
     btnCoordinators?.classList.remove('active');
-
     viewStaff?.classList.remove('hidden');
     viewDoctors?.classList.add('hidden');
     viewCoordinators?.classList.add('hidden');
@@ -153,7 +160,6 @@ function setupEmployeeDirectoryViews() {
     btnDoctors.classList.add('active');
     btnStaff?.classList.remove('active');
     btnCoordinators?.classList.remove('active');
-
     viewDoctors?.classList.remove('hidden');
     viewStaff?.classList.add('hidden');
     viewCoordinators?.classList.add('hidden');
@@ -163,7 +169,6 @@ function setupEmployeeDirectoryViews() {
     btnCoordinators.classList.add('active');
     btnStaff?.classList.remove('active');
     btnDoctors?.classList.remove('active');
-
     viewCoordinators?.classList.remove('hidden');
     viewStaff?.classList.add('hidden');
     viewDoctors?.classList.add('hidden');
@@ -182,7 +187,7 @@ function setupEmployeeDirectoryViews() {
     } else if (cat === 'DOCTOR') {
       detailLabel.textContent = 'Medical Specialty';
       detailInput.value = 'General Medicine';
-      detailInput.placeholder = 'e.g. Cardiology, Geriatrics, General Physician';
+      detailInput.placeholder = 'e.g. Cardiology, Geriatrics';
     } else if (cat === 'COORDINATOR') {
       detailLabel.textContent = 'Coordinator Job Title';
       detailInput.value = 'Care Coordinator';
@@ -208,22 +213,14 @@ function setupEmployeeCreationForm() {
     const detail = document.getElementById('emp-detail').value.trim();
 
     try {
-      const res = await callApi('adminCreateEmployee', {
-        category,
-        fullName,
-        phone,
-        email,
-        detail
-      });
-
+      const res = await callApi('adminCreateEmployee', { category, fullName, phone, email, detail });
       resultDiv.className = 'message success';
-      resultDiv.innerHTML = `✅ <strong>Employee Created!</strong> ID: <code>${res.id}</code> (Saved to tab: <strong>${res.targetTab}</strong>)`;
+      resultDiv.innerHTML = `✅ <strong>Employee Created!</strong> ID: <code>${res.id}</code> (Saved to: <strong>${res.targetTab}</strong>)`;
       resultDiv.classList.remove('hidden');
 
       form.reset();
       document.getElementById('emp-category').value = category;
       document.getElementById('emp-category').dispatchEvent(new Event('change'));
-
       await loadAdminDashboard();
     } catch (err) {
       resultDiv.className = 'message error';
@@ -236,9 +233,6 @@ function setupEmployeeCreationForm() {
   });
 }
 
-// -------------------------------------------------------------
-// UNIVERSAL PAGINATION COMPONENT (5 ENTRIES PER SCREEN)
-// -------------------------------------------------------------
 function renderPaginationBar(containerId, totalItems, currentPage, onPageChange) {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -271,9 +265,6 @@ function renderPaginationBar(containerId, totalItems, currentPage, onPageChange)
   });
 }
 
-// -------------------------------------------------------------
-// DATA LOADING & RENDERING
-// -------------------------------------------------------------
 async function loadAdminDashboard() {
   try {
     const data = await callApi('getAdminDashboard');
@@ -297,14 +288,16 @@ async function loadAdminDashboard() {
       ...(allData.coordinators || []).map(c => ({ id: String(c.coordinator_id || '').trim(), name: String(c.full_name || '').trim(), type: 'Coordinator' }))
     ];
 
-    const countStaff = document.getElementById('count-staff');
-    if (countStaff) countStaff.textContent = (allData.staff || []).length;
-    const countDocs = document.getElementById('count-doctors');
-    if (countDocs) countDocs.textContent = (allData.doctors || []).length;
-    const countCrds = document.getElementById('count-coordinators');
-    if (countCrds) countCrds.textContent = (allData.coordinators || []).length;
+    const setEl = (id, count) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = count;
+    };
+    setEl('count-staff', (allData.staff || []).length);
+    setEl('count-doctors', (allData.doctors || []).length);
+    setEl('count-coordinators', (allData.coordinators || []).length);
 
     populateSeniorDropdowns(allData.seniors || []);
+    renderHomeDashboardTelemetry();
 
     renderWorkOrders(allData.workOrders || []);
     renderSeniors(allData.seniors || []);
@@ -319,9 +312,70 @@ async function loadAdminDashboard() {
     renderAudit(allData.logs || []);
     renderHospitalServices(allData.hospitalServices || []);
     renderCompanionServices(allData.companionServices || []);
-
   } catch (err) {
     console.error('Dashboard load error:', err);
+  }
+}
+
+function renderHomeDashboardTelemetry() {
+  const wos = allData.workOrders || [];
+  const seniors = allData.seniors || [];
+  const subs = allData.subscriptions || [];
+  const reviews = allData.reviews || [];
+  const logs = allData.logs || [];
+
+  const countActiveSeniors = seniors.filter(s => String(s.status || '').toUpperCase() === 'ACTIVE').length;
+  const countScheduled = wos.filter(w => String(w.status || '').toUpperCase() === 'SCHEDULED' || String(w.status || '').toUpperCase() === 'UNSCHEDULED').length;
+  const countInProgress = wos.filter(w => String(w.status || '').toUpperCase() === 'IN_PROGRESS').length;
+  const countCompleted = wos.filter(w => String(w.status || '').toUpperCase() === 'COMPLETE' || String(w.status || '').toUpperCase() === 'CLOSE').length;
+  const countAlerts = reviews.filter(r => (r.priority === 'EMERGENCY' || r.priority === 'URGENT') && String(r.status || '').toUpperCase() === 'OPEN').length;
+  const countSubs = subs.filter(s => String(s.status || '').toUpperCase() === 'ACTIVE').length;
+
+  const setT = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setT('dash-stat-seniors', countActiveSeniors);
+  setT('dash-stat-scheduled', countScheduled);
+  setT('dash-stat-inprogress', countInProgress);
+  setT('dash-stat-complete', countCompleted);
+  setT('dash-stat-alerts', countAlerts);
+  setT('dash-stat-subs', countSubs);
+
+  const radarTbody = document.querySelector('#dash-live-ops-table tbody');
+  if (radarTbody) {
+    const liveVisits = wos.filter(w => String(w.status || '').toUpperCase() === 'IN_PROGRESS' || String(w.status || '').toUpperCase() === 'SCHEDULED').slice(0, 5);
+    if (liveVisits.length === 0) {
+      radarTbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:12px; color:#94a3b8;">No active visits in progress right now.</td></tr>';
+    } else {
+      radarTbody.innerHTML = liveVisits.map(w => {
+        const isInProgress = String(w.status || '').toUpperCase() === 'IN_PROGRESS';
+        const badgeCls = isInProgress ? 'badge-in-progress' : 'badge-scheduled';
+        const assignedName = w.assigned_doctor_id ? getStaffName(w.assigned_doctor_id) : (w.assigned_staff_id ? getStaffName(w.assigned_staff_id) : 'Unassigned');
+        return `
+          <tr>
+            <td><strong>${w.work_order_id}</strong></td>
+            <td>${getSeniorName(w.senior_id)}</td>
+            <td>${getServiceTypeBadge(w.type)}</td>
+            <td>${assignedName}</td>
+            <td><span class="badge ${badgeCls}">${w.status}</span></td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+
+  const auditTbody = document.querySelector('#dash-recent-audit-table tbody');
+  if (auditTbody) {
+    const recentLogs = [...logs].reverse().slice(0, 5);
+    if (recentLogs.length === 0) {
+      auditTbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:12px; color:#94a3b8;">No recent audit activity.</td></tr>';
+    } else {
+      auditTbody.innerHTML = recentLogs.map(l => `
+        <tr>
+          <td><small>${l.timestamp ? new Date(l.timestamp).toLocaleTimeString() : '-'}</small></td>
+          <td><strong>${l.actor_id || 'System'}</strong> <small style="color:#64748b;">(${l.actor_role || ''})</small></td>
+          <td><span class="badge badge-nurse-visit">${l.event || 'ACTION'}</span></td>
+        </tr>
+      `).join('');
+    }
   }
 }
 
@@ -405,9 +459,6 @@ function getServiceTypeBadge(type) {
   }
 }
 
-// -------------------------------------------------------------
-// PAGINATED TABLE RENDERERS (5 ENTRIES PER PAGE)
-// -------------------------------------------------------------
 function renderWorkOrders(orders) {
   const tbody = document.querySelector('#admin-wo-table tbody');
   if (!tbody) return;
@@ -426,8 +477,7 @@ function renderWorkOrders(orders) {
   filtered.reverse();
   const total = filtered.length;
   const page = pageState.wo;
-  const start = (page - 1) * PAGE_SIZE;
-  const slice = filtered.slice(start, start + PAGE_SIZE);
+  const slice = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   if (slice.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:18px; color:#94a3b8;">No work orders found in this view.</td></tr>';
@@ -477,8 +527,8 @@ function renderWorkOrders(orders) {
     };
   });
 
-  renderPaginationBar('wo-pagination', total, page, (newPage) => {
-    pageState.wo = newPage;
+  renderPaginationBar('wo-pagination', total, page, (p) => {
+    pageState.wo = p;
     renderWorkOrders(orders);
   });
 }
@@ -690,443 +740,3 @@ function renderHospitalServices(services) {
     renderHospitalServices(services);
   });
 }
-
-function renderCompanionServices(services) {
-  const tbody = document.querySelector('#admin-companion-services-table tbody');
-  if (!tbody) return;
-
-  const total = services.length;
-  const page = pageState.companion;
-  const sorted = [...services].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-  const slice = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  if (slice.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:16px; color:#94a3b8;">No companion bookings yet.</td></tr>';
-    renderPaginationBar('companion-pagination', 0, 1, () => {});
-    return;
-  }
-
-  tbody.innerHTML = slice.map(s => `
-    <tr>
-      <td><strong>${s.service_id}</strong></td>
-      <td>${getSeniorName(s.senior_id)}</td>
-      <td><span class="badge badge-doctor-consult">${s.companion_type}</span></td>
-      <td>${s.destination || '-'}</td>
-      <td><span class="badge ${s.status === 'COMPLETED' ? 'badge-complete' : 'badge-scheduled'}">${s.status}</span></td>
-      <td>${s.assigned_staff_id ? getStaffName(s.assigned_staff_id) : '-'}</td>
-    </tr>
-  `).join('');
-
-  renderPaginationBar('companion-pagination', total, page, (p) => {
-    pageState.companion = p;
-    renderCompanionServices(services);
-  });
-}
-
-function renderSubscriptions(subs) {
-  const tbody = document.querySelector('#admin-subs-table tbody');
-  if (!tbody) return;
-
-  const total = subs.length;
-  const page = pageState.subs;
-  const slice = subs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  if (slice.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6">No active subscriptions found.</td></tr>';
-    renderPaginationBar('subs-pagination', 0, 1, () => {});
-    return;
-  }
-
-  tbody.innerHTML = slice.map(s => `
-    <tr>
-      <td><strong>${s.subscription_id}</strong></td>
-      <td>${getSeniorName(s.senior_id)}</td>
-      <td>${s.plan_name}</td>
-      <td>${s.start_date ? s.start_date.slice(0, 10) : '-'}</td>
-      <td><strong>${s.end_date ? s.end_date.slice(0, 10) : '-'}</strong></td>
-      <td><span class="badge badge-complete">${s.status || 'ACTIVE'}</span></td>
-    </tr>
-  `).join('');
-
-  renderPaginationBar('subs-pagination', total, page, (p) => {
-    pageState.subs = p;
-    renderSubscriptions(subs);
-  });
-}
-
-function renderEntitlements(ents) {
-  const tbody = document.querySelector('#admin-entitlements-table tbody');
-  if (!tbody) return;
-
-  const total = ents.length;
-  const page = pageState.ent;
-  const slice = ents.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  if (slice.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4">No entitlement records found.</td></tr>';
-    renderPaginationBar('ent-pagination', 0, 1, () => {});
-    return;
-  }
-
-  tbody.innerHTML = slice.map(e => `
-    <tr>
-      <td><strong>${getSeniorName(e.senior_id)}</strong></td>
-      <td>${e.month}</td>
-      <td>${e.nurse_used} / ${e.nurse_allowed}</td>
-      <td>${e.doctor_used} / ${e.doctor_allowed}</td>
-    </tr>
-  `).join('');
-
-  renderPaginationBar('ent-pagination', total, page, (p) => {
-    pageState.ent = p;
-    renderEntitlements(ents);
-  });
-}
-
-function renderReports(reports) {
-  const tbody = document.querySelector('#admin-reports-table tbody');
-  if (!tbody) return;
-
-  const total = reports.length;
-  const page = pageState.reports;
-  const slice = reports.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  if (slice.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6">No diagnostic reports uploaded yet.</td></tr>';
-    renderPaginationBar('reports-pagination', 0, 1, () => {});
-    return;
-  }
-
-  tbody.innerHTML = slice.map(r => {
-    const isCareJournal = (r.file_url === 'INTERNAL_CARE_JOURNAL');
-    const docLink = isCareJournal
-      ? `<span class="badge badge-doctor-consult">Care Journal</span>`
-      : `<a href="${r.file_url}" target="_blank" rel="noopener">Open Doc ↗</a>`;
-
-    return `
-      <tr>
-        <td><strong>${r.report_id}</strong></td>
-        <td><strong>${getSeniorName(r.senior_id)}</strong></td>
-        <td><span class="badge ${isCareJournal ? 'badge-complete' : 'badge-nurse-visit'}">${r.type}</span></td>
-        <td>${docLink}</td>
-        <td>${r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN') : '-'}</td>
-        <td><button class="share-btn" data-id="${r.report_id}" data-senior="${r.senior_id}">Share 72h</button></td>
-      </tr>
-    `;
-  }).join('');
-
-  tbody.querySelectorAll('.share-btn').forEach(btn => {
-    btn.onclick = async () => {
-      const reportId = btn.getAttribute('data-id');
-      try {
-        const res = await callApi('createReportLink', { reportId, expiryHours: 72 });
-        const shareUrl = `${window.location.origin}${window.location.pathname.replace('admin.html', '')}report.html?token=${res.token}`;
-        prompt('72-Hour Link Created. Copy below:', shareUrl);
-      } catch (err) {
-        alert('Share error: ' + err.message);
-      }
-    };
-  });
-
-  renderPaginationBar('reports-pagination', total, page, (p) => {
-    pageState.reports = p;
-    renderReports(reports);
-  });
-}
-
-function renderReviews(revs) {
-  const tbody = document.querySelector('#admin-reviews-table tbody');
-  if (!tbody) return;
-
-  const total = revs.length;
-  const page = pageState.reviews;
-  const slice = revs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  if (slice.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6">No clinical reviews pending.</td></tr>';
-    renderPaginationBar('reviews-pagination', 0, 1, () => {});
-    return;
-  }
-
-  tbody.innerHTML = slice.map(r => {
-    const color = r.priority === 'EMERGENCY' ? 'badge-cancelled' : (r.priority === 'URGENT' ? 'badge-scheduled' : 'badge-doctor-consult');
-    return `
-      <tr>
-        <td><strong>${r.review_id}</strong></td>
-        <td>${getSeniorName(r.senior_id)}</td>
-        <td><span class="badge ${color}">${r.priority}</span></td>
-        <td>${r.reason}</td>
-        <td>${getStaffName(r.assigned_doctor_id)}</td>
-        <td><span class="badge badge-scheduled">${r.status}</span></td>
-      </tr>
-    `;
-  }).join('');
-
-  renderPaginationBar('reviews-pagination', total, page, (p) => {
-    pageState.reviews = p;
-    renderReviews(revs);
-  });
-}
-
-function renderAudit(logs) {
-  const tbody = document.querySelector('#admin-audit-table tbody');
-  if (!tbody) return;
-
-  const logsRev = [...logs].reverse();
-  const total = logsRev.length;
-  const page = pageState.audit;
-  const slice = logsRev.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  if (slice.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6">No audit records found.</td></tr>';
-    renderPaginationBar('audit-pagination', 0, 1, () => {});
-    return;
-  }
-
-  tbody.innerHTML = slice.map(l => `
-    <tr>
-      <td><small>${l.timestamp ? new Date(l.timestamp).toLocaleTimeString() : '-'}</small></td>
-      <td>${l.actor_id}</td>
-      <td>${l.actor_role}</td>
-      <td><strong>${l.event}</strong></td>
-      <td>${l.work_order_id || '-'}</td>
-      <td><small>${l.reason || ''}</small></td>
-    </tr>
-  `).join('');
-
-  renderPaginationBar('audit-pagination', total, page, (p) => {
-    pageState.audit = p;
-    renderAudit(logs);
-  });
-}
-
-// -------------------------------------------------------------
-// SEARCH INPUTS BINDING
-// -------------------------------------------------------------
-function setupTableSearches() {
-  const binds = [
-    { id: 'search-wo', filter: (q) => allData.workOrders.filter(w => JSON.stringify(w).toLowerCase().includes(q)), render: (d) => { pageState.wo = 1; renderWorkOrders(d); } },
-    { id: 'search-seniors', filter: (q) => allData.seniors.filter(s => JSON.stringify(s).toLowerCase().includes(q)), render: (d) => { pageState.seniors = 1; renderSeniors(d); } },
-    { id: 'search-families', filter: (q) => allData.families.filter(f => JSON.stringify(f).toLowerCase().includes(q)), render: (d) => { pageState.families = 1; renderFamilies(d, allData.familyLinks); } },
-    { id: 'search-staff', filter: (q) => allData.staff.filter(st => JSON.stringify(st).toLowerCase().includes(q)), render: (d) => { pageState.staff = 1; renderStaff(d); } },
-    { id: 'search-doctors', filter: (q) => allData.doctors.filter(dc => JSON.stringify(dc).toLowerCase().includes(q)), render: (d) => { pageState.doctors = 1; renderDoctors(d); } },
-    { id: 'search-coordinators', filter: (q) => (allData.coordinators || []).filter(c => JSON.stringify(c).toLowerCase().includes(q)), render: (d) => { pageState.coordinators = 1; renderCoordinators(d); } }
-  ];
-
-  binds.forEach(({ id, filter, render }) => {
-    const input = document.getElementById(id);
-    if (input && !input.dataset.bound) {
-      input.dataset.bound = 'true';
-      input.oninput = () => {
-        const q = input.value.trim().toLowerCase();
-        render(filter(q));
-      };
-    }
-  });
-}
-
-// -------------------------------------------------------------
-// ACTION FORMS SETUP
-// -------------------------------------------------------------
-function setupActionForms() {
-  // 1. Unified Work Order Form
-  document.getElementById('create-wo-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const seniorId = String(document.getElementById('wo-senior-id')?.value || '').trim();
-    const serviceType = document.getElementById('wo-type')?.value;
-    const resultDiv = document.getElementById('wo-result');
-    resultDiv.className = 'message hidden';
-
-    if (!seniorId) return alert('Please choose a Senior Patient.');
-
-    const isClinical = (serviceType === 'NurseVisit' || serviceType === 'DoctorConsult');
-    if (isClinical) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const hasActiveSub = (allData.subscriptions || []).some(s => {
-        const sId = String(s.senior_id || '').trim();
-        const st = String(s.status || '').trim().toUpperCase();
-        if (sId !== seniorId || st !== 'ACTIVE') return false;
-        if (!s.end_date) return true;
-
-        let exp = (s.end_date instanceof Date) ? new Date(s.end_date.getTime()) : new Date(String(s.end_date).trim());
-        exp.setHours(23, 59, 59, 999);
-        return exp >= today;
-      });
-
-      if (!hasActiveSub) {
-        alert('ALERT: Senior ' + seniorId + ' has NO Active Subscription for clinical care. Please check Subscriptions tab.');
-        return;
-      }
-    }
-
-    let staffId = String(document.getElementById('wo-staff-id')?.value || '').trim();
-    const staffSearchText = String(document.getElementById('wo-staff-search')?.value || '').trim().toLowerCase();
-    if (!staffId && staffSearchText) {
-      const match = practitionerList.find(p =>
-        p.name.toLowerCase() === staffSearchText ||
-        p.id.toLowerCase() === staffSearchText ||
-        `dr. ${p.name.toLowerCase()}` === staffSearchText
-      );
-      if (match) staffId = match.id;
-    }
-
-    const scheduledVal = document.getElementById('wo-scheduled-at').value;
-    const scheduledIso = scheduledVal ? new Date(scheduledVal).toISOString() : new Date().toISOString();
-
-    const payload = {
-      seniorId: seniorId,
-      type: serviceType,
-      scheduledAt: scheduledIso,
-      staffId: staffId,
-      notes: document.getElementById('wo-notes')?.value.trim() || '',
-      preferredHospital: document.getElementById('wo-hsv-hospital')?.value.trim() || '',
-      specialty: document.getElementById('wo-hsv-specialty')?.value.trim() || '',
-      hospitalTravelPayer: document.getElementById('wo-hsv-travel-payer')?.value || 'FAMILY',
-      companionType: document.getElementById('wo-cmp-subtype')?.value || 'OUTINGS',
-      destination: document.getElementById('wo-cmp-destination')?.value.trim() || '',
-      itemsList: document.getElementById('wo-cmp-items')?.value.trim() || '',
-      companionTravelPayer: 'FAMILY'
-    };
-
-    try {
-      const res = await callApi('createWorkOrder', payload);
-      resultDiv.innerHTML = `<strong>Work Order Created!</strong> ID: <code>${res.workOrderId}</code> | Start PIN: <strong>${res.startCode}</strong> | End PIN: <strong>${res.endCode}</strong>`;
-      resultDiv.className = 'message success';
-      resultDiv.classList.remove('hidden');
-
-      document.getElementById('create-wo-form').reset();
-      document.getElementById('wo-staff-search').value = '';
-      document.getElementById('wo-staff-id').value = '';
-      document.getElementById('wo-hospital-fields').style.display = 'none';
-      document.getElementById('wo-companion-fields').style.display = 'none';
-
-      await loadAdminDashboard();
-    } catch (err) {
-      resultDiv.innerHTML = 'Error: ' + err.message;
-      resultDiv.className = 'message error';
-      resultDiv.classList.remove('hidden');
-    }
-  });
-
-  // 2. Senior + Primary Family Creation Form
-  document.getElementById('create-senior-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    try {
-      const res = await callApi('adminCreateSenior', {
-        fullName: document.getElementById('snr-name').value.trim(),
-        dob: document.getElementById('snr-dob').value,
-        phone: document.getElementById('snr-phone').value.trim(),
-        email: document.getElementById('snr-email').value.trim(),
-        address: document.getElementById('snr-address').value.trim(),
-        familyName: document.getElementById('fam-name').value.trim(),
-        familyRelation: document.getElementById('fam-rel').value.trim(),
-        familyPhone: document.getElementById('fam-phone').value.trim(),
-        familyEmail: document.getElementById('fam-email').value.trim()
-      });
-      alert('Senior & Family Linked Successfully! Senior ID: ' + res.seniorId);
-      document.getElementById('create-senior-form').reset();
-      await loadAdminDashboard();
-    } catch (err) {
-      alert('Enrollment error: ' + err.message);
-    }
-  });
-
-  // 3. Subscription Creation Form
-  document.getElementById('create-sub-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const seniorId = document.getElementById('sub-senior-id')?.value;
-    const planName = document.getElementById('sub-plan-name')?.value.trim();
-    const startDate = document.getElementById('sub-start-date')?.value;
-    const nurseVisits = Number(document.getElementById('sub-nurse-visits')?.value || 2);
-    const doctorConsults = Number(document.getElementById('sub-doctor-consults')?.value || 1);
-
-    if (!seniorId) return alert('Please choose a Senior Patient first.');
-
-    try {
-      const res = await callApi('adminCreateSubscription', {
-        seniorId: seniorId,
-        planName: planName,
-        startDate: startDate,
-        nurseVisits: nurseVisits,
-        doctorConsults: doctorConsults
-      });
-      alert(`✅ Subscription Created! Sub ID: ${res.subscriptionId} (Valid 30 days until ${res.endDate})`);
-      document.getElementById('create-sub-form').reset();
-      document.getElementById('sub-start-date').value = new Date().toISOString().slice(0, 10);
-      await loadAdminDashboard();
-    } catch (err) {
-      alert('Subscription error: ' + err.message);
-    }
-  });
-
-  // 4. Diagnostic Report Registration Form
-  document.getElementById('create-report-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const seniorId = document.getElementById('report-senior-id')?.value;
-    const type = document.getElementById('report-type')?.value;
-    const fileUrl = document.getElementById('report-url')?.value.trim();
-
-    if (!seniorId) return alert('Please choose a Senior Patient first.');
-
-    try {
-      await callApi('adminCreateReport', {
-        seniorId: seniorId,
-        type: type,
-        fileUrl: fileUrl
-      });
-      alert('✅ Diagnostic report registered successfully!');
-      document.getElementById('create-report-form').reset();
-      await loadAdminDashboard();
-    } catch (err) {
-      alert('Report registration error: ' + err.message);
-    }
-  });
-
-  // 5. Generate 72-Hour Clinical Care Summary Button
-  document.getElementById('btn-gen-care-report')?.addEventListener('click', async () => {
-    const seniorSelect = document.getElementById('gen-report-senior');
-    const seniorId = seniorSelect ? seniorSelect.value.trim() : '';
-    if (!seniorId) return alert('Please choose a Senior Patient first.');
-
-    const btn = document.getElementById('btn-gen-care-report');
-    btn.disabled = true;
-    btn.textContent = 'Generating Care Summary...';
-
-    try {
-      const res = await callApi('generateClinicalCareReport', { seniorId: seniorId });
-      const shareUrl = `${window.location.origin}${window.location.pathname.replace('admin.html', '')}report.html?token=${res.token}`;
-      await loadAdminDashboard();
-
-      const input = prompt(`72-Hour Care Summary Generated for ${res.seniorName}!\n\nSecure Link:\n${shareUrl}\n\nType 'copy' to copy, or enter an email address to send directly:`);
-      if (input) {
-        if (input.toLowerCase() === 'copy') {
-          await navigator.clipboard.writeText(shareUrl);
-          alert('Link copied to clipboard!');
-        } else if (input.includes('@')) {
-          await callApi('shareReportByEmail', {
-            recipientEmail: input.trim(),
-            seniorName: res.seniorName,
-            reportType: 'Clinical Assessment & Care Journal',
-            secureUrl: shareUrl
-          });
-          alert('Care report link emailed to ' + input.trim());
-        }
-      }
-    } catch (err) {
-      alert('Error generating care summary: ' + err.message);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Generate 72-Hour Shareable Care Summary';
-    }
-  });
-}
-
-// -------------------------------------------------------------
-// STARTUP BOOTSTRAPPER
-// -------------------------------------------------------------
-init().catch(err => {
-  console.error('Admin Init Failure:', err);
-});
