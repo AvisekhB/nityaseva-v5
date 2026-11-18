@@ -576,18 +576,56 @@ function renderCompanionServices(services) {
 function renderSubscriptions(subs) {
   const tbody = document.querySelector('#admin-subs-table tbody');
   if (!tbody) return;
-  const slice = paginateArray(subs, pageState.subs);
-  tbody.innerHTML = slice.length === 0 ? '<tr><td colspan="6">No active subscriptions found.</td></tr>' : slice.map(s => `
-    <tr>
-      <td><strong>${s.subscription_id}</strong></td>
-      <td>${getSeniorName(s.senior_id)}</td>
-      <td>${s.plan_name}</td>
-      <td>${s.start_date ? s.start_date.slice(0, 10) : '-'}</td>
-      <td><strong>${s.end_date ? s.end_date.slice(0, 10) : '-'}</strong></td>
-      <td><span class="badge badge-complete">${s.status || 'ACTIVE'}</span></td>
-    </tr>`).join('');
-  renderPaginationBar('subs-pagination', subs.length, pageState.subs, (p) => { pageState.subs = p; renderSubscriptions(subs); });
+
+  const total = subs.length;
+  const page = pageState.subs;
+  const slice = subs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  if (slice.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6">No active subscriptions found.</td></tr>';
+    renderPaginationBar('subs-pagination', 0, 1, () => {});
+    return;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  tbody.innerHTML = slice.map(s => {
+    // Compute REAL status based on end_date vs today, ignore stale stored status
+    let computedStatus = String(s.status || 'ACTIVE').toUpperCase();
+    let badgeCls = 'badge-complete';
+
+    if (computedStatus !== 'CANCELLED') {
+      if (s.end_date) {
+        let exp = (s.end_date instanceof Date) ? new Date(s.end_date.getTime()) : new Date(String(s.end_date).trim());
+        exp.setHours(23, 59, 59, 999);
+        if (exp < today) {
+          computedStatus = 'EXPIRED';
+          badgeCls = 'badge-cancelled';
+        }
+      }
+    } else {
+      badgeCls = 'badge-cancelled';
+    }
+
+    return `
+      <tr>
+        <td><strong>${s.subscription_id}</strong></td>
+        <td>${getSeniorName(s.senior_id)}</td>
+        <td>${s.plan_name}</td>
+        <td>${s.start_date ? String(s.start_date).slice(0, 10) : '-'}</td>
+        <td><strong>${s.end_date ? String(s.end_date).slice(0, 10) : '-'}</strong></td>
+        <td><span class="badge ${badgeCls}">${computedStatus}</span></td>
+      </tr>
+    `;
+  }).join('');
+
+  renderPaginationBar('subs-pagination', total, page, (p) => {
+    pageState.subs = p;
+    renderSubscriptions(subs);
+  });
 }
+
 
 function renderEntitlements(ents) {
   const tbody = document.querySelector('#admin-entitlements-table tbody');
