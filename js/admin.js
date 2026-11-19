@@ -839,7 +839,6 @@ function setupActionForms() {
     const scheduledIso = scheduledVal ? new Date(scheduledVal).toISOString() : new Date().toISOString();
 
     const payload = {
-         const payload = {
       seniorId: seniorId,
       type: serviceType,
       scheduledAt: scheduledIso,
