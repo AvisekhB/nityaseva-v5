@@ -776,6 +776,7 @@ function setupTableSearches() {
     { id: 'search-coordinators', filter: (q) => (allData.coordinators || []).filter(c => JSON.stringify(c).toLowerCase().includes(q)), render: (d) => { pageState.coordinators = 1; renderCoordinators(d); } }
   ];
 
+
   binds.forEach(({ id, filter, render }) => {
     const input = document.getElementById(id);
     if (input && !input.dataset.bound) {
