@@ -153,7 +153,15 @@ function setupEmployeeDirectoryViews() {
       detailInput.placeholder = 'e.g. Care Coordinator, Operations Lead';
     }
   });
+
+  categorySelect?.addEventListener('change', () => {
+    const subGroup = document.getElementById('emp-sub-category-group');
+    if (subGroup) subGroup.style.display = categorySelect.value === 'STAFF' ? 'block' : 'none';
+  });
+  // Trigger once on load to set correct initial visibility
+  categorySelect?.dispatchEvent(new Event('change'));
 }
+
 categorySelect?.addEventListener('change', () => {
   const subGroup = document.getElementById('emp-sub-category-group');
   if (subGroup) subGroup.style.display = categorySelect.value === 'STAFF' ? 'block' : 'none';
