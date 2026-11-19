@@ -392,7 +392,7 @@ function getServiceTypeBadge(type) {
   const t = String(type || '').trim();
   switch (t) {
     case 'NurseVisit': return '<span class="badge badge-nurse-visit">👩‍⚕️ Nurse Visit</span>';
-    case 'DoctorConsult': return
+    
 case 'DoctorConsult': return '<span class="badge badge-doctor-consult">🩺 Doctor Consult</span>';
     case 'HospitalCoordination': return '<span class="badge badge-nurse-visit" style="background:#e0f2fe; color:#0369a1;">📞 Hospital Coord</span>';
     case 'HospitalEscort': return '<span class="badge badge-doctor-consult" style="background:#f3e8ff; color:#7e22ce;">🏥 Hospital Escort</span>';
