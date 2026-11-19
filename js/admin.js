@@ -481,18 +481,36 @@ function renderFamilies(families, links) {
 function renderStaff(staff) {
   const tbody = document.querySelector('#admin-staff-table tbody');
   if (!tbody) return;
-  const slice = paginateArray(staff, pageState.staff);
-  tbody.innerHTML = slice.length === 0 ? '<tr><td colspan="6">No staff recorded.</td></tr>' : slice.map(st => `
-    <tr>
-      <td><strong>${st.staff_id}</strong></td>
-      <td>${st.full_name}</td>
-      <td>${st.role || 'Staff'}</td>
-      <td>${st.email}</td>
-      <td>${st.phone || '-'}</td>
-      <td><span class="badge badge-complete">${st.status || 'ACTIVE'}</span></td>
-    </tr>`).join('');
-  renderPaginationBar('staff-pagination', staff.length, pageState.staff, (p) => { pageState.staff = p; renderStaff(staff); });
-}
+
+  const total = staff.length;
+  const page = pageState.staff;
+  const slice = staff.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  if (slice.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7">No staff recorded.</td></tr>';
+    renderPaginationBar('staff-pagination', 0, 1, () => {});
+    return;
+  }
+
+  tbody.innerHTML = slice.map(st => {
+    const cat = String(st.category || 'NURSE').toUpperCase();
+    const catBadge = cat === 'COMPANION_ESCORT'
+      ? '<span class="badge badge-scheduled" style="background:#fef3c7; color:#92400e;">🚗 Companion Escort</span>'
+      : '<span class="badge badge-nurse-visit">👩‍⚕️ Field Nurse</span>';
+
+    return `
+      <tr>
+        <td><strong>${st.staff_id}</strong></td>
+        <td>${st.full_name}</td>
+        <td>${st.role || 'Staff'}</td>
+        <td>${catBadge}</td>
+        <td>${st.email}</td>
+        <td>${st.phone || '-'}</td>
+        <td><span class="badge badge-complete">${st.status || 'ACTIVE'}</span></td>
+      </tr>
+    `;
+  }).join('');
+
 
 function renderDoctors(doctors) {
   const tbody = document.querySelector('#admin-doctors-table tbody');
