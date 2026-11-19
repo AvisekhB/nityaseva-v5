@@ -384,13 +384,12 @@
 
       <div class="card">
         <h2>Operational Work Orders</h2>
-        <div class="sub-nav">
-          <button class="sub-tab active" data-slicer="ALL">All</button>
-          <button class="sub-tab" data-slicer="SCHEDULED">SCHEDULED</button>
-          <button class="sub-tab" data-slicer="IN_PROGRESS">In Progress</button>
-          <button class="sub-tab" data-slicer="COMPLETE">Complete</button>
-          <button class="sub-tab" data-slicer="CANCELLED">Cancelled</button>
-        </div>
+<div class="sub-nav" style="margin:0; padding:0; border:none;">
+  <button class="sub-tab active" id="btn-show-staff">👩‍⚕️ Staff (<span id="count-staff">0</span>)</button>
+  <button class="sub-tab" id="btn-show-doctors">🩺 Doctors (<span id="count-doctors">0</span>)</button>
+  <button class="sub-tab" id="btn-show-coordinators">🧑‍💼 Coordinators (<span id="count-coordinators">0</span>)</button>
+</div>
+
         <div class="table-toolbar">
           <div class="search-box"><input type="text" id="search-wo" placeholder="Search work orders..."></div>
         </div>
