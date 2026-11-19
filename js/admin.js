@@ -539,7 +539,7 @@ function renderDoctors(doctors) {
   renderPaginationBar('doctors-pagination', doctors.length, pageState.doctors, (p) => { pageState.doctors = p; renderDoctors(doctors); });
 
 };
-  });
+
   
 
 function renderCoordinators(coordinators) {
