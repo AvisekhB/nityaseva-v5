@@ -476,6 +476,14 @@
                 <option value="COORDINATOR">🧑‍💼 Care Coordinator (CRD)</option>
               </select>
             </div>
+            <div class="form-group" id="emp-sub-category-group">
+  <label>Staff Sub-Type</label>
+  <select id="emp-sub-category">
+    <option value="NURSE">👩‍⚕️ Field Nurse (Clinical Visits)</option>
+    <option value="COMPANION_ESCORT">🚗 Companion Escort (Outings & Errands — Non-Medical)</option>
+  </select>
+</div>
+
             <div class="form-group">
               <label>Full Name</label>
               <input type="text" id="emp-name" placeholder="Full name" required>
@@ -502,11 +510,12 @@
       <div class="card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
           <h2 style="margin:0; border:none; padding:0;">Employee Rosters</h2>
-          <div class="sub-nav" style="margin:0; padding:0; border:none;">
-            <button class="sub-tab active" id="btn-show-staff">👩‍⚕️ Staff (<span id="count-staff">0</span>)</button>
-            <button class="sub-tab" id="btn-show-doctors">🩺 Doctors (<span id="count-doctors">0</span>)</button>
-            <button class="sub-tab" id="btn-show-coordinators">🧑‍💼 Coordinators (<span id="count-coordinators">0</span>)</button>
-          </div>
+<div class="sub-nav" style="margin:0; padding:0; border:none;">
+  <button class="sub-tab active" id="btn-show-staff">👩‍⚕️ Staff (<span id="count-staff">0</span>)</button>
+  <button class="sub-tab" id="btn-show-doctors">🩺 Doctors (<span id="count-doctors">0</span>)</button>
+  <button class="sub-tab" id="btn-show-coordinators">🧑‍💼 Coordinators (<span id="count-coordinators">0</span>)</button>
+</div>
+
         </div>
 
         <div id="view-emp-staff">
