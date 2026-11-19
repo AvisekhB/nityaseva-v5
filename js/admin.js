@@ -519,8 +519,11 @@ function renderStaff(staff) {
     `;
   }).join('');
 
+  renderPaginationBar('staff-pagination', staff.length, pageState.staff, (p) => { pageState.staff = p; renderStaff(staff); });
+}
 
 function renderDoctors(doctors) {
+
   const tbody = document.querySelector('#admin-doctors-table tbody');
   if (!tbody) return;
   const slice = paginateArray(doctors, pageState.doctors);
