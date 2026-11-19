@@ -154,17 +154,20 @@ function setupEmployeeDirectoryViews() {
     }
   });
 
-categorySelect?.addEventListener('change', () => {
-  const subGroup = document.getElementById('emp-sub-category-group');
-  if (subGroup) subGroup.style.display = categorySelect.value === 'STAFF' ? 'block' : 'none';
-});
-// Trigger once on load to set correct initial visibility
-categorySelect?.dispatchEvent(new Event('change'));
+  categorySelect?.addEventListener('change', () => {
+    const subGroup = document.getElementById('emp-sub-category-group');
+    const ageGroup = document.getElementById('emp-age-group');
+    const expGroup = document.getElementById('emp-exp-group');
+    const isStaff = categorySelect.value === 'STAFF';
+    if (subGroup) subGroup.style.display = isStaff ? 'block' : 'none';
+    if (ageGroup) ageGroup.style.display = isStaff ? 'block' : 'none';
+    if (expGroup) expGroup.style.display = isStaff ? 'block' : 'none';
+  });
+  // Trigger once on load to set correct initial visibility
+  categorySelect?.dispatchEvent(new Event('change'));
 }
 
 function setupEmployeeCreationForm() {
-
-
   const form = document.getElementById('create-employee-form');
   const resultDiv = document.getElementById('emp-result');
 
@@ -175,9 +178,16 @@ function setupEmployeeCreationForm() {
     btn.textContent = 'Registering Employee...';
 
     const category = document.getElementById('emp-category').value;
+    const subCategory = document.getElementById('emp-sub-category')?.value || 'NURSE';
+    const age = document.getElementById('emp-age')?.value.trim() || '';
+    const experience = document.getElementById('emp-experience')?.value.trim() || '';
+
     try {
       const res = await callApi('adminCreateEmployee', {
         category,
+        subCategory,
+        age,
+        experience,
         fullName: document.getElementById('emp-name').value.trim(),
         phone: document.getElementById('emp-phone').value.trim(),
         email: document.getElementById('emp-email').value.trim().toLowerCase(),
@@ -382,7 +392,8 @@ function getServiceTypeBadge(type) {
   const t = String(type || '').trim();
   switch (t) {
     case 'NurseVisit': return '<span class="badge badge-nurse-visit">👩‍⚕️ Nurse Visit</span>';
-    case 'DoctorConsult': return '<span class="badge badge-doctor-consult">🩺 Doctor Consult</span>';
+    case 'DoctorConsult': return
+case 'DoctorConsult': return '<span class="badge badge-doctor-consult">🩺 Doctor Consult</span>';
     case 'HospitalCoordination': return '<span class="badge badge-nurse-visit" style="background:#e0f2fe; color:#0369a1;">📞 Hospital Coord</span>';
     case 'HospitalEscort': return '<span class="badge badge-doctor-consult" style="background:#f3e8ff; color:#7e22ce;">🏥 Hospital Escort</span>';
     case 'CompanionService': return '<span class="badge badge-scheduled" style="background:#fef3c7; color:#92400e;">🚗 Companion Errand</span>';
@@ -490,7 +501,7 @@ function renderStaff(staff) {
   const slice = staff.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   if (slice.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7">No staff recorded.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9">No staff recorded.</td></tr>';
     renderPaginationBar('staff-pagination', 0, 1, () => {});
     return;
   }
@@ -507,6 +518,8 @@ function renderStaff(staff) {
         <td>${st.full_name}</td>
         <td>${st.role || 'Staff'}</td>
         <td>${catBadge}</td>
+        <td>${st.age || '-'}</td>
+        <td>${st.experience || '-'}</td>
         <td>${st.email}</td>
         <td>${st.phone || '-'}</td>
         <td><span class="badge badge-complete">${st.status || 'ACTIVE'}</span></td>
@@ -518,7 +531,6 @@ function renderStaff(staff) {
 }
 
 function renderDoctors(doctors) {
-
   const tbody = document.querySelector('#admin-doctors-table tbody');
   if (!tbody) return;
   const slice = paginateArray(doctors, pageState.doctors);
@@ -532,10 +544,7 @@ function renderDoctors(doctors) {
       <td><span class="badge badge-complete">${d.status || 'ACTIVE'}</span></td>
     </tr>`).join('');
   renderPaginationBar('doctors-pagination', doctors.length, pageState.doctors, (p) => { pageState.doctors = p; renderDoctors(doctors); });
-
-};
-
-  
+}
 
 function renderCoordinators(coordinators) {
   const tbody = document.querySelector('#admin-coordinators-table tbody');
@@ -624,7 +633,6 @@ function renderSubscriptions(subs) {
   today.setHours(0, 0, 0, 0);
 
   tbody.innerHTML = slice.map(s => {
-    // Compute REAL status based on end_date vs today, ignore stale stored status
     let computedStatus = String(s.status || 'ACTIVE').toUpperCase();
     let badgeCls = 'badge-complete';
 
@@ -659,7 +667,6 @@ function renderSubscriptions(subs) {
   });
 }
 
-
 function renderEntitlements(ents) {
   const tbody = document.querySelector('#admin-entitlements-table tbody');
   if (!tbody) return;
@@ -687,17 +694,6 @@ function renderReports(reports) {
         <td><strong>${getSeniorName(r.senior_id)}</strong></td>
         <td><span class="badge ${isCare ? 'badge-complete' : 'badge-nurse-visit'}">${r.type}</span></td>
         <td>${isCare ? '<span class="badge badge-doctor-consult">Care Journal</span>' : `<a href="${r.file_url}" target="_blank" rel="noopener">Open Doc ↗</a>`}</td>
-
-
-
-
-
-
-
-
-
-
-
         <td>${r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN') : '-'}</td>
         <td><button class="share-btn" data-id="${r.report_id}" data-senior="${r.senior_id}">Share 72h</button></td>
       </tr>`;
@@ -775,7 +771,8 @@ function setupTableSearches() {
     { id: 'search-seniors', filter: (q) => allData.seniors.filter(s => JSON.stringify(s).toLowerCase().includes(q)), render: (d) => { pageState.seniors = 1; renderSeniors(d); } },
     { id: 'search-families', filter: (q) => allData.families.filter(f => JSON.stringify(f).toLowerCase().includes(q)), render: (d) => { pageState.families = 1; renderFamilies(d, allData.familyLinks); } },
     { id: 'search-staff', filter: (q) => allData.staff.filter(st => JSON.stringify(st).toLowerCase().includes(q)), render: (d) => { pageState.staff = 1; renderStaff(d); } },
-    { id: 'search-doctors', filter: (q) => allData.doctors.filter(dc => JSON.stringify(dc).toLowerCase().includes(q)), render: (d) => { pageState.doctors = 1; renderDoctors(d); } },
+    { id: 'search-doctors', filter: (q) => allData.doctors.filter(dc => JSON.stringify(dc).toLowerCase().includes(q)), render: (d)
+=> { pageState.doctors = 1; renderDoctors(d); } },
     { id: 'search-coordinators', filter: (q) => (allData.coordinators || []).filter(c => JSON.stringify(c).toLowerCase().includes(q)), render: (d) => { pageState.coordinators = 1; renderCoordinators(d); } }
   ];
 
@@ -842,6 +839,7 @@ function setupActionForms() {
     const scheduledIso = scheduledVal ? new Date(scheduledVal).toISOString() : new Date().toISOString();
 
     const payload = {
+         const payload = {
       seniorId: seniorId,
       type: serviceType,
       scheduledAt: scheduledIso,
