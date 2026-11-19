@@ -537,7 +537,10 @@ function renderDoctors(doctors) {
       <td><span class="badge badge-complete">${d.status || 'ACTIVE'}</span></td>
     </tr>`).join('');
   renderPaginationBar('doctors-pagination', doctors.length, pageState.doctors, (p) => { pageState.doctors = p; renderDoctors(doctors); });
-}
+
+};
+  });
+  
 
 function renderCoordinators(coordinators) {
   const tbody = document.querySelector('#admin-coordinators-table tbody');
