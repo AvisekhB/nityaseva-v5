@@ -36,16 +36,16 @@ async function init() {
     setupCockpitActions();
     setupAssessmentForm();
     setupDoctorOptions();
-    setupEndVisitFlow();
     setupRouteTabs();
-    
-    // ADD THIS LINE
     setupExtendedActions(); 
-
     await loadNurseWorkOrders();
   } catch (err) {
-
+    console.error('Nurse Portal Init Error:', err);
+    setHTML('route-list-container', `<p style="color:#dc2626; text-align:center; padding:20px 0;">Failed to load: ${err.message}</p>`);
+  }
 }
+
+
 
 // -------------------------------------------------------------
 // PENDING vs COMPLETED SLICER TABS
@@ -469,6 +469,38 @@ function setupEndVisitFlow() {
   });
 }
 
+async function handleCompleteVisit() {
+  const remarks = document.getElementById('visit-remarks').value;
+  const code = document.getElementById('input-end-code').value;
+  
+  if (!remarks) return alert('Mandatory: Please enter visit remarks before completing.');
+  if (code.length !== 6) return alert('Enter valid 6-digit numeric End Code.');
+  
+  const geo = await getDeviceLocation(); // Captures final location
+  try {
+    const res = await callApi('verifyEndCode', { 
+      workOrderId: activeWO.work_order_id, 
+      code, 
+      remarks, // <--- This now goes to WorkOrders.gs
+      geo      // <--- This now goes to WorkOrders.gs
+    });
+    
+    if (res.success) {
+      clearInterval(timerInterval);
+      alert('✅ Visit Completed & Logged Successfully');
+      hide('end-visit-overlay'); 
+      hide('cockpit-overlay');
+      await loadNurseWorkOrders();
+    } else {
+      alert(res.error || 'End Code Verification failed');
+    }
+  } catch (err) { alert('Completion error: ' + err.message); }
+}
+
+
+
+
+  
 function setupModalCloseButtons() {
   ['start', 'cockpit', 'assessment', 'doctor', 'end', 'sos'].forEach(id => {
     const btn = document.getElementById(`btn-close-${id === 'start' ? 'start-sheet' : id === 'end' ? 'end-sheet' : id}`);
