@@ -642,16 +642,25 @@
           <span id="location-confirmed-text">Fetching GPS coordinates...</span>
         </div>
       </div>
-      <div class="cockpit-actions-grid">
-        <button class="btn-action-tile" id="btn-open-assessment">
-          <strong>📝 20-Point Vitals</strong>
-          <small>Record clinical assessment</small>
-        </button>
-        <button class="btn-action-tile" id="btn-doctor-options">
-          <strong>🩺 Doctor Consult</strong>
-          <small>Teleconsult or escalate</small>
-        </button>
-      </div>
+<!-- ADD OFFICE CALL & SOS -->
+<div class="cockpit-actions-grid" style="margin-bottom: 15px;">
+  <button id="btn-sos-trigger-cockpit" class="btn-action-tile" style="background:#fef2f2; border:1px solid #dc2626;"><strong>🚨 SOS</strong></button>
+  <button id="btn-call-office" class="btn-action-tile" style="background:#f0f9ff; border:1px solid #0284c7;"><strong>📞 Office Support</strong></button>
+</div>
+
+<!-- ADD CANCEL SECTION -->
+<div class="card" style="background:#fff5f5; border:1px solid #feb2b2; padding:15px; border-radius:16px;">
+  <label style="font-weight:800; color:#991b1b;">Cancel Visit</label>
+  <select id="cancel-reason-dropdown" style="margin:8px 0;">
+    <option value="">Select Reason</option>
+    <option value="Senior not available">Senior not available</option>
+    <option value="Senior not responding">Senior not responding</option>
+    <option value="Wrong address">Wrong address</option>
+    <option value="Other">Other</option>
+  </select>
+  <button onclick="handleCancelBooking()" class="btn-conclude-full" style="background:#718096; padding:10px;">Cancel Booking</button>
+</div>
+
       <button class="btn-conclude-full" id="btn-open-end-code">🏁 Conclude Visit (End Code)</button>
     </div>
   </div>
