@@ -37,7 +37,7 @@ async function init() {
     setupAssessmentForm();
     setupDoctorOptions();
     setupRouteTabs();
-    setupExtendedActions(); // This handles your new buttons
+    setupExtendedActions(); 
     
     await loadNurseWorkOrders();
   } catch (err) {
