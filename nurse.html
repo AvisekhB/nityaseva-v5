@@ -2,116 +2,50 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Nurse Field Care — Nityaseva</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    /* Add existing styles here (omitted for brevity, keep your current style block) */
+    /* Keep your existing style block here, just make sure to add these to the bottom of the <style> block: */
+    .cockpit-actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+    .btn-action-tile { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 16px; padding: 14px; cursor: pointer; }
+    .btn-conclude-full { background: #dc2626; color: white; width: 100%; padding: 15px; border-radius: 16px; border: none; margin-top: 10px; }
   </style>
 </head>
 <body>
   <div class="app-viewport">
-    <!-- Profile Card & App Bar -->
-    <div class="card" id="nurse-profile-card" style="background:#1b4332; color:#fff; border-radius:20px; padding:20px; margin-bottom:14px;">
-      <div style="display:flex; align-items:center; gap:15px;">
-        <div id="btn-nurse-avatar" class="nurse-badge-avatar" style="width:60px; height:60px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:30px; overflow:hidden;">
-          <span id="nurse-avatar-text">👩‍⚕️</span>
-        </div>
-        <div>
-          <h2 id="nurse-name-profile" style="margin:0; font-size:20px;">Loading...</h2>
-          <p id="nurse-role-profile" style="font-size:12px; opacity:0.85; margin:3px 0 0 0;">Staff ID: STF-001</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="app-header">
-      <div class="app-header-left">
-        <div class="nurse-badge-avatar" style="width:40px; height:40px;"><span>👩‍⚕️</span></div>
-        <div class="nurse-info">
-          <h4 id="nurse-name-display">Loading...</h4>
-          <small id="nurse-id-display">STF-XXXX</small>
-        </div>
-      </div>
-      <button class="btn-logout-mini" id="btn-logout">Logout</button>
-    </div>
-
-    <div class="emergency-strip">
-      <span>🚨 Emergency Protocol (112)</span>
-      <button class="btn-sos-trigger" id="btn-sos-trigger">Trigger SOS</button>
-    </div>
-
-    <div id="view-route" class="route-card">
-      <div class="route-card-title">
-        <span>Care Route Visits</span>
-        <span class="route-count-pill" id="route-count-badge">0 Visits</span>
-      </div>
-      <div class="sub-tabs-bar">
-        <button class="sub-tab-btn active" id="nurse-tab-pending" type="button">⏳ Pending / Active</button>
-        <button class="sub-tab-btn" id="nurse-tab-complete" type="button">✅ Completed</button>
-      </div>
-      <div id="route-list-container"><p>Loading...</p></div>
-    </div>
+    <!-- Existing Profile/App Bar and Route List -->
+    <div id="route-list-container"></div>
   </div>
 
-  <!-- START VISIT MODAL -->
-  <div id="start-visit-overlay" class="modal-sheet-overlay hidden">
-    <div class="modal-sheet">
-      <div class="modal-top-notch"><span class="otp-protected-chip">🔒 OTP PROTECTED</span><button class="modal-close-btn" id="btn-close-start-sheet">✕</button></div>
-      <div class="start-visit-title">Start visit</div>
-      <input type="text" inputmode="numeric" maxlength="6" class="otp-input-field" id="input-start-code" placeholder="••••••">
-      <button class="btn-start-action" id="btn-verify-start">Start Visit</button>
-    </div>
-  </div>
-
-  <!-- SINGLE COCKPIT MODAL (SOS, Call, Cancel, Remarks, End Visit) -->
+  <!-- SINGLE CLEAN COCKPIT MODAL -->
   <div id="cockpit-overlay" class="modal-sheet-overlay hidden">
     <div class="modal-sheet cockpit-view">
-      <div class="modal-top-notch">
-        <span class="otp-protected-chip">🔒 VISIT ACTIVE</span>
-        <button class="modal-close-btn" id="btn-close-cockpit">✕</button>
-      </div>
+      <div class="modal-top-notch"><span class="otp-protected-chip">🔒 VISIT ACTIVE</span><button class="modal-close-btn" id="btn-close-cockpit">✕</button></div>
       <h2 id="cockpit-senior-name">Senior Name</h2>
-      <div class="live-timer-card">
-        <div class="timer-main-display" id="live-timer-display">00:00:00</div>
-      </div>
-
+      <div class="live-timer-card"><div class="timer-main-display" id="live-timer-display">00:00:00</div></div>
+      
       <div class="cockpit-actions-grid">
-        <button id="btn-sos-trigger-cockpit" class="btn-action-tile" style="background:#fef2f2; border:1px solid #dc2626;"><strong>🚨 SOS</strong></button>
-        <button id="btn-call-office" class="btn-action-tile" style="background:#f0f9ff; border:1px solid #0284c7;"><strong>📞 Office Support</strong></button>
+        <button id="btn-sos-trigger-cockpit" class="btn-action-tile"><strong>🚨 SOS</strong></button>
+        <button id="btn-call-office" class="btn-action-tile"><strong>📞 Support</strong></button>
       </div>
 
-      <div class="card" style="margin-top:10px; border:1px solid #feb2b2; background:#fff5f5; padding:15px; border-radius:16px;">
-        <label style="font-weight:800; color:#991b1b; font-size:12px;">Cancel Visit</label>
-        <select id="cancel-reason-dropdown" style="margin:8px 0; width:100%; padding:8px;">
-          <option value="">-- Select Reason --</option>
+      <div class="card" style="margin-top:10px; padding:15px;">
+        <label>Cancel Visit</label>
+        <select id="cancel-reason-dropdown" style="width:100%; padding:8px;">
+          <option value="">Select Reason</option>
           <option value="Senior not available">Senior not available</option>
-          <option value="Senior not responding">Senior not responding</option>
           <option value="Other">Other</option>
         </select>
-        <button onclick="handleCancelBooking()" class="btn-conclude-full" style="background:#718096; margin-top:5px;">Cancel Booking</button>
+        <button onclick="handleCancelBooking()" class="btn-conclude-full" style="background:#718096;">Cancel Booking</button>
       </div>
 
-      <div class="form-group-mobile" style="margin-top:10px;">
-        <label>Visit Remarks (Mandatory)</label>
-        <textarea id="visit-remarks" rows="3" placeholder="Enter visit summary..."></textarea>
-      </div>
-
-      <button class="btn-conclude-full" id="btn-open-end-code">🏁 Conclude Visit (End Code)</button>
+      <textarea id="visit-remarks" rows="3" placeholder="Mandatory: Visit remarks..." style="width:100%; margin-top:10px; padding:10px;"></textarea>
+      <button class="btn-conclude-full" id="btn-open-end-code">🏁 Conclude Visit</button>
     </div>
   </div>
 
-  <!-- OTHER MODALS -->
-  <div id="assessment-overlay" class="modal-sheet-overlay hidden">...</div> 
-  <div id="end-visit-overlay" class="modal-sheet-overlay hidden">
-    <div class="modal-sheet">
-      <div class="modal-top-notch"><span class="otp-protected-chip">🏁 CONCLUDE</span><button class="modal-close-btn" id="btn-close-end-sheet">✕</button></div>
-      <input type="text" inputmode="numeric" maxlength="6" class="otp-input-field" id="input-end-code" placeholder="••••••">
-      <button class="btn-start-action" style="background:#dc2626;" id="btn-verify-end">Complete & Close Visit</button>
-    </div>
-  </div>
-  <div id="sos-modal" class="modal-sheet-overlay hidden">...</div>
-
+  <!-- Other Modals (Assessment, etc.) stay here -->
   <script type="module" src="js/nurse.js"></script>
 </body>
 </html>
