@@ -10,6 +10,8 @@ let visitStartTime = null;
 let isVitalsSavedForActiveWO = false;
 let nurseActiveTab = 'PENDING'; // 'PENDING' or 'COMPLETE'
 
+const OFFICE_NUMBER = "+919239258921"; // REPLACE WITH YOUR ACTUAL OFFICE NUMBER
+
 // -------------------------------------------------------------
 // SAFE DOM HELPERS
 // -------------------------------------------------------------
@@ -546,6 +548,32 @@ function setupDoctorOptions() {
   document.getElementById('btn-skip-consult-mobile')?.addEventListener('click', () => {
     hide('doctor-overlay');
   });
+}
+// --- NEW SOS & OFFICE HANDLERS ---
+function setupExtendedActions() {
+  // Office Call Button
+  document.getElementById('btn-call-office')?.addEventListener('click', () => {
+    window.location.href = `tel:${OFFICE_NUMBER}`;
+  });
+  
+  // SOS Button in Cockpit (triggers existing SOS Modal)
+  document.getElementById('btn-sos-trigger-cockpit')?.addEventListener('click', () => show('sos-modal'));
+}
+
+// --- NEW CANCEL HANDLER ---
+async function handleCancelBooking() {
+  const dropdown = document.getElementById('cancel-reason-dropdown');
+  const reason = dropdown ? dropdown.value : '';
+  
+  if (!reason) return alert('Please select a reason.');
+  if (!confirm('Are you sure you want to cancel this visit?')) return;
+  
+  try {
+    await callApi('requestCancellation', { workOrderId: activeWO.work_order_id, reason: reason });
+    alert('Visit cancelled successfully.');
+    hide('cockpit-overlay');
+    await loadNurseWorkOrders();
+  } catch (err) { alert('Cancellation failed: ' + err.message); }
 }
 
 init();
