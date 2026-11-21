@@ -37,7 +37,8 @@ async function init() {
     setupAssessmentForm();
     setupDoctorOptions();
     setupRouteTabs();
-    setupExtendedActions(); 
+    setupExtendedActions(); // This handles your new buttons
+    
     await loadNurseWorkOrders();
   } catch (err) {
     console.error('Nurse Portal Init Error:', err);
@@ -343,18 +344,19 @@ function startLiveTimer() {
   }, 1000);
 }
 
+
 function setupCockpitActions() {
   document.getElementById('btn-open-assessment')?.addEventListener('click', () => show('assessment-overlay'));
   document.getElementById('btn-doctor-options')?.addEventListener('click', () => show('doctor-overlay'));
-  document.getElementById('btn-open-end-code')?.addEventListener('click', () => {
-    if (!isVitalsSavedForActiveWO) {
-      alert('⚠️ Mandatory: Submit 20-Point Vitals Assessment first.');
-      show('assessment-overlay');
-      return;
-    }
-    show('end-visit-overlay');
-  });
+  
+  // Wire the End Code verify button to your new remarks-aware function
+  document.getElementById('btn-verify-end')?.onclick = handleCompleteVisit;
 }
+
+
+
+
+
 
 function setupAssessmentForm() {
   document.getElementById('assessment-form')?.addEventListener('submit', async (e) => {
