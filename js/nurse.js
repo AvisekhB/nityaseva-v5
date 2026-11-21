@@ -44,10 +44,7 @@ async function init() {
 
     await loadNurseWorkOrders();
   } catch (err) {
-  } catch (err) {
-    console.error('Nurse Portal Init Error:', err);
-    setHTML('route-list-container', `<p style="color:#dc2626; text-align:center; padding:20px 0;">Failed to load: ${err.message}</p>`);
-  }
+
 }
 
 // -------------------------------------------------------------
