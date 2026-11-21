@@ -608,21 +608,50 @@
     </div>
   </div>
 
- <div id="cockpit-overlay" class="modal-sheet-overlay hidden">
+ <!-- Inside your nurse.html, find your cockpit-overlay -->
+<div id="cockpit-overlay" class="modal-sheet-overlay hidden">
   <div class="modal-sheet cockpit-view">
+    <!-- 1. HEADER -->
     <div class="modal-top-notch">
-      <span class="otp-protected-chip" style="background:#dcfce7; color:#166534;">🔒 VISIT ACTIVE</span>
+      <span class="otp-protected-chip">🔒 VISIT ACTIVE</span>
       <button class="modal-close-btn" id="btn-close-cockpit">✕</button>
     </div>
 
+    <!-- 2. CONTENT -->
     <div class="senior-hero-card">
       <h2 id="cockpit-senior-name">Senior Name</h2>
-      <div class="pin-verified-pill"><span>✅</span> Visit started</div>
+      <div class="pin-verified-pill">✅ Visit started</div>
     </div>
 
     <div class="live-timer-card">
       <div class="timer-main-display" id="live-timer-display">00:00:00</div>
     </div>
+
+    <!-- 3. ACTIONS -->
+    <div class="cockpit-actions-grid">
+      <button id="btn-sos-trigger-cockpit" class="btn-action-tile" style="background:#fef2f2; border:1px solid #dc2626;"><strong>🚨 SOS</strong></button>
+      <button id="btn-call-office" class="btn-action-tile" style="background:#f0f9ff; border:1px solid #0284c7;"><strong>📞 Office Support</strong></button>
+    </div>
+
+    <div class="card" style="margin-top:10px; border:1px solid #feb2b2; background:#fff5f5; padding:15px; border-radius:16px;">
+      <label style="font-weight:800; color:#991b1b; font-size:12px;">Cancel this Visit</label>
+      <select id="cancel-reason-dropdown" style="margin:8px 0; width:100%; padding:8px;">
+        <option value="">-- Select Reason --</option>
+        <option value="Senior not available">Senior not available</option>
+        <option value="Senior not responding">Senior not responding</option>
+        <option value="Other">Other</option>
+      </select>
+      <button onclick="handleCancelBooking()" class="btn-conclude-full" style="background:#718096; margin-top:5px;">Cancel Booking</button>
+    </div>
+
+    <div class="form-group-mobile" style="margin-top:15px;">
+      <label>Visit Remarks (Mandatory)</label>
+      <textarea id="visit-remarks" rows="3" placeholder="Enter visit summary..."></textarea>
+    </div>
+
+    <button class="btn-conclude-full" id="btn-open-end-code">🏁 Conclude Visit (End Code)</button>
+  </div>
+</div>
 
     <!-- SOS & Office -->
     <div class="cockpit-actions-grid">
