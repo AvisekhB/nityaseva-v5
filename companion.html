@@ -1,28 +1,164 @@
-<!-- Inside companion.html -->
-<div id="cockpit-overlay" class="modal-sheet-overlay hidden">
-  <div class="modal-sheet">
-    <div class="modal-top-notch"><span>🔒 COMPANION SERVICE</span></div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Companion Field Service — Nityaseva</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f2f5f2; --card-white: #ffffff; --text-main: #0f172a; --text-muted: #64748b;
+      --blue-dark: #1e3a8a; --blue-accent: #2563eb; --timer-card-bg: #141f18;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background-color: var(--bg); display: flex; justify-content: center; padding: 12px 10px 80px; min-height: 100vh; }
+    .app-viewport { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; }
+    .app-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 4px; }
+    .app-header-left { display: flex; align-items: center; gap: 10px; }
+    .comp-badge-avatar { width: 44px; height: 44px; border-radius: 50%; background: #e2e8f0; border: 2px solid var(--blue-accent); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .btn-logout-mini { background: #e2e8f0; border: none; color: #334155; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; }
+    .emergency-strip { background: #fef2f2; border: 1px solid #fecaca; border-radius: 14px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; }
+    .btn-sos-trigger { background: #dc2626; color: #fff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; }
+    .route-card { background: var(--card-white); border-radius: 20px; padding: 16px; box-shadow: 0 4px 14px rgba(0,0,0,0.03); }
+    .route-card-title { font-size: 15px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .route-count-pill { background: #e0f2fe; color: var(--blue-accent); padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 800; }
+    .sub-tabs-bar { display: flex; gap: 6px; background: #f1f5f9; padding: 4px; border-radius: 12px; margin-bottom: 14px; }
+    .sub-tab-btn { flex: 1; padding: 8px 10px; font-size: 12px; font-weight: 800; color: #64748b; background: transparent; border: none; border-radius: 9px; cursor: pointer; }
+    .sub-tab-btn.active { background: #ffffff; color: var(--blue-dark); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    .visit-card-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 14px; margin-bottom: 10px; cursor: pointer; }
+    .visit-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .visit-senior-name { font-size: 16px; font-weight: 800; }
+    .visit-meta-row { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+    .status-badge { font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 3px 8px; border-radius: 8px; }
+    .badge-scheduled { background: #fef3c7; color: #92400e; }
+    .badge-in_progress { background: #dbeafe; color: #1e40af; }
+    .badge-complete { background: #dcfce7; color: #166534; }
     
-    <div class="live-timer-card"><div class="timer-main-display" id="live-timer-display">00:00:00</div></div>
-
-    <!-- SOS & OFFICE -->
-    <div class="cockpit-actions-grid">
-      <button id="btn-sos-trigger-cockpit" class="btn-action-tile">🚨 SOS</button>
-      <button id="btn-call-office" class="btn-action-tile">📞 Office</button>
+    .modal-sheet-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: flex-end; justify-content: center; }
+    .modal-sheet { background: #fff; width: 100%; max-width: 440px; border-radius: 28px 28px 0 0; padding: 24px 20px 34px; max-height: 90vh; overflow-y: auto; }
+    .modal-top-notch { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .otp-protected-chip { background: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+    .modal-close-btn { background: #f1f5f9; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; }
+    .otp-input-field { width: 100%; border: 2px solid #cbd5e1; border-radius: 16px; padding: 14px; font-size: 28px; font-weight: 800; letter-spacing: 10px; text-align: center; margin: 16px 0; }
+    .btn-start-action { background: var(--blue-dark); color: #fff; width: 100%; padding: 15px; border-radius: 16px; font-size: 15px; font-weight: 800; border: none; cursor: pointer; }
+    
+    .live-timer-card { background: var(--timer-card-bg); color: #fff; border-radius: 22px; padding: 20px 18px; }
+    .timer-main-display { font-size: 40px; font-weight: 800; font-family: monospace; text-align: center; }
+    .cockpit-actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+    .btn-action-tile { background: #fff; border: 1px solid #cbd5e1; border-radius: 16px; padding: 14px; cursor: pointer; text-align: center; }
+    .btn-conclude-full { background: #dc2626; color: #fff; border: none; padding: 15px; border-radius: 16px; font-weight: 800; width: 100%; margin-top: 10px; cursor: pointer; }
+    .form-group-mobile textarea, .form-group-mobile select { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 14px; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="app-viewport">
+    <div class="card" style="background:#1e3a8a; color:#fff; border-radius:20px; padding:20px; margin-bottom:14px;">
+      <h2 id="comp-name-profile" style="margin:0; font-size:20px;">Loading...</h2>
+      <p id="comp-role-profile" style="font-size:12px; opacity:0.85; margin:3px 0 0 0;">Companion ID: FCRD-XXX</p>
     </div>
 
-    <!-- CANCEL -->
-    <div class="card" style="margin-top:10px;">
-      <label>Cancel Trip</label>
-      <select id="cancel-reason-dropdown">
-        <option value="Senior not available">Senior not available</option>
-        <option value="Other">Other</option>
-      </select>
-      <button onclick="handleCancelBooking()" class="btn-conclude-full">Cancel</button>
+    <div class="app-header">
+      <div class="app-header-left">
+        <div class="comp-badge-avatar"><span>🚗</span></div>
+        <div>
+          <h4 id="comp-name-display">Loading...</h4>
+          <small id="comp-id-display">FCRD-XXXX</small>
+        </div>
+      </div>
+      <button class="btn-logout-mini" id="btn-logout">Logout</button>
     </div>
 
-    <!-- REMARKS -->
-    <textarea id="visit-remarks" placeholder="Enter trip remarks..."></textarea>
-    <button class="btn-conclude-full" id="btn-open-end-code">🏁 End Trip (End Code)</button>
+    <div class="emergency-strip">
+      <span>🚨 Emergency Protocol (112)</span>
+      <button class="btn-sos-trigger" id="btn-sos-trigger">Trigger SOS</button>
+    </div>
+
+    <div class="route-card">
+      <div class="route-card-title">
+        <span>Companion Trips</span>
+        <span class="route-count-pill" id="route-count-badge">0 Trips</span>
+      </div>
+      <div class="sub-tabs-bar">
+        <button class="sub-tab-btn active" id="comp-tab-pending" type="button">⏳ Pending / Active</button>
+        <button class="sub-tab-btn" id="comp-tab-complete" type="button">✅ Completed</button>
+      </div>
+      <div id="route-list-container"><p style="text-align:center; color:#94a3b8;">Loading trips...</p></div>
+    </div>
   </div>
-</div>
+
+  <!-- START VISIT MODAL -->
+  <div id="start-visit-overlay" class="modal-sheet-overlay hidden">
+    <div class="modal-sheet">
+      <div class="modal-top-notch"><span class="otp-protected-chip">🔒 OTP PROTECTED</span><button class="modal-close-btn" id="btn-close-start-sheet">✕</button></div>
+      <h3>Start Trip/Service</h3>
+      <p style="color:var(--text-muted); font-size:13px;">Ask <strong id="start-sheet-senior-name">the senior</strong>'s family for their PIN.</p>
+      <input type="text" inputmode="numeric" maxlength="6" class="otp-input-field" id="input-start-code" placeholder="••••••">
+      <button class="btn-start-action" id="btn-verify-start">Start Trip</button>
+    </div>
+  </div>
+
+  <!-- COCKPIT MODAL -->
+  <div id="cockpit-overlay" class="modal-sheet-overlay hidden">
+    <div class="modal-sheet">
+      <div class="modal-top-notch"><span class="otp-protected-chip">🔒 TRIP ACTIVE</span><button class="modal-close-btn" id="btn-close-cockpit">✕</button></div>
+      <h2 id="cockpit-senior-name">Senior Name</h2>
+      <p id="cockpit-service-sub" style="color:var(--text-muted); font-size:13px; margin-bottom:10px;">Companion Service</p>
+
+      <div class="live-timer-card">
+        <div class="timer-main-display" id="live-timer-display">00:00:00</div>
+        <div style="text-align:center; font-size:11px; color:#94a3b8;" id="timer-started-at">started --:--</div>
+      </div>
+
+      <div class="cockpit-actions-grid">
+        <button id="btn-sos-trigger-cockpit" class="btn-action-tile" style="background:#fef2f2; border-color:#dc2626;"><strong>🚨 SOS</strong></button>
+        <button id="btn-call-office" class="btn-action-tile" style="background:#eff6ff; border-color:#2563eb;"><strong>📞 Office</strong></button>
+      </div>
+
+      <div class="card" style="margin-top:15px; border:1px solid #feb2b2; background:#fff5f5; padding:15px; border-radius:16px;">
+        <label style="font-weight:800; color:#991b1b; font-size:12px;">Cancel Trip</label>
+        <select id="cancel-reason-dropdown" style="margin:8px 0;">
+          <option value="">-- Select Reason --</option>
+          <option value="Senior not available">Senior not available</option>
+          <option value="Senior not responding">Senior not responding</option>
+          <option value="Other">Other</option>
+        </select>
+        <button onclick="handleCancelBooking()" class="btn-conclude-full" style="background:#718096;">Cancel Booking</button>
+      </div>
+
+      <div class="form-group-mobile" style="margin-top:15px;">
+        <label style="font-size:11px; font-weight:700; text-transform:uppercase;">Visit Remarks (Mandatory)</label>
+        <textarea id="visit-remarks" rows="3" placeholder="Enter trip summary..."></textarea>
+      </div>
+
+      <button class="btn-conclude-full" id="btn-open-end-code">🏁 Conclude Trip (End Code)</button>
+    </div>
+  </div>
+
+  <!-- END VISIT MODAL -->
+  <div id="end-visit-overlay" class="modal-sheet-overlay hidden">
+    <div class="modal-sheet">
+      <div class="modal-top-notch"><span class="otp-protected-chip" style="background:#fee2e2; color:#991b1b;">🏁 CONCLUDE</span><button class="modal-close-btn" id="btn-close-end-sheet">✕</button></div>
+      <h3>End Trip</h3>
+      <p style="color:var(--text-muted); font-size:13px;">Ask the family for the <strong>End Code</strong>.</p>
+      <input type="text" inputmode="numeric" maxlength="6" class="otp-input-field" id="input-end-code" placeholder="••••••">
+      <button class="btn-start-action" style="background:#dc2626;" id="btn-verify-end">Complete & Close Trip</button>
+    </div>
+  </div>
+
+  <!-- SOS MODAL -->
+  <div id="sos-modal" class="modal-sheet-overlay hidden">
+    <div class="modal-sheet" style="text-align:center;">
+      <div style="font-size:50px;">🚨</div>
+      <h3 style="color:#dc2626;">Confirm Emergency SOS</h3>
+      <div style="display:flex; flex-direction:column; gap:10px; margin-top:15px;">
+        <a href="tel:112" class="btn-start-action" style="background:#dc2626; text-decoration:none;">📞 Call 112 Now</a>
+        <button class="btn-start-action" id="btn-confirm-sos">🚨 Alert Control Room (GPS)</button>
+        <button id="btn-cancel-sos" style="background:transparent; border:none; cursor:pointer; padding:8px;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/companion.js"></script>
+</body>
+</html>
