@@ -1,0 +1,28 @@
+<!-- Inside companion.html -->
+<div id="cockpit-overlay" class="modal-sheet-overlay hidden">
+  <div class="modal-sheet">
+    <div class="modal-top-notch"><span>🔒 COMPANION SERVICE</span></div>
+    
+    <div class="live-timer-card"><div class="timer-main-display" id="live-timer-display">00:00:00</div></div>
+
+    <!-- SOS & OFFICE -->
+    <div class="cockpit-actions-grid">
+      <button id="btn-sos-trigger-cockpit" class="btn-action-tile">🚨 SOS</button>
+      <button id="btn-call-office" class="btn-action-tile">📞 Office</button>
+    </div>
+
+    <!-- CANCEL -->
+    <div class="card" style="margin-top:10px;">
+      <label>Cancel Trip</label>
+      <select id="cancel-reason-dropdown">
+        <option value="Senior not available">Senior not available</option>
+        <option value="Other">Other</option>
+      </select>
+      <button onclick="handleCancelBooking()" class="btn-conclude-full">Cancel</button>
+    </div>
+
+    <!-- REMARKS -->
+    <textarea id="visit-remarks" placeholder="Enter trip remarks..."></textarea>
+    <button class="btn-conclude-full" id="btn-open-end-code">🏁 End Trip (End Code)</button>
+  </div>
+</div>
