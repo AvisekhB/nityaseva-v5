@@ -541,36 +541,51 @@ function renderStaff(staff) {
   const tbody = document.querySelector('#admin-staff-table tbody');
   if (!tbody) return;
 
-  const total = staff.length;
-  const page = pageState.staff;
-  const slice = staff.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const slice = staff.slice((pageState.staff - 1) * PAGE_SIZE, pageState.staff * PAGE_SIZE);
 
   if (slice.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9">No staff recorded.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10">No staff recorded.</td></tr>';
     renderPaginationBar('staff-pagination', 0, 1, () => {});
     return;
   }
 
   tbody.innerHTML = slice.map(st => {
     const cat = String(st.category || 'NURSE').toUpperCase();
-    const catBadge = cat === 'COMPANION_ESCORT'
+    const specialtyBadge = cat === 'COMPANION_ESCORT'
       ? '<span class="badge badge-scheduled" style="background:#fef3c7; color:#92400e;">🚗 Companion Escort</span>'
       : '<span class="badge badge-nurse-visit">👩‍⚕️ Field Nurse</span>';
+    const isActive = String(st.status).toUpperCase() === 'ACTIVE';
 
     return `
       <tr>
         <td><strong>${st.staff_id}</strong></td>
         <td>${st.full_name}</td>
-        <td>${st.role || 'Staff'}</td>
-        <td>${catBadge}</td>
+        <td>${st.email || '-'}</td>
+        <td>${st.phone || '-'}</td>
+        <td>${specialtyBadge}</td>
         <td>${st.age || '-'}</td>
         <td>${st.experience || '-'}</td>
-        <td>${st.email}</td>
-        <td>${st.phone || '-'}</td>
-        <td><span class="badge badge-complete">${st.status || 'ACTIVE'}</span></td>
+        <td>${st.role || 'Staff'}</td>
+        <td><span class="badge ${isActive ? 'badge-complete' : 'badge-cancelled'}">${st.status || 'ACTIVE'}</span></td>
+        <td>
+          <button class="sort-btn toggle-staff-status" data-id="${st.staff_id}" data-current="${st.status}">
+            ${isActive ? 'Deactivate' : 'Activate'}
+          </button>
+        </td>
       </tr>
     `;
   }).join('');
+
+  tbody.querySelectorAll('.toggle-staff-status').forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.getAttribute('data-id');
+      const current = btn.getAttribute('data-current');
+      try {
+        await callApi('adminUpdateStaffStatus', { staffId: id, status: current === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' });
+        await loadAdminDashboard();
+      } catch (err) { alert('Error: ' + err.message); }
+    };
+  });
 
   renderPaginationBar('staff-pagination', staff.length, pageState.staff, (p) => { pageState.staff = p; renderStaff(staff); });
 }
@@ -579,15 +594,46 @@ function renderDoctors(doctors) {
   const tbody = document.querySelector('#admin-doctors-table tbody');
   if (!tbody) return;
   const slice = paginateArray(doctors, pageState.doctors);
-  tbody.innerHTML = slice.length === 0 ? '<tr><td colspan="6">No doctors recorded.</td></tr>' : slice.map(d => `
-    <tr>
-      <td><strong>${d.doctor_id}</strong></td>
-      <td>${d.full_name}</td>
-      <td>${d.specialty || 'General'}</td>
-      <td>${d.email}</td>
-      <td>${d.phone || '-'}</td>
-      <td><span class="badge badge-complete">${d.status || 'ACTIVE'}</span></td>
-    </tr>`).join('');
+
+  if (slice.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10">No doctors recorded.</td></tr>';
+    renderPaginationBar('doctors-pagination', 0, 1, () => {});
+    return;
+  }
+
+  tbody.innerHTML = slice.map(d => {
+    const isActive = String(d.status).toUpperCase() === 'ACTIVE';
+    return `
+      <tr>
+        <td><strong>${d.doctor_id}</strong></td>
+        <td>${d.full_name}</td>
+        <td>${d.email || '-'}</td>
+        <td>${d.phone || '-'}</td>
+        <td><span class="badge badge-doctor-consult">${d.specialty || 'General'}</span></td>
+        <td>${d.age || '-'}</td>
+        <td>${d.experience || '-'}</td>
+        <td>Doctor</td>
+        <td><span class="badge ${isActive ? 'badge-complete' : 'badge-cancelled'}">${d.status || 'ACTIVE'}</span></td>
+        <td>
+          <button class="sort-btn toggle-doctor-status" data-id="${d.doctor_id}" data-current="${d.status}">
+            ${isActive ? 'Deactivate' : 'Activate'}
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  tbody.querySelectorAll('.toggle-doctor-status').forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.getAttribute('data-id');
+      const current = btn.getAttribute('data-current');
+      try {
+        await callApi('adminUpdateDoctorStatus', { doctorId: id, status: current === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' });
+        await loadAdminDashboard();
+      } catch (err) { alert('Error: ' + err.message); }
+    };
+  });
+
   renderPaginationBar('doctors-pagination', doctors.length, pageState.doctors, (p) => { pageState.doctors = p; renderDoctors(doctors); });
 }
 
@@ -595,20 +641,34 @@ function renderCoordinators(coordinators) {
   const tbody = document.querySelector('#admin-coordinators-table tbody');
   if (!tbody) return;
   const slice = paginateArray(coordinators, pageState.coordinators);
-  tbody.innerHTML = slice.length === 0 ? '<tr><td colspan="6">No coordinators recorded.</td></tr>' : slice.map(c => `
-    <tr>
-      <td><strong>${c.coordinator_id}</strong></td>
-      <td>${c.full_name}</td>
-      <td>${c.phone || '-'}</td>
-      <td>${c.email}</td>
-      <td>${c.role || 'Care Coordinator'}</td>
-      <td>
-        <span class="badge ${String(c.status).toUpperCase() === 'ACTIVE' ? 'badge-complete' : 'badge-cancelled'}">${c.status || 'ACTIVE'}</span>
-        <button class="sort-btn toggle-crd-status" data-id="${c.coordinator_id}" data-current="${c.status}" style="margin-left:6px;">
-          ${String(c.status).toUpperCase() === 'ACTIVE' ? 'Deactivate' : 'Activate'}
-        </button>
-      </td>
-    </tr>`).join('');
+
+  if (slice.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10">No coordinators recorded.</td></tr>';
+    renderPaginationBar('coordinators-pagination', 0, 1, () => {});
+    return;
+  }
+
+  tbody.innerHTML = slice.map(c => {
+    const isActive = String(c.status).toUpperCase() === 'ACTIVE';
+    return `
+      <tr>
+        <td><strong>${c.coordinator_id}</strong></td>
+        <td>${c.full_name}</td>
+        <td>${c.email || '-'}</td>
+        <td>${c.phone || '-'}</td>
+        <td>-</td>
+        <td>${c.age || '-'}</td>
+        <td>${c.experience || '-'}</td>
+        <td>${c.role || 'Care Coordinator'}</td>
+        <td><span class="badge ${isActive ? 'badge-complete' : 'badge-cancelled'}">${c.status || 'ACTIVE'}</span></td>
+        <td>
+          <button class="sort-btn toggle-crd-status" data-id="${c.coordinator_id}" data-current="${c.status}">
+            ${isActive ? 'Deactivate' : 'Activate'}
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
 
   tbody.querySelectorAll('.toggle-crd-status').forEach(btn => {
     btn.onclick = async () => {
@@ -622,6 +682,53 @@ function renderCoordinators(coordinators) {
   });
 
   renderPaginationBar('coordinators-pagination', coordinators.length, pageState.coordinators, (p) => { pageState.coordinators = p; renderCoordinators(coordinators); });
+}
+
+function renderCompanions(companions) {
+  const tbody = document.querySelector('#admin-companions-table tbody');
+  if (!tbody) return;
+
+  if (companions.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">No companions registered.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = companions.map(c => {
+    const isActive = String(c.status).toUpperCase() === 'ACTIVE';
+    const cat = String(c.category || 'COMPANION_ESCORT').toUpperCase();
+    const specialtyBadge = cat === 'COMPANION_ESCORT'
+      ? '<span class="badge badge-scheduled" style="background:#fef3c7; color:#92400e;">🚗 Companion Escort</span>'
+      : `<span class="badge badge-nurse-visit">${c.category || '-'}</span>`;
+
+    return `
+      <tr>
+        <td><strong>${c.companion_id}</strong></td>
+        <td>${c.full_name}</td>
+        <td>${c.email || '-'}</td>
+        <td>${c.phone || '-'}</td>
+        <td>${specialtyBadge}</td>
+        <td>${c.age || '-'}</td>
+        <td>${c.experience || '-'}</td>
+        <td>${c.role || 'Companion'}</td>
+        <td><span class="badge ${isActive ? 'badge-complete' : 'badge-cancelled'}">${c.status || 'ACTIVE'}</span></td>
+        <td>
+          <button class="sort-btn toggle-comp-status" data-id="${c.companion_id}" data-current="${c.status}">
+            ${isActive ? 'Deactivate' : 'Activate'}
+          </button>
+        </td>
+      </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('.toggle-comp-status').forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.getAttribute('data-id');
+      const current = btn.getAttribute('data-current');
+      try {
+        await callApi('adminUpdateCompanionStatus', { companionId: id, status: current === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' });
+        await loadAdminDashboard();
+      } catch (err) { alert('Error: ' + err.message); }
+    };
+  });
 }
 
 function renderHospitalServices(services) {
@@ -1070,3 +1177,4 @@ function renderCompanions(companions) {
 init().catch(err => {
   console.error('Admin Init Failure:', err);
 });
+
