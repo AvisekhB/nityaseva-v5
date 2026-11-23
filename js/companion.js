@@ -54,16 +54,34 @@ async function getDeviceLocation() {
 // -------------------------------------------------------------
 // LOAD & RENDER
 // -------------------------------------------------------------
-async function loadCompanionWorkOrders() {
+async function init() {
   try {
-    const staffId = currentProfile.staff_id || currentProfile.userId;
-    const data = await callApi('getCompanionDashboard', { staffId });
-    allWorkOrders = data || [];
-    renderRouteList();
+    currentProfile = await requireAuth('companion');
+    if (!currentProfile) return;
+
+    const companionId = currentProfile.companion_id || currentProfile.userId || 'FCRD-XXXX';
+
+    setText('comp-name-display', currentProfile.full_name || 'Companion');
+    setText('comp-id-display', companionId);
+    setText('comp-name-profile', currentProfile.full_name || 'Companion');
+    setText('comp-role-profile', `ID: ${companionId}`);
+
+    document.getElementById('btn-logout')?.addEventListener('click', signOut);
+
+    setupRouteTabs();
+    setupSosHandlers();
+    setupModalCloseButtons();
+    setupStartVisitFlow();
+    setupCockpitActions();
+    setupExtendedActions();
+
+    await loadCompanionWorkOrders();
   } catch (err) {
-    setHTML('route-list-container', `<p style="color:#dc2626;">Error: ${err.message}</p>`);
+    console.error('Companion Portal Init Error:', err);
+    setHTML('route-list-container', `<p style="color:#dc2626; text-align:center;">Failed to load: ${err.message}</p>`);
   }
 }
+
 
 function setupRouteTabs() {
   const btnPending = document.getElementById('comp-tab-pending');
