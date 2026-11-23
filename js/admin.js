@@ -122,7 +122,7 @@ function setupUnifiedWorkOrderFormToggles() {
 
 function setupEmployeeDirectoryViews() {
   const switchSubTab = (btnId, viewId) => {
-    ['staff', 'doctors', 'coordinators'].forEach(k => {
+    ['staff', 'doctors', 'coordinators', 'companions'].forEach(k => {
       document.getElementById(`btn-show-${k}`)?.classList.remove('active');
       document.getElementById(`view-emp-${k}`)?.classList.add('hidden');
     });
@@ -133,6 +133,7 @@ function setupEmployeeDirectoryViews() {
   document.getElementById('btn-show-staff')?.addEventListener('click', () => switchSubTab('btn-show-staff', 'view-emp-staff'));
   document.getElementById('btn-show-doctors')?.addEventListener('click', () => switchSubTab('btn-show-doctors', 'view-emp-doctors'));
   document.getElementById('btn-show-coordinators')?.addEventListener('click', () => switchSubTab('btn-show-coordinators', 'view-emp-coordinators'));
+  document.getElementById('btn-show-companions')?.addEventListener('click', () => switchSubTab('btn-show-companions', 'view-emp-companions'));
 
   const categorySelect = document.getElementById('emp-category');
   const detailLabel = document.getElementById('emp-detail-label');
@@ -247,49 +248,29 @@ function renderPaginationBar(containerId, totalItems, currentPage, onPageChange)
 // DATA LOADING & DASHBOARD TELEMETRY
 // -------------------------------------------------------------
 async function loadAdminDashboard() {
-  // Add this inside loadAdminDashboard()
-try { 
-  allData.companions = await callApi('adminGetCompanions') || []; 
-  setText('count-companions', allData.companions.length); // Update the badge
-  renderCompanions(allData.companions); // Call the renderer
-} catch (e) { allData.companions = []; }
-
-
   try {
     const data = await callApi('getAdminDashboard');
     allData = data || {};
 
+    // Ensure all endpoints are fetched
     try { allData.coordinators = await callApi('adminGetCoordinators') || []; } catch (e) { allData.coordinators = []; }
+    try { allData.companions = await callApi('adminGetCompanions') || []; } catch (e) { allData.companions = []; }
     try { allData.hospitalServices = await callApi('getHospitalServices', {}) || []; } catch (e) { allData.hospitalServices = []; }
     try { allData.companionServices = await callApi('getCompanionServices', {}) || []; } catch (e) { allData.companionServices = []; }
 
-    practitionerList = [
-      ...(allData.staff || []).map(s => ({ id: String(s.staff_id || '').trim(), name: String(s.full_name || '').trim(), type: 'Nurse' })),
-      ...(allData.doctors || []).map(d => ({ id: String(d.doctor_id || '').trim(), name: String(d.full_name || '').trim(), type: 'Doctor' })),
-      ...(allData.coordinators || []).map(c => ({ id: String(c.coordinator_id || '').trim(), name: String(c.full_name || '').trim(), type: 'Coordinator' }))
-    ];
-
+    // Update the UI badges
     const setT = (id, count) => { const el = document.getElementById(id); if (el) el.textContent = count; };
     setT('count-staff', (allData.staff || []).length);
     setT('count-doctors', (allData.doctors || []).length);
     setT('count-coordinators', (allData.coordinators || []).length);
+    setT('count-companions', (allData.companions || []).length); // Added this
 
-    populateSeniorDropdowns(allData.seniors || []);
-    renderHomeDashboardTelemetry();
-
-    renderWorkOrders(allData.workOrders || []);
-    renderSeniors(allData.seniors || []);
-    renderFamilies(allData.families || [], allData.familyLinks || []);
+    // ... (Keep existing calls to renderSeniors, renderStaff, etc.)
     renderStaff(allData.staff || []);
     renderDoctors(allData.doctors || []);
     renderCoordinators(allData.coordinators || []);
-    renderSubscriptions(allData.subscriptions || []);
-    renderEntitlements(allData.entitlements || []);
-    renderReports(allData.reports || []);
-    renderReviews(allData.reviews || []);
-    renderAudit(allData.logs || []);
-    renderHospitalServices(allData.hospitalServices || []);
-    renderCompanionServices(allData.companionServices || []);
+    renderCompanions(allData.companions || []); // ADD THIS CALL
+    // ... rest of your code
   } catch (err) {
     console.error('Dashboard load error:', err);
   }
@@ -993,6 +974,36 @@ function setupActionForms() {
       btn.disabled = false;
       btn.textContent = 'Generate 72-Hour Shareable Care Summary';
     }
+  });
+}
+function renderCompanions(companions) {
+  const tbody = document.querySelector('#admin-companions-table tbody');
+  if (!tbody) return;
+  tbody.innerHTML = companions.length === 0 
+    ? '<tr><td colspan="6" style="text-align:center;">No companions registered.</td></tr>' 
+    : companions.map(c => `
+      <tr>
+        <td><strong>${c.companion_id}</strong></td>
+        <td>${c.full_name}</td>
+        <td>${c.email}</td>
+        <td>${c.phone}</td>
+        <td><span class="badge ${c.status === 'ACTIVE' ? 'badge-complete' : 'badge-cancelled'}">${c.status}</span></td>
+        <td>
+          <button class="sort-btn toggle-comp-status" data-id="${c.companion_id}" data-current="${c.status}">
+            ${c.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+          </button>
+        </td>
+      </tr>`).join('');
+
+  tbody.querySelectorAll('.toggle-comp-status').forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.getAttribute('data-id');
+      const current = btn.getAttribute('data-current');
+      try {
+        await callApi('adminUpdateCompanionStatus', { companionId: id, status: current === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' });
+        await loadAdminDashboard();
+      } catch (err) { alert('Error: ' + err.message); }
+    };
   });
 }
 
