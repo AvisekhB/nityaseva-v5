@@ -246,6 +246,14 @@ function renderPaginationBar(containerId, totalItems, currentPage, onPageChange)
 // DATA LOADING & DASHBOARD TELEMETRY
 // -------------------------------------------------------------
 async function loadAdminDashboard() {
+  // Add this inside loadAdminDashboard()
+try { 
+  allData.companions = await callApi('adminGetCompanions') || []; 
+  setText('count-companions', allData.companions.length); // Update the badge
+  renderCompanions(allData.companions); // Call the renderer
+} catch (e) { allData.companions = []; }
+
+
   try {
     const data = await callApi('getAdminDashboard');
     allData = data || {};
