@@ -121,7 +121,7 @@ function setupUnifiedWorkOrderFormToggles() {
 
 function setupEmployeeDirectoryViews() {
   const switchSubTab = (btnId, viewId) => {
-    ['staff', 'doctors', 'coordinators'].forEach(k => {
+    ['staff', 'doctors', 'coordinators','companions'].forEach(k => {
       document.getElementById(`btn-show-${k}`)?.classList.remove('active');
       document.getElementById(`view-emp-${k}`)?.classList.add('hidden');
     });
@@ -132,7 +132,8 @@ function setupEmployeeDirectoryViews() {
   document.getElementById('btn-show-staff')?.addEventListener('click', () => switchSubTab('btn-show-staff', 'view-emp-staff'));
   document.getElementById('btn-show-doctors')?.addEventListener('click', () => switchSubTab('btn-show-doctors', 'view-emp-doctors'));
   document.getElementById('btn-show-coordinators')?.addEventListener('click', () => switchSubTab('btn-show-coordinators', 'view-emp-coordinators'));
-
+  document.getElementById('btn-show-companions')?.addEventListener('click', () => switchSubTab('btn-show-companions', 'view-emp-companions'));
+  
   const categorySelect = document.getElementById('emp-category');
   const detailLabel = document.getElementById('emp-detail-label');
   const detailInput = document.getElementById('emp-detail');
