@@ -253,7 +253,18 @@ async function loadAdminDashboard() {
     try { allData.coordinators = await callApi('adminGetCoordinators') || []; } catch (e) { allData.coordinators = []; }
     try { allData.hospitalServices = await callApi('getHospitalServices', {}) || []; } catch (e) { allData.hospitalServices = []; }
     try { allData.companionServices = await callApi('getCompanionServices', {}) || []; } catch (e) { allData.companionServices = []; }
-    try { allData.companions = await callApi('adminGetCompanions') || []; } catch(e) { allData.companions = []; }
+    // Add these lines to your fetch block
+try { allData.companions = await callApi('adminGetCompanions') || []; } catch (e) { allData.companions = []; }
+
+// Add these to update the UI counts
+setText('count-staff', (allData.staff || []).length);
+setText('count-doctors', (allData.doctors || []).length);
+setText('count-coordinators', (allData.coordinators || []).length);
+setText('count-companions', (allData.companions || []).length); // <-- ADD THIS
+
+// Call the render function
+renderCompanions(allData.companions || []);
+
 
     practitionerList = [
       ...(allData.staff || []).map(s => ({ id: String(s.staff_id || '').trim(), name: String(s.full_name || '').trim(), type: 'Nurse' })),
