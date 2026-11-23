@@ -1138,38 +1138,8 @@ function setupActionForms() {
     }
   });
 }
-// ... existing render functions (renderStaff, renderDoctors, etc.)
 
-function renderCompanions(companions) {
-  const tbody = document.querySelector('#admin-companions-table tbody');
-  if (!tbody) return;
-  tbody.innerHTML = companions.length === 0 
-    ? '<tr><td colspan="6" style="text-align:center;">No companions registered.</td></tr>' 
-    : companions.map(c => `
-      <tr>
-        <td><strong>${c.companion_id}</strong></td>
-        <td>${c.full_name}</td>
-        <td>${c.email}</td>
-        <td>${c.phone}</td>
-        <td><span class="badge ${c.status === 'ACTIVE' ? 'badge-complete' : 'badge-cancelled'}">${c.status}</span></td>
-        <td>
-          <button class="sort-btn toggle-comp-status" data-id="${c.companion_id}" data-current="${c.status}">
-            ${c.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
-          </button>
-        </td>
-      </tr>`).join('');
 
-  tbody.querySelectorAll('.toggle-comp-status').forEach(btn => {
-    btn.onclick = async () => {
-      const id = btn.getAttribute('data-id');
-      const current = btn.getAttribute('data-current');
-      try {
-        await callApi('adminUpdateCompanionStatus', { companionId: id, status: current === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' });
-        await loadAdminDashboard();
-      } catch (err) { alert('Error: ' + err.message); }
-    };
-  });
-}
 
 // -------------------------------------------------------------
 // STARTUP BOOTSTRAPPER
@@ -1177,4 +1147,5 @@ function renderCompanions(companions) {
 init().catch(err => {
   console.error('Admin Init Failure:', err);
 });
+
 
