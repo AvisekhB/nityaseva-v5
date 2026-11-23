@@ -419,6 +419,22 @@ function paginateArray(arr, page) {
   const start = (page - 1) * PAGE_SIZE;
   return arr.slice(start, start + PAGE_SIZE);
 }
+function updateWorkOrderSlicerCounts(orders) {
+  const statusOf = w => String(w.status || '').toUpperCase();
+  const escalatedIds = (allData.reviews || [])
+    .filter(r => ['URGENT', 'EMERGENCY'].includes(String(r.priority).toUpperCase()) && String(r.status).toUpperCase() === 'OPEN')
+    .map(r => r.work_order_id);
+
+  const setT = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+
+  setT('wo-count-all', orders.length);
+  setT('wo-count-unscheduled', orders.filter(w => statusOf(w) === 'UNSCHEDULED').length);
+  setT('wo-count-scheduled', orders.filter(w => statusOf(w) === 'SCHEDULED').length);
+  setT('wo-count-escalated', orders.filter(w => statusOf(w) === 'ESCALATED' || escalatedIds.includes(w.work_order_id)).length);
+  setT('wo-count-inprogress', orders.filter(w => statusOf(w) === 'IN_PROGRESS').length);
+  setT('wo-count-complete', orders.filter(w => ['COMPLETE', 'CLOSE'].includes(statusOf(w))).length);
+  setT('wo-count-cancelled', orders.filter(w => statusOf(w) === 'CANCELLED').length);
+}
 
 function renderWorkOrders(orders) {
   const tbody = document.querySelector('#admin-wo-table tbody');
