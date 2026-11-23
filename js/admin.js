@@ -3,10 +3,11 @@ import { callApi } from './dataService.js';
 
 let currentProfile = null;
 let allData = { 
-  seniors: [], workOrders: [], staff: [], doctors: [], coordinators: [], 
+  seniors: [], workOrders: [], staff: [], doctors: [], coordinators: [], companions: [], // Add companions here
   families: [], familyLinks: [], subscriptions: [], entitlements: [], 
   reports: [], reviews: [], logs: [], hospitalServices: [], companionServices: [] 
 };
+
 let practitionerList = [];
 let activeSlicer = 'ALL';
 
