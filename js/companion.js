@@ -30,8 +30,11 @@ async function init() {
     setText('comp-name-profile', currentProfile.full_name || 'Companion');
     setText('comp-role-profile', `ID: ${companionId}`);
 
+    renderCompanionProfile(currentProfile);
+    
     document.getElementById('btn-logout')?.addEventListener('click', signOut);
-
+    
+    setupCompanionAvatarUpload();   
     setupRouteTabs();
     setupSosHandlers();
     setupModalCloseButtons();
@@ -54,6 +57,85 @@ async function getDeviceLocation() {
       () => resolve(null), { enableHighAccuracy: true, timeout: 6000 }
     );
   });
+}
+// -------------------------------------------------------------
+// PROFILE PHOTO UPLOAD
+// -------------------------------------------------------------
+function setupCompanionAvatarUpload() {
+  const input = document.getElementById('comp-photo-input');
+  if (!input) return;
+
+  const trigger = document.getElementById('btn-comp-avatar');
+  if (trigger) {
+    trigger.style.cursor = 'pointer';
+    trigger.title = 'Click to upload your photo';
+    trigger.onclick = () => input.click();
+  }
+
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = async () => {
+        const canvas = document.createElement('canvas');
+        const MAX = 150;
+        let w = img.width, h = img.height;
+        if (w > h) { if (w > MAX) { h = Math.round(h * (MAX / w)); w = MAX; } }
+        else { if (h > MAX) { w = Math.round(w * (MAX / h)); h = MAX; } }
+        canvas.width = w; canvas.height = h;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const base64 = canvas.toDataURL('image/jpeg', 0.7);
+
+        renderCompanionAvatar(base64);
+
+        const companionId = currentProfile.companion_id || currentProfile.userId;
+        if (!companionId) {
+          alert('Companion ID not found. Could not save photo.');
+          return;
+        }
+
+        try {
+          const res = await callApi('updateCompanionPhoto', { companionId, photoData: base64 });
+          if (res && res.success) {
+            currentProfile.photo_url = base64;
+            alert('✓ Profile photo saved successfully!');
+          }
+        } catch (err) {
+          console.error('Photo sync error:', err);
+          alert('Photo save failed: ' + err.message);
+        }
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+}
+
+function renderCompanionAvatar(base64) {
+  if (!base64) return;
+  const el = document.getElementById('btn-comp-avatar');
+  if (el) {
+    el.innerHTML = `<img src="${base64}" alt="Photo" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;">`;
+  }
+}
+
+// -------------------------------------------------------------
+// RENDER PROFILE STATS (Age / Exp / Role / Phone)
+// -------------------------------------------------------------
+function renderCompanionProfile(profile) {
+  setText('c-age', profile.age || '--');
+  setText('c-exp', profile.experience || '--');
+  setText('c-role', profile.role || 'Companion');
+  setText('c-phone', profile.phone || '--');
+
+  if (profile.photo_url && String(profile.photo_url).length > 20) {
+    renderCompanionAvatar(profile.photo_url);
+  }
 }
 
 // -------------------------------------------------------------
