@@ -924,6 +924,7 @@ function setupTableSearches() {
     { id: 'search-families', filter: (q) => allData.families.filter(f => JSON.stringify(f).toLowerCase().includes(q)), render: (d) => { pageState.families = 1; renderFamilies(d, allData.familyLinks); } },
     { id: 'search-staff', filter: (q) => allData.staff.filter(st => JSON.stringify(st).toLowerCase().includes(q)), render: (d) => { pageState.staff = 1; renderStaff(d); } },
     { id: 'search-doctors', filter: (q) => allData.doctors.filter(dc => JSON.stringify(dc).toLowerCase().includes(q)), render: (d) => { pageState.doctors = 1; renderDoctors(d); } },
+    { id: 'search-companions', filter: (q) => (allData.companions || []).filter(c => JSON.stringify(c).toLowerCase().includes(q)), render: (d) => { renderCompanions(d); } }
     { id: 'search-coordinators', filter: (q) => (allData.coordinators || []).filter(c => JSON.stringify(c).toLowerCase().includes(q)), render: (d) => { pageState.coordinators = 1; renderCoordinators(d); } }
   ];
 
@@ -1147,5 +1148,6 @@ function setupActionForms() {
 init().catch(err => {
   console.error('Admin Init Failure:', err);
 });
+
 
 
