@@ -998,6 +998,35 @@ function setupActionForms() {
     }
   });
 }
+function renderCompanions(companions) {
+  const tbody = document.querySelector('#admin-companions-table tbody');
+  if (!tbody) return;
+  tbody.innerHTML = companions.map(c => `
+    <tr>
+      <td><strong>${c.companion_id}</strong></td>
+      <td>${c.full_name}</td>
+      <td>${c.email}</td>
+      <td>${c.phone}</td>
+      <td>
+        <span class="badge ${c.status === 'ACTIVE' ? 'badge-complete' : 'badge-cancelled'}">${c.status}</span>
+      </td>
+      <td>
+        <button class="sort-btn toggle-comp-status" data-id="${c.companion_id}" data-current="${c.status}">
+          ${c.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+        </button>
+      </td>
+    </tr>`).join('');
+
+  // Wiring the toggle button
+  tbody.querySelectorAll('.toggle-comp-status').forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.getAttribute('data-id');
+      const current = btn.getAttribute('data-current');
+      await callApi('adminUpdateCompanionStatus', { companionId: id, status: current === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' });
+      await loadAdminDashboard();
+    };
+  });
+}
 
 // -------------------------------------------------------------
 // STARTUP BOOTSTRAPPER
