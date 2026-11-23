@@ -53,17 +53,33 @@
 </head>
 <body>
   <div class="app-viewport">
-    <div class="card" style="background:#1e3a8a; color:#fff; border-radius:20px; padding:20px; margin-bottom:14px;">
-      <h2 id="comp-name-profile" style="margin:0; font-size:20px;">Loading...</h2>
-      <p id="comp-role-profile" style="font-size:12px; opacity:0.85; margin:3px 0 0 0;">Companion ID: FCRD-XXX</p>
+    <!-- COMPANION PROFILE CARD (Photo + Age/Exp/Role/Phone) -->
+    <div class="card" id="comp-profile-card" style="background:#1e3a8a; color:#fff; border-radius:20px; padding:20px; margin-bottom:14px;">
+      <div style="display:flex; align-items:center; gap:15px;">
+        <div id="btn-comp-avatar" class="comp-badge-avatar" style="width:60px; height:60px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:30px; overflow:hidden; cursor:pointer; flex-shrink:0;">
+          <span id="comp-avatar-text">🚗</span>
+        </div>
+        <div>
+          <h2 id="comp-name-profile" style="margin:0; font-size:20px;">Loading...</h2>
+          <p id="comp-role-profile" style="font-size:12px; opacity:0.85; margin:3px 0 0 0;">Companion ID: COM-XXX</p>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px; font-size:12px;">
+        <div>Age: <span id="c-age">--</span></div>
+        <div>Exp: <span id="c-exp">--</span> yrs</div>
+        <div>Role: <span id="c-role">--</span></div>
+        <div>Phone: <span id="c-phone">--</span></div>
+      </div>
     </div>
+
+    <input type="file" id="comp-photo-input" accept="image/*" style="display:none;">
 
     <div class="app-header">
       <div class="app-header-left">
-        <div class="comp-badge-avatar"><span>🚗</span></div>
+        <div class="comp-badge-avatar" style="width:44px; height:44px;"><span>🚗</span></div>
         <div>
           <h4 id="comp-name-display">Loading...</h4>
-          <small id="comp-id-display">FCRD-XXXX</small>
+          <small id="comp-id-display">COM-XXXX</small>
         </div>
       </div>
       <button class="btn-logout-mini" id="btn-logout">Logout</button>
