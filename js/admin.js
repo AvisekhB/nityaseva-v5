@@ -253,6 +253,7 @@ async function loadAdminDashboard() {
     try { allData.coordinators = await callApi('adminGetCoordinators') || []; } catch (e) { allData.coordinators = []; }
     try { allData.hospitalServices = await callApi('getHospitalServices', {}) || []; } catch (e) { allData.hospitalServices = []; }
     try { allData.companionServices = await callApi('getCompanionServices', {}) || []; } catch (e) { allData.companionServices = []; }
+    try { allData.companions = await callApi('adminGetCompanions') || []; } catch(e) { allData.companions = []; }
 
     practitionerList = [
       ...(allData.staff || []).map(s => ({ id: String(s.staff_id || '').trim(), name: String(s.full_name || '').trim(), type: 'Nurse' })),
