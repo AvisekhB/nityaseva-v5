@@ -121,7 +121,7 @@ function setupUnifiedWorkOrderFormToggles() {
 
 function setupEmployeeDirectoryViews() {
   const switchSubTab = (btnId, viewId) => {
-    ['staff', 'doctors', 'coordinators','companions'].forEach(k => {
+    ['staff', 'doctors', 'coordinators'].forEach(k => {
       document.getElementById(`btn-show-${k}`)?.classList.remove('active');
       document.getElementById(`view-emp-${k}`)?.classList.add('hidden');
     });
@@ -132,8 +132,7 @@ function setupEmployeeDirectoryViews() {
   document.getElementById('btn-show-staff')?.addEventListener('click', () => switchSubTab('btn-show-staff', 'view-emp-staff'));
   document.getElementById('btn-show-doctors')?.addEventListener('click', () => switchSubTab('btn-show-doctors', 'view-emp-doctors'));
   document.getElementById('btn-show-coordinators')?.addEventListener('click', () => switchSubTab('btn-show-coordinators', 'view-emp-coordinators'));
-  document.getElementById('btn-show-companions')?.addEventListener('click', () => switchSubTab('btn-show-companions', 'view-emp-companions'));
-  
+
   const categorySelect = document.getElementById('emp-category');
   const detailLabel = document.getElementById('emp-detail-label');
   const detailInput = document.getElementById('emp-detail');
@@ -254,18 +253,6 @@ async function loadAdminDashboard() {
     try { allData.coordinators = await callApi('adminGetCoordinators') || []; } catch (e) { allData.coordinators = []; }
     try { allData.hospitalServices = await callApi('getHospitalServices', {}) || []; } catch (e) { allData.hospitalServices = []; }
     try { allData.companionServices = await callApi('getCompanionServices', {}) || []; } catch (e) { allData.companionServices = []; }
-    // Add these lines to your fetch block
-try { allData.companions = await callApi('adminGetCompanions') || []; } catch (e) { allData.companions = []; }
-
-// Add these to update the UI counts
-setText('count-staff', (allData.staff || []).length);
-setText('count-doctors', (allData.doctors || []).length);
-setText('count-coordinators', (allData.coordinators || []).length);
-setText('count-companions', (allData.companions || []).length); // <-- ADD THIS
-
-// Call the render function
-renderCompanions(allData.companions || []);
-
 
     practitionerList = [
       ...(allData.staff || []).map(s => ({ id: String(s.staff_id || '').trim(), name: String(s.full_name || '').trim(), type: 'Nurse' })),
@@ -997,35 +984,6 @@ function setupActionForms() {
       btn.disabled = false;
       btn.textContent = 'Generate 72-Hour Shareable Care Summary';
     }
-  });
-}
-function renderCompanions(companions) {
-  const tbody = document.querySelector('#admin-companions-table tbody');
-  if (!tbody) return;
-  tbody.innerHTML = companions.map(c => `
-    <tr>
-      <td><strong>${c.companion_id}</strong></td>
-      <td>${c.full_name}</td>
-      <td>${c.email}</td>
-      <td>${c.phone}</td>
-      <td>
-        <span class="badge ${c.status === 'ACTIVE' ? 'badge-complete' : 'badge-cancelled'}">${c.status}</span>
-      </td>
-      <td>
-        <button class="sort-btn toggle-comp-status" data-id="${c.companion_id}" data-current="${c.status}">
-          ${c.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
-        </button>
-      </td>
-    </tr>`).join('');
-
-  // Wiring the toggle button
-  tbody.querySelectorAll('.toggle-comp-status').forEach(btn => {
-    btn.onclick = async () => {
-      const id = btn.getAttribute('data-id');
-      const current = btn.getAttribute('data-current');
-      await callApi('adminUpdateCompanionStatus', { companionId: id, status: current === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' });
-      await loadAdminDashboard();
-    };
   });
 }
 
