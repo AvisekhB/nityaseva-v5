@@ -255,25 +255,44 @@ async function loadAdminDashboard() {
     const data = await callApi('getAdminDashboard');
     allData = data || {};
 
-    // Ensure all endpoints are fetched
     try { allData.coordinators = await callApi('adminGetCoordinators') || []; } catch (e) { allData.coordinators = []; }
     try { allData.companions = await callApi('adminGetCompanions') || []; } catch (e) { allData.companions = []; }
     try { allData.hospitalServices = await callApi('getHospitalServices', {}) || []; } catch (e) { allData.hospitalServices = []; }
     try { allData.companionServices = await callApi('getCompanionServices', {}) || []; } catch (e) { allData.companionServices = []; }
 
-    // Update the UI badges
+    practitionerList = [
+      ...(allData.staff || []).map(s => ({ id: String(s.staff_id || '').trim(), name: String(s.full_name || '').trim(), type: 'Nurse' })),
+      ...(allData.doctors || []).map(d => ({ id: String(d.doctor_id || '').trim(), name: String(d.full_name || '').trim(), type: 'Doctor' })),
+      ...(allData.coordinators || []).map(c => ({ id: String(c.coordinator_id || '').trim(), name: String(c.full_name || '').trim(), type: 'Coordinator' })),
+      ...(allData.companions || []).map(c => ({ id: String(c.companion_id || '').trim(), name: String(c.full_name || '').trim(), type: 'Companion' }))
+    ];
+
     const setT = (id, count) => { const el = document.getElementById(id); if (el) el.textContent = count; };
     setT('count-staff', (allData.staff || []).length);
     setT('count-doctors', (allData.doctors || []).length);
     setT('count-coordinators', (allData.coordinators || []).length);
-    setT('count-companions', (allData.companions || []).length); // Added this
+    setT('count-companions', (allData.companions || []).length);
 
-    // ... (Keep existing calls to renderSeniors, renderStaff, etc.)
+    // THIS LINE fills the "Senior Patient" dropdown on the Work Order form
+    populateSeniorDropdowns(allData.seniors || []);
+
+    // THIS LINE fills the "Executive Operations Overview" stat tiles
+    renderHomeDashboardTelemetry();
+
+    renderWorkOrders(allData.workOrders || []);
+    renderSeniors(allData.seniors || []);
+    renderFamilies(allData.families || [], allData.familyLinks || []);
     renderStaff(allData.staff || []);
     renderDoctors(allData.doctors || []);
     renderCoordinators(allData.coordinators || []);
-    renderCompanions(allData.companions || []); // ADD THIS CALL
-    // ... rest of your code
+    renderCompanions(allData.companions || []);
+    renderSubscriptions(allData.subscriptions || []);
+    renderEntitlements(allData.entitlements || []);
+    renderReports(allData.reports || []);
+    renderReviews(allData.reviews || []);
+    renderAudit(allData.logs || []);
+    renderHospitalServices(allData.hospitalServices || []);
+    renderCompanionServices(allData.companionServices || []);
   } catch (err) {
     console.error('Dashboard load error:', err);
   }
