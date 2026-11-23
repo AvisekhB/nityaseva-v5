@@ -355,8 +355,12 @@ function getStaffName(id) {
   if (!cleanId) return '<span style="color:#a0aec0;">Unassigned</span>';
   const p = practitionerList.find(x => x.id === cleanId);
   if (!p) return cleanId;
-  return p.type === 'Doctor' ? `🩺 Dr. ${p.name}` : (p.type === 'Coordinator' ? `🧑‍💼 ${p.name}` : `👩‍⚕️ ${p.name}`);
+  if (p.type === 'Doctor') return `🩺 Dr. ${p.name}`;
+  if (p.type === 'Coordinator') return `🧑‍💼 ${p.name}`;
+  if (p.type === 'Companion') return `🚗 ${p.name}`;
+  return `👩‍⚕️ ${p.name}`;
 }
+
 
 function populateSeniorDropdowns(seniors) {
   const options = '<option value="">-- Choose Senior --</option>' +
@@ -1148,6 +1152,7 @@ function setupActionForms() {
 init().catch(err => {
   console.error('Admin Init Failure:', err);
 });
+
 
 
 
