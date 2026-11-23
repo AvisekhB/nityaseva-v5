@@ -976,6 +976,8 @@ function setupActionForms() {
     }
   });
 }
+// ... existing render functions (renderStaff, renderDoctors, etc.)
+
 function renderCompanions(companions) {
   const tbody = document.querySelector('#admin-companions-table tbody');
   if (!tbody) return;
