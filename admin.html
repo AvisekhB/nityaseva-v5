@@ -384,11 +384,17 @@
 
       <div class="card">
         <h2>Operational Work Orders</h2>
-<div class="sub-nav" style="margin:0; padding:0; border:none;">
-  <button class="sub-tab active" id="btn-show-staff">👩‍⚕️ Staff (<span id="count-staff">0</span>)</button>
-  <button class="sub-tab" id="btn-show-doctors">🩺 Doctors (<span id="count-doctors">0</span>)</button>
-  <button class="sub-tab" id="btn-show-coordinators">🧑‍💼 Coordinators (<span id="count-coordinators">0</span>)</button>
+        
+<div class="sub-nav wo-slicer-bar" style="margin:0; padding:0; border:none; flex-wrap:wrap;">
+  <button class="sub-tab active" data-slicer="ALL">📋 All (<span id="wo-count-all">0</span>)</button>
+  <button class="sub-tab" data-slicer="UNSCHEDULED">⏳ Unscheduled (<span id="wo-count-unscheduled">0</span>)</button>
+  <button class="sub-tab" data-slicer="SCHEDULED">📅 Scheduled (<span id="wo-count-scheduled">0</span>)</button>
+  <button class="sub-tab" data-slicer="ESCALATED">🚨 Escalated (<span id="wo-count-escalated">0</span>)</button>
+  <button class="sub-tab" data-slicer="IN_PROGRESS">🟢 In Progress (<span id="wo-count-inprogress">0</span>)</button>
+  <button class="sub-tab" data-slicer="COMPLETE">✅ Complete/Closed (<span id="wo-count-complete">0</span>)</button>
+  <button class="sub-tab" data-slicer="CANCELLED">❌ Cancelled (<span id="wo-count-cancelled">0</span>)</button>
 </div>
+
 
         <div class="table-toolbar">
           <div class="search-box"><input type="text" id="search-wo" placeholder="Search work orders..."></div>
