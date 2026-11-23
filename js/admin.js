@@ -156,7 +156,7 @@ function setupEmployeeDirectoryViews() {
       detailInput.value = 'Care Coordinator';
       detailInput.placeholder = 'e.g. Care Coordinator, Operations Lead';
     }
-    
+    }
   });
 
   categorySelect?.addEventListener('change', () => {
