@@ -510,12 +510,12 @@
       <div class="card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
           <h2 style="margin:0; border:none; padding:0;">Employee Rosters</h2>
-<div class="sub-nav" style="margin:0; padding:0; border:none; display:flex; gap:8px;">
+<div class="sub-nav" style="margin:0; padding:0; border:none;">
   <button class="sub-tab active" id="btn-show-staff">👩‍⚕️ Staff (<span id="count-staff">0</span>)</button>
   <button class="sub-tab" id="btn-show-doctors">🩺 Doctors (<span id="count-doctors">0</span>)</button>
   <button class="sub-tab" id="btn-show-coordinators">🧑‍💼 Coordinators (<span id="count-coordinators">0</span>)</button>
-  <button class="sub-tab" id="btn-show-companions">🚗 Companions (<span id="count-companions">0</span>)</button>
 </div>
+
         </div>
 
         <div id="view-emp-staff">
@@ -546,20 +546,6 @@
           </table>
           <div id="coordinators-pagination" class="pagination-bar"></div>
         </div>
-        <div id="view-emp-staff">
-  <table id="admin-staff-table">
-    <thead><tr><th>ID</th><th>Name</th><th>Role</th><th>Category</th><th>Email</th><th>Phone</th><th>Status</th></tr></thead>
-    <tbody><tr><td colspan="7">Loading...</td></tr></tbody>
-  </table>
-</div>
-<div id="view-emp-doctors" class="hidden">...</div>
-<div id="view-emp-coordinators" class="hidden">...</div>
-<div id="view-emp-companions" class="hidden">
-  <table id="admin-companions-table">
-    <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead>
-    <tbody><tr><td colspan="6">Loading...</td></tr></tbody>
-  </table>
-</div>
       </div>
     </div>
 
