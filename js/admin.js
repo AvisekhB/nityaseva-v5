@@ -440,11 +440,29 @@ function renderWorkOrders(orders) {
   const tbody = document.querySelector('#admin-wo-table tbody');
   if (!tbody) return;
 
+  // NEW: update the 7 status badge counts every render
+  updateWorkOrderSlicerCounts(orders);
+
+  const statusOf = w => String(w.status || '').toUpperCase();
   let filtered = [...orders];
-  if (activeSlicer === 'SCHEDULED') filtered = filtered.filter(w => ['SCHEDULED', 'UNSCHEDULED'].includes(String(w.status).toUpperCase()));
-  else if (activeSlicer === 'IN_PROGRESS') filtered = filtered.filter(w => String(w.status).toUpperCase() === 'IN_PROGRESS');
-  else if (activeSlicer === 'COMPLETE') filtered = filtered.filter(w => ['COMPLETE', 'CLOSE'].includes(String(w.status).toUpperCase()));
-  else if (activeSlicer === 'CANCELLED') filtered = filtered.filter(w => String(w.status).toUpperCase() === 'CANCELLED');
+
+  if (activeSlicer === 'UNSCHEDULED') {
+    filtered = filtered.filter(w => statusOf(w) === 'UNSCHEDULED');
+  } else if (activeSlicer === 'SCHEDULED') {
+    filtered = filtered.filter(w => statusOf(w) === 'SCHEDULED');
+  } else if (activeSlicer === 'ESCALATED') {
+    const escalatedIds = (allData.reviews || [])
+      .filter(r => ['URGENT', 'EMERGENCY'].includes(String(r.priority).toUpperCase()) && String(r.status).toUpperCase() === 'OPEN')
+      .map(r => r.work_order_id);
+    filtered = filtered.filter(w => statusOf(w) === 'ESCALATED' || escalatedIds.includes(w.work_order_id));
+  } else if (activeSlicer === 'IN_PROGRESS') {
+    filtered = filtered.filter(w => statusOf(w) === 'IN_PROGRESS');
+  } else if (activeSlicer === 'COMPLETE') {
+    filtered = filtered.filter(w => ['COMPLETE', 'CLOSE'].includes(statusOf(w)));
+  } else if (activeSlicer === 'CANCELLED') {
+    filtered = filtered.filter(w => statusOf(w) === 'CANCELLED');
+  }
+  // activeSlicer === 'ALL' → no filtering applied
 
   filtered.reverse();
   const slice = paginateArray(filtered, pageState.wo);
