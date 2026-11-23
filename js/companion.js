@@ -15,15 +15,20 @@ function setHTML(id, html) { const el = document.getElementById(id); if (el) el.
 function show(id) { document.getElementById(id)?.classList.remove('hidden'); }
 function hide(id) { document.getElementById(id)?.classList.add('hidden'); }
 
+// -------------------------------------------------------------
+// INIT (single, correct version — uses companion_id, not staff_id)
+// -------------------------------------------------------------
 async function init() {
   try {
     currentProfile = await requireAuth('companion');
     if (!currentProfile) return;
 
+    const companionId = currentProfile.companion_id || currentProfile.userId || 'COM-XXXX';
+
     setText('comp-name-display', currentProfile.full_name || 'Companion');
-    setText('comp-id-display', currentProfile.staff_id || 'FCRD-XXXX');
+    setText('comp-id-display', companionId);
     setText('comp-name-profile', currentProfile.full_name || 'Companion');
-    setText('comp-role-profile', `ID: ${currentProfile.staff_id || 'FCRD-XXXX'}`);
+    setText('comp-role-profile', `ID: ${companionId}`);
 
     document.getElementById('btn-logout')?.addEventListener('click', signOut);
 
@@ -32,7 +37,7 @@ async function init() {
     setupModalCloseButtons();
     setupStartVisitFlow();
     setupCockpitActions();
-    setupExtendedActions();
+    setupEndVisitFlow();
 
     await loadCompanionWorkOrders();
   } catch (err) {
@@ -54,34 +59,16 @@ async function getDeviceLocation() {
 // -------------------------------------------------------------
 // LOAD & RENDER
 // -------------------------------------------------------------
-async function init() {
+async function loadCompanionWorkOrders() {
   try {
-    currentProfile = await requireAuth('companion');
-    if (!currentProfile) return;
-
-    const companionId = currentProfile.companion_id || currentProfile.userId || 'FCRD-XXXX';
-
-    setText('comp-name-display', currentProfile.full_name || 'Companion');
-    setText('comp-id-display', companionId);
-    setText('comp-name-profile', currentProfile.full_name || 'Companion');
-    setText('comp-role-profile', `ID: ${companionId}`);
-
-    document.getElementById('btn-logout')?.addEventListener('click', signOut);
-
-    setupRouteTabs();
-    setupSosHandlers();
-    setupModalCloseButtons();
-    setupStartVisitFlow();
-    setupCockpitActions();
-    setupExtendedActions();
-
-    await loadCompanionWorkOrders();
+    const companionId = currentProfile.companion_id || currentProfile.userId;
+    const data = await callApi('getCompanionDashboard', { staffId: companionId });
+    allWorkOrders = data || [];
+    renderRouteList();
   } catch (err) {
-    console.error('Companion Portal Init Error:', err);
-    setHTML('route-list-container', `<p style="color:#dc2626; text-align:center;">Failed to load: ${err.message}</p>`);
+    setHTML('route-list-container', `<p style="color:#dc2626;">Error: ${err.message}</p>`);
   }
 }
-
 
 function setupRouteTabs() {
   const btnPending = document.getElementById('comp-tab-pending');
@@ -120,4 +107,190 @@ function renderRouteList() {
         </div>
         <div class="visit-meta-row">📍 ${wo.destination || wo.senior_address || 'Address on file'}</div>
         <div class="visit-meta-row">🕐 ${displayTime}</div>
-        <div
+        <div class="visit-meta-row">🆔 ${wo.work_order_id}</div>
+      </div>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.visit-card-item').forEach(card => {
+    card.onclick = () => {
+      const match = allWorkOrders.find(w => w.work_order_id === card.getAttribute('data-id'));
+      if (match) openTripFlow(match);
+    };
+  });
+}
+
+// -------------------------------------------------------------
+// WORKFLOW: OPEN TRIP (START OTP vs COCKPIT)
+// -------------------------------------------------------------
+function openTripFlow(wo) {
+  activeWO = wo;
+  const st = String(wo.status || '').toUpperCase();
+  if (st === 'COMPLETE' || st === 'CLOSE') {
+    alert(`✅ Trip for ${wo.senior_name || wo.senior_id} has already been completed.`);
+    return;
+  }
+  st === 'IN_PROGRESS' ? openCockpit(wo) : openStartVisitSheet(wo);
+}
+
+function openStartVisitSheet(wo) {
+  setText('start-sheet-senior-name', wo.senior_name || wo.senior_id);
+  const input = document.getElementById('input-start-code');
+  if (input) input.value = '';
+  show('start-visit-overlay');
+}
+
+function openCockpit(wo) {
+  activeWO = wo;
+  setText('cockpit-senior-name', wo.senior_name || wo.senior_id);
+  setText('cockpit-service-sub', wo.companion_type || 'Companion Service');
+
+  visitStartTime = wo.start_verified_at ? new Date(wo.start_verified_at) : new Date();
+  setText('timer-started-at', 'started ' + visitStartTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }));
+  startLiveTimer();
+
+  show('cockpit-overlay');
+}
+
+function startLiveTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    const diff = Math.floor((Date.now() - visitStartTime.getTime()) / 1000);
+    setText('live-timer-display', new Date(diff * 1000).toISOString().substr(11, 8));
+  }, 1000);
+}
+
+function stopLiveTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+
+// -------------------------------------------------------------
+// START VISIT OTP FLOW
+// -------------------------------------------------------------
+function setupStartVisitFlow() {
+  document.getElementById('btn-verify-start')?.addEventListener('click', async () => {
+    const code = document.getElementById('input-start-code')?.value.trim().replace(/\D/g, '');
+    if (!code || code.length !== 6) return alert('Please enter a valid 6-digit numeric Start Code.');
+
+    try {
+      const geo = await getDeviceLocation();
+      const res = await callApi('verifyStartCode', { workOrderId: activeWO.work_order_id, code, geo });
+      if (res.success) {
+        activeWO.status = 'IN_PROGRESS';
+        hide('start-visit-overlay');
+        openCockpit(activeWO);
+        await loadCompanionWorkOrders();
+      } else {
+        alert(res.error || 'Invalid Start Code.');
+      }
+    } catch (err) {
+      alert('Verification error: ' + err.message);
+    }
+  });
+}
+
+// -------------------------------------------------------------
+// END VISIT OTP FLOW
+// -------------------------------------------------------------
+function setupEndVisitFlow() {
+  document.getElementById('btn-verify-end')?.addEventListener('click', async () => {
+    const code = document.getElementById('input-end-code')?.value.trim().replace(/\D/g, '');
+    if (!code || code.length !== 6) return alert('Please enter a valid 6-digit numeric End Code.');
+
+    const remarks = document.getElementById('visit-remarks')?.value.trim() || '';
+
+    try {
+      const res = await callApi('verifyEndCode', { workOrderId: activeWO.work_order_id, code, remarks });
+      if (res.success) {
+        stopLiveTimer();
+        alert('✅ Trip Completed & Closed Successfully.');
+        hide('end-visit-overlay');
+        hide('cockpit-overlay');
+        activeWO = null;
+        await loadCompanionWorkOrders();
+      } else {
+        alert(res.error || 'Invalid End Code.');
+      }
+    } catch (err) {
+      alert('Completion error: ' + err.message);
+    }
+  });
+}
+
+// -------------------------------------------------------------
+// COCKPIT ACTIONS (Open End Code sheet, SOS, Office Call)
+// -------------------------------------------------------------
+function setupCockpitActions() {
+  document.getElementById('btn-open-end-code')?.addEventListener('click', () => {
+    const input = document.getElementById('input-end-code');
+    if (input) input.value = '';
+    show('end-visit-overlay');
+  });
+
+  document.getElementById('btn-call-office')?.addEventListener('click', () => {
+    window.location.href = `tel:${OFFICE_NUMBER}`;
+  });
+
+  document.getElementById('btn-sos-trigger-cockpit')?.addEventListener('click', () => show('sos-modal'));
+}
+
+// -------------------------------------------------------------
+// CANCEL BOOKING (called via inline onclick in companion.html)
+// -------------------------------------------------------------
+window.handleCancelBooking = async function () {
+  const reasonSelect = document.getElementById('cancel-reason-dropdown');
+  const reason = reasonSelect ? reasonSelect.value : '';
+  if (!reason) return alert('Please select a cancellation reason.');
+  if (!activeWO) return;
+
+  if (!confirm('Are you sure you want to cancel this booking?')) return;
+
+  try {
+    await callApi('requestCancellation', { workOrderId: activeWO.work_order_id, reason });
+    alert('Booking cancelled.');
+    stopLiveTimer();
+    hide('cockpit-overlay');
+    activeWO = null;
+    await loadCompanionWorkOrders();
+  } catch (err) {
+    alert('Cancellation error: ' + err.message);
+  }
+};
+
+// -------------------------------------------------------------
+// SOS HANDLERS
+// -------------------------------------------------------------
+function setupSosHandlers() {
+  document.getElementById('btn-sos-trigger')?.addEventListener('click', () => show('sos-modal'));
+  document.getElementById('btn-cancel-sos')?.addEventListener('click', () => hide('sos-modal'));
+  document.getElementById('btn-confirm-sos')?.addEventListener('click', async () => {
+    const geo = await getDeviceLocation();
+    try {
+      await callApi('createDoctorReviewRequest', {
+        seniorId: activeWO?.senior_id || 'UNKNOWN',
+        workOrderId: activeWO?.work_order_id || '',
+        reason: `🚨 COMPANION SOS. GPS: ${geo ? geo.lat + ',' + geo.lng : 'Unknown'}`,
+        priority: 'EMERGENCY'
+      });
+      alert('🚨 Emergency Alert Sent to Control Room!');
+    } catch (err) {
+      alert('SOS error: ' + err.message);
+    } finally {
+      hide('sos-modal');
+    }
+  });
+}
+
+// -------------------------------------------------------------
+// MODAL CLOSE BUTTONS
+// -------------------------------------------------------------
+function setupModalCloseButtons() {
+  document.getElementById('btn-close-start-sheet')?.addEventListener('click', () => hide('start-visit-overlay'));
+  document.getElementById('btn-close-cockpit')?.addEventListener('click', () => {
+    stopLiveTimer();
+    hide('cockpit-overlay');
+  });
+  document.getElementById('btn-close-end-sheet')?.addEventListener('click', () => hide('end-visit-overlay'));
+}
+
+init();
