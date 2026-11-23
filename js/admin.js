@@ -80,18 +80,17 @@ function setupDashboardJumps() {
 }
 
 function setupSlicers() {
-  document.querySelectorAll('.sub-nav .sub-tab').forEach(btn => {
+  document.querySelectorAll('.wo-slicer-bar .sub-tab').forEach(btn => {
     btn.onclick = () => {
-      if (btn.closest('.card')?.querySelector('#admin-wo-table')) {
-        document.querySelectorAll('.sub-nav .sub-tab').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        activeSlicer = btn.getAttribute('data-slicer');
-        pageState.wo = 1;
-        renderWorkOrders(allData.workOrders || []);
-      }
+      document.querySelectorAll('.wo-slicer-bar .sub-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeSlicer = btn.getAttribute('data-slicer') || 'ALL';
+      pageState.wo = 1;
+      renderWorkOrders(allData.workOrders || []);
     };
   });
 }
+
 
 // -------------------------------------------------------------
 // FORM FIELD TOGGLES
