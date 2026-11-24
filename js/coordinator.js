@@ -24,9 +24,18 @@ function renderCoordinatorProfile(profile) {
 
 function renderCoordinatorAvatar(base64) {
   if (!base64) return;
-  const el = document.getElementById('btn-crd-avatar');
-  if (el) {
-    el.innerHTML = `<img src="${base64}" alt="Photo" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;">`;
+  
+  // 1. Update the Big Profile Card (Top)
+  const bigAvatar = document.getElementById('btn-crd-avatar');
+  if (bigAvatar) {
+    bigAvatar.innerHTML = `<img src="${base64}" alt="Photo" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;">`;
+  }
+
+  // 2. Update the Header Icon (Bottom) - ADD THIS
+  const smallAvatar = document.querySelector('.crd-avatar'); // Or the specific ID if you have one
+  if (smallAvatar) {
+    // We replace the text content "🧑‍💼" with the image
+    smallAvatar.innerHTML = `<img src="${base64}" alt="Photo" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;">`;
   }
 }
 
