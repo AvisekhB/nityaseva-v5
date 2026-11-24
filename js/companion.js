@@ -124,11 +124,19 @@ function setupCompanionAvatarUpload() {
 
 function renderCompanionAvatar(base64) {
   if (!base64) return;
-  const el = document.getElementById('btn-comp-avatar');
-  if (el) {
-    el.innerHTML = `<img src="${base64}" alt="Photo" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;">`;
-  }
+  
+  const imgHtml = `<img src="${base64}" alt="Photo" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;">`;
+  
+  // 1. Update the Big Profile Card
+  const bigAvatar = document.getElementById('btn-comp-avatar');
+  if (bigAvatar) bigAvatar.innerHTML = imgHtml;
+
+  // 2. Update the Small Header Icon
+  // Based on your HTML, the header icon uses the class 'comp-badge-avatar'
+  const smallAvatar = document.querySelector('.comp-badge-avatar');
+  if (smallAvatar) smallAvatar.innerHTML = imgHtml;
 }
+
 
 // -------------------------------------------------------------
 // RENDER PROFILE STATS (Age / Exp / Role / Phone)
