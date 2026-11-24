@@ -140,6 +140,9 @@ function setupSubTabs() {
 async function loadCoordinatorDashboard() {
   try {
     dashboardData = await callApi('getCoordinatorDashboard');
+    
+    // --- ADD THIS LINE ---
+    const appointments = await callApi('getAppointments', {}); 
 
     const counts = dashboardData.counts || {};
     setText('stat-visits', counts.todaysVisits || 0);
@@ -150,12 +153,14 @@ async function loadCoordinatorDashboard() {
     setText('morning-incidents-count', (dashboardData.incidents || []).length);
     setText('missed-count', (dashboardData.missedVisits || []).length);
     setText('complaints-count', (dashboardData.openComplaints || []).length);
-    setText('insurance-count', (dashboardData.insuranceFollowUps || []).length);
     setText('companion-jobs-count', (dashboardData.myCompanionJobs || []).length);
     setText('hospital-count', (dashboardData.myHospitalJobs || []).length);
 
     renderMorningVisits(dashboardData.todaysVisits || []);
     renderPendingRequests(dashboardData.pendingRequests || []);
+    // --- ADD THIS LINE ---
+    renderAppointmentQueue(appointments); 
+
     renderIncidents(dashboardData.incidents || []);
     renderMissedVisits(dashboardData.missedVisits || []);
     renderStaffAvailability(dashboardData.staffWithLoad || []);
@@ -633,6 +638,36 @@ function setupForms() {
       }
     });
   }
+}
+function renderAppointmentQueue(apts) {
+  const container = document.getElementById('morning-pending-list');
+  if (!container) return;
+  
+  // Filter for only requested appointments
+  const requested = apts.filter(a => a.status === 'REQUESTED');
+  
+  if (requested.length === 0) return;
+
+  container.innerHTML += requested.map(a => `
+    <div class="item-card">
+      <div class="item-top">
+        <span class="item-name">${a.appointment_id}</span>
+        <button class="mini-btn remind-btn" data-id="${a.appointment_id}">Send Reminder</button>
+      </div>
+      <div class="item-meta">Senior: ${a.senior_id} | Scheduled: ${formatDateTime(a.scheduled_at)}</div>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('.remind-btn').forEach(btn => {
+    btn.onclick = async () => {
+      try {
+        await callApi('sendAppointmentReminder', { appointmentId: btn.dataset.id });
+        alert('Reminder sent to family!');
+      } catch (err) {
+        alert('Error sending reminder: ' + err.message);
+      }
+    };
+  });
 }
 
 init();
