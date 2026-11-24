@@ -93,11 +93,19 @@ async function init() {
     currentProfile = await requireAuth('coordinator');
     if (!currentProfile) return;
 
+    const coordinatorId = currentProfile.coordinator_id || 'CRD-XXXX';
+
     setText('crd-name-display', currentProfile.full_name || 'Coordinator');
-    setText('crd-id-display', currentProfile.coordinator_id || 'CRD-XXXX');
+    setText('crd-id-display', coordinatorId);
+    setText('crd-name-profile', currentProfile.full_name || 'Coordinator');
+    setText('crd-role-profile', `Coordinator ID: ${coordinatorId}`);
+
+    // NEW: populate Age/Exp/Role/Phone + photo
+    renderCoordinatorProfile(currentProfile);
 
     document.getElementById('btn-logout')?.addEventListener('click', signOut);
 
+    setupCoordinatorAvatarUpload(); // NEW
     setupSubTabs();
     setupForms();
     await loadCoordinatorDashboard();
