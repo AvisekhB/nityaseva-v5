@@ -31,10 +31,10 @@ function renderCoordinatorAvatar(base64) {
     bigAvatar.innerHTML = `<img src="${base64}" alt="Photo" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;">`;
   }
 
-  // 2. Update the Header Icon (Bottom) - ADD THIS
-  const smallAvatar = document.querySelector('.crd-avatar'); // Or the specific ID if you have one
+  // 2. Update the Header Icon (Bottom)
+  // We use querySelector to find the div with class 'crd-avatar'
+  const smallAvatar = document.querySelector('.crd-avatar'); 
   if (smallAvatar) {
-    // We replace the text content "🧑‍💼" with the image
     smallAvatar.innerHTML = `<img src="${base64}" alt="Photo" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;">`;
   }
 }
