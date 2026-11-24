@@ -8,6 +8,12 @@ let timerInterval = null;
 let visitStartTime = null;
 let compActiveTab = 'PENDING';
 
+const storage = {
+  setItem: (k, v) => { try { localStorage.setItem(k, v); } catch(e) {} },
+  getItem: (k) => { try { return localStorage.getItem(k); } catch(e) { return null; } },
+  removeItem: (k) => { try { localStorage.removeItem(k); } catch(e) {} }
+};
+
 const OFFICE_NUMBER = "+919239258921"; // Update with actual office number
 
 function setText(id, text) { const el = document.getElementById(id); if (el) el.textContent = text ?? ''; }
