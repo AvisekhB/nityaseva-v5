@@ -143,8 +143,8 @@ function renderCompanionProfile(profile) {
 // -------------------------------------------------------------
 async function loadCompanionWorkOrders() {
   try {
-    const companionId = currentProfile.companion_id || currentProfile.userId;
-    const data = await callApi('getCompanionDashboard', { staffId: companionId });
+    // DO NOT pass staffId. Let the server figure it out from the auth token.
+    const data = await callApi('getCompanionDashboard', {}); 
     allWorkOrders = data || [];
     renderRouteList();
   } catch (err) {
