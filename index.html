@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    // Force a mock localStorage if it doesn't exist to stop the crashing
+    if (!window.localStorage) {
+      window.localStorage = {
+        data: {},
+        getItem: function(key) { return this.data.hasOwnProperty(key) ? this.data[key] : null; },
+        setItem: function(key, val) { this.data[key] = String(val); },
+        removeItem: function(key) { delete this.data[key]; }
+      };
+    }
+  </script>
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nityaseva — Login</title>
