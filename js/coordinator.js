@@ -22,20 +22,58 @@ function renderCoordinatorProfile(profile) {
   }
 }
 
+// 1. UPDATED: Render Avatar in BOTH places
 function renderCoordinatorAvatar(base64) {
   if (!base64) return;
   
-  // 1. Update the Big Profile Card (Top)
+  // Target both the Big Profile (ID) and the Header Icon (Class)
   const bigAvatar = document.getElementById('btn-crd-avatar');
-  if (bigAvatar) {
-    bigAvatar.innerHTML = `<img src="${base64}" alt="Photo" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;">`;
-  }
+  const smallAvatar = document.querySelector('.crd-avatar');
+  
+  const imgHtml = `<img src="${base64}" alt="Photo" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;">`;
+  
+  if (bigAvatar) bigAvatar.innerHTML = imgHtml;
+  if (smallAvatar) smallAvatar.innerHTML = imgHtml;
+}
 
-  // 2. Update the Header Icon (Bottom)
-  // We use querySelector to find the div with class 'crd-avatar'
-  const smallAvatar = document.querySelector('.crd-avatar'); 
-  if (smallAvatar) {
-    smallAvatar.innerHTML = `<img src="${base64}" alt="Photo" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;">`;
+// 2. UPDATED: Render Profile (handles initial load)
+function renderCoordinatorProfile(profile) {
+  setText('crd-age', profile.age || '--');
+  setText('crd-exp', profile.experience || '--');
+  setText('crd-role', profile.role || 'Care Coordinator');
+  setText('crd-phone', profile.phone || '--');
+
+  // Trigger sync to both places if photo exists
+  if (profile.photo_url && String(profile.photo_url).length > 20) {
+    renderCoordinatorAvatar(profile.photo_url);
+  }
+}
+
+// 3. UPDATED: Init (Ensure profile loads correctly)
+async function init() {
+  try {
+    currentProfile = await requireAuth('coordinator');
+    if (!currentProfile) return;
+
+    // Use the ID from the profile object (ensure it's not null)
+    const coordinatorId = currentProfile.coordinator_id;
+
+    setText('crd-name-display', currentProfile.full_name || 'Coordinator');
+    setText('crd-id-display', coordinatorId);
+    setText('crd-name-profile', currentProfile.full_name || 'Coordinator');
+    setText('crd-role-profile', `Coordinator ID: ${coordinatorId}`);
+
+    renderCoordinatorProfile(currentProfile);
+
+    document.getElementById('btn-logout')?.addEventListener('click', signOut);
+
+    setupCoordinatorAvatarUpload();
+    setupSubTabs();
+    setupForms();
+    await loadCoordinatorDashboard();
+  } catch (err) {
+    console.error('Coordinator init failed:', err);
+    showFatalError('Dashboard failed to load: ' + err.message);
   }
 }
 
