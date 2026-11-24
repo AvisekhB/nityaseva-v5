@@ -11,74 +11,24 @@ function setText(id, text) {
 // -------------------------------------------------------------
 // PROFILE CARD RENDER (Age/Exp/Role/Phone + Photo)
 // -------------------------------------------------------------
-
-
-// 1. UPDATED: Render Avatar in BOTH places
-function renderCoordinatorAvatar(base64) {
-  if (!base64) return;
-  
-  // Target both the Big Profile (ID) and the Header Icon (Class)
-  const bigAvatar = document.getElementById('btn-crd-avatar');
-  const smallAvatar = document.querySelector('.crd-avatar');
-  
-  const imgHtml = `<img src="${base64}" alt="Photo" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;">`;
-  
-  if (bigAvatar) bigAvatar.innerHTML = imgHtml;
-  if (smallAvatar) smallAvatar.innerHTML = imgHtml;
-}
-
-// 2. UPDATED: Render Profile (handles initial load)
 function renderCoordinatorProfile(profile) {
   setText('crd-age', profile.age || '--');
   setText('crd-exp', profile.experience || '--');
   setText('crd-role', profile.role || 'Care Coordinator');
   setText('crd-phone', profile.phone || '--');
 
-  // Trigger sync to both places if photo exists
   if (profile.photo_url && String(profile.photo_url).length > 20) {
     renderCoordinatorAvatar(profile.photo_url);
   }
 }
 
-// 3. UPDATED: Init (Ensure profile loads correctly)
-async function init() {
-  try {
-    // 1. Ensure role matches the file (Coordinator)
-    currentProfile = await requireAuth('coordinator');
-    if (!currentProfile) {
-      console.log("No profile found, redirecting...");
-      return;
-    }
-
-    console.log("Profile Loaded:", currentProfile); 
-
-    // 2. Safely get IDs
-    const coordinatorId = currentProfile.coordinator_id || currentProfile.userId || 'CRD-XXXX';
-
-    // 3. UI Updates
-    setText('crd-name-display', currentProfile.full_name || 'Coordinator');
-    setText('crd-id-display', coordinatorId);
-    setText('crd-name-profile', currentProfile.full_name || 'Coordinator');
-    setText('crd-role-profile', `Coordinator ID: ${coordinatorId}`);
-
-    renderCoordinatorProfile(currentProfile);
-    
-    document.getElementById('btn-logout')?.addEventListener('click', signOut);
-    
-    setupCoordinatorAvatarUpload();
-    setupSubTabs();
-    setupForms();
-    
-    // 4. Load Data
-    await loadCoordinatorDashboard();
-    
-  } catch (err) {
-    console.error('Coordinator init failed:', err);
-    // This will now show the error directly on the UI if dashboard fails
-    showFatalError('Init Error: ' + err.message); 
+function renderCoordinatorAvatar(base64) {
+  if (!base64) return;
+  const el = document.getElementById('btn-crd-avatar');
+  if (el) {
+    el.innerHTML = `<img src="${base64}" alt="Photo" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;">`;
   }
 }
-
 
 // -------------------------------------------------------------
 // PROFILE PHOTO UPLOAD
@@ -87,19 +37,6 @@ function setupCoordinatorAvatarUpload() {
   const input = document.getElementById('crd-photo-input');
   if (!input) return;
 
-  const companionId = currentProfile.coordinator_id; // Check this specifically
-if (!companionId) {
-    alert('Error: Coordinator ID missing. Please refresh.');
-    return;
-}
-
-try {
-  // Make sure the action name matches Code.gs exactly
-  const res = await callApi('updateCoordinatorPhoto', { 
-    coordinatorId: companionId, 
-    photoData: base64 
-  });
-  
   const trigger = document.getElementById('btn-crd-avatar');
   if (trigger) {
     trigger.style.cursor = 'pointer';
