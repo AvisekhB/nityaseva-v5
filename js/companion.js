@@ -27,7 +27,7 @@ function hide(id) { document.getElementById(id)?.classList.add('hidden'); }
 async function init() {
   try {
     // 1. Ensure role matches the file (Coordinator)
-    currentProfile = await requireAuth('coordinator');
+    currentProfile = await requireAuth('companion');
     if (!currentProfile) {
       console.log("No profile found, redirecting...");
       return;
