@@ -8,12 +8,6 @@ let timerInterval = null;
 let visitStartTime = null;
 let compActiveTab = 'PENDING';
 
-const storage = {
-  setItem: (k, v) => { try { localStorage.setItem(k, v); } catch(e) {} },
-  getItem: (k) => { try { return localStorage.getItem(k); } catch(e) { return null; } },
-  removeItem: (k) => { try { localStorage.removeItem(k); } catch(e) {} }
-};
-
 const OFFICE_NUMBER = "+919239258921"; // Update with actual office number
 
 function setText(id, text) { const el = document.getElementById(id); if (el) el.textContent = text ?? ''; }
@@ -26,39 +20,32 @@ function hide(id) { document.getElementById(id)?.classList.add('hidden'); }
 // -------------------------------------------------------------
 async function init() {
   try {
-    // 1. Ensure role matches the file (Coordinator)
     currentProfile = await requireAuth('companion');
-    if (!currentProfile) {
-      console.log("No profile found, redirecting...");
-      return;
-    }
+    if (!currentProfile) return;
 
-    console.log("Profile Loaded:", currentProfile); 
+    const companionId = currentProfile.companion_id || currentProfile.userId || 'COM-XXXX';
 
-    // 2. Safely get IDs
-    const coordinatorId = currentProfile.coordinator_id || currentProfile.userId || 'CRD-XXXX';
+    setText('comp-name-display', currentProfile.full_name || 'Companion');
+    setText('comp-id-display', companionId);
+    setText('comp-name-profile', currentProfile.full_name || 'Companion');
+    setText('comp-role-profile', `ID: ${companionId}`);
 
-    // 3. UI Updates
-    setText('crd-name-display', currentProfile.full_name || 'Coordinator');
-    setText('crd-id-display', coordinatorId);
-    setText('crd-name-profile', currentProfile.full_name || 'Coordinator');
-    setText('crd-role-profile', `Coordinator ID: ${coordinatorId}`);
-
-    renderCoordinatorProfile(currentProfile);
+    renderCompanionProfile(currentProfile);
     
     document.getElementById('btn-logout')?.addEventListener('click', signOut);
     
-    setupCoordinatorAvatarUpload();
-    setupSubTabs();
-    setupForms();
-    
-    // 4. Load Data
-    await loadCoordinatorDashboard();
-    
+    setupCompanionAvatarUpload();   
+    setupRouteTabs();
+    setupSosHandlers();
+    setupModalCloseButtons();
+    setupStartVisitFlow();
+    setupCockpitActions();
+    setupEndVisitFlow();
+
+    await loadCompanionWorkOrders();
   } catch (err) {
-    console.error('Coordinator init failed:', err);
-    // This will now show the error directly on the UI if dashboard fails
-    showFatalError('Init Error: ' + err.message); 
+    console.error('Companion Portal Init Error:', err);
+    setHTML('route-list-container', `<p style="color:#dc2626; text-align:center;">Failed to load: ${err.message}</p>`);
   }
 }
 
@@ -131,19 +118,11 @@ function setupCompanionAvatarUpload() {
 
 function renderCompanionAvatar(base64) {
   if (!base64) return;
-  
-  const imgHtml = `<img src="${base64}" alt="Photo" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;">`;
-  
-  // 1. Update the Big Profile Card
-  const bigAvatar = document.getElementById('btn-comp-avatar');
-  if (bigAvatar) bigAvatar.innerHTML = imgHtml;
-
-  // 2. Update the Small Header Icon
-  // Based on your HTML, the header icon uses the class 'comp-badge-avatar'
-  const smallAvatar = document.querySelector('.comp-badge-avatar');
-  if (smallAvatar) smallAvatar.innerHTML = imgHtml;
+  const el = document.getElementById('btn-comp-avatar');
+  if (el) {
+    el.innerHTML = `<img src="${base64}" alt="Photo" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;">`;
+  }
 }
-
 
 // -------------------------------------------------------------
 // RENDER PROFILE STATS (Age / Exp / Role / Phone)
@@ -164,8 +143,8 @@ function renderCompanionProfile(profile) {
 // -------------------------------------------------------------
 async function loadCompanionWorkOrders() {
   try {
-    // DO NOT pass staffId. Let the server figure it out from the auth token.
-    const data = await callApi('getCompanionDashboard', {}); 
+    const companionId = currentProfile.companion_id || currentProfile.userId;
+    const data = await callApi('getCompanionDashboard', { staffId: companionId });
     allWorkOrders = data || [];
     renderRouteList();
   } catch (err) {
