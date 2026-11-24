@@ -11,16 +11,7 @@ function setText(id, text) {
 // -------------------------------------------------------------
 // PROFILE CARD RENDER (Age/Exp/Role/Phone + Photo)
 // -------------------------------------------------------------
-function renderCoordinatorProfile(profile) {
-  setText('crd-age', profile.age || '--');
-  setText('crd-exp', profile.experience || '--');
-  setText('crd-role', profile.role || 'Care Coordinator');
-  setText('crd-phone', profile.phone || '--');
 
-  if (profile.photo_url && String(profile.photo_url).length > 20) {
-    renderCoordinatorAvatar(profile.photo_url);
-  }
-}
 
 // 1. UPDATED: Render Avatar in BOTH places
 function renderCoordinatorAvatar(base64) {
