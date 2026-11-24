@@ -252,6 +252,7 @@ function renderPaginationBar(containerId, totalItems, currentPage, onPageChange)
 async function loadAdminDashboard() {
   try {
     const data = await callApi('getAdminDashboard');
+    console.log("DEBUG: Data received from server:", data);
     allData = data || {};
 
     try { allData.coordinators = await callApi('adminGetCoordinators') || []; } catch (e) { allData.coordinators = []; }
@@ -1152,6 +1153,7 @@ function setupActionForms() {
 init().catch(err => {
   console.error('Admin Init Failure:', err);
 });
+
 
 
 
