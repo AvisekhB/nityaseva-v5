@@ -84,6 +84,19 @@ function setupCoordinatorAvatarUpload() {
   const input = document.getElementById('crd-photo-input');
   if (!input) return;
 
+  const companionId = currentProfile.coordinator_id; // Check this specifically
+if (!companionId) {
+    alert('Error: Coordinator ID missing. Please refresh.');
+    return;
+}
+
+try {
+  // Make sure the action name matches Code.gs exactly
+  const res = await callApi('updateCoordinatorPhoto', { 
+    coordinatorId: companionId, 
+    photoData: base64 
+  });
+  
   const trigger = document.getElementById('btn-crd-avatar');
   if (trigger) {
     trigger.style.cursor = 'pointer';
