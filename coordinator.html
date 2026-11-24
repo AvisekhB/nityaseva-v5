@@ -70,16 +70,37 @@
 <body>
   <div class="app-viewport">
 
-    <div class="app-header">
-      <div class="app-header-left">
-        <div class="crd-avatar">🧑‍💼</div>
-        <div class="crd-info">
-          <h4 id="crd-name-display">Loading Coordinator...</h4>
-          <small id="crd-id-display">CRD-XXXX</small>
-        </div>
+  <!-- COORDINATOR PROFILE CARD (Photo + Age/Exp/Role/Phone) -->
+  <div class="card" id="crd-profile-card" style="background:#6b46c1; color:#fff; border-radius:20px; padding:20px; margin-bottom:14px;">
+    <div style="display:flex; align-items:center; gap:15px;">
+      <div id="btn-crd-avatar" class="crd-avatar" style="width:60px; height:60px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:30px; overflow:hidden; cursor:pointer; flex-shrink:0;">
+        <span id="crd-avatar-text">🧑‍💼</span>
       </div>
-      <button class="btn-logout-mini" id="btn-logout">Logout</button>
+      <div>
+        <h2 id="crd-name-profile" style="margin:0; font-size:20px;">Loading...</h2>
+        <p id="crd-role-profile" style="font-size:12px; opacity:0.85; margin:3px 0 0 0;">Coordinator ID: CRD-XXX</p>
+      </div>
     </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px; font-size:12px;">
+      <div>Age: <span id="crd-age">--</span></div>
+      <div>Exp: <span id="crd-exp">--</span> yrs</div>
+      <div>Role: <span id="crd-role">--</span></div>
+      <div>Phone: <span id="crd-phone">--</span></div>
+    </div>
+  </div>
+
+  <input type="file" id="crd-photo-input" accept="image/*" style="display:none;">
+
+  <div class="app-header">
+    <div class="app-header-left">
+      <div class="crd-avatar" style="width:44px; height:44px;">🧑‍💼</div>
+      <div class="crd-info">
+        <h4 id="crd-name-display">Loading Coordinator...</h4>
+        <small id="crd-id-display">CRD-XXXX</small>
+      </div>
+    </div>
+    <button class="btn-logout-mini" id="btn-logout">Logout</button>
+  </div>
 
     <div class="emergency-strip">
       <span>🚨 Hospital Emergency (112)</span>
