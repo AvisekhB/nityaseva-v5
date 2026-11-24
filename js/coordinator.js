@@ -43,30 +43,42 @@ function renderCoordinatorProfile(profile) {
 // 3. UPDATED: Init (Ensure profile loads correctly)
 async function init() {
   try {
+    // 1. Ensure role matches the file (Coordinator)
     currentProfile = await requireAuth('coordinator');
-    if (!currentProfile) return;
+    if (!currentProfile) {
+      console.log("No profile found, redirecting...");
+      return;
+    }
 
-    // Use the ID from the profile object (ensure it's not null)
-    const coordinatorId = currentProfile.coordinator_id;
+    console.log("Profile Loaded:", currentProfile); 
 
+    // 2. Safely get IDs
+    const coordinatorId = currentProfile.coordinator_id || currentProfile.userId || 'CRD-XXXX';
+
+    // 3. UI Updates
     setText('crd-name-display', currentProfile.full_name || 'Coordinator');
     setText('crd-id-display', coordinatorId);
     setText('crd-name-profile', currentProfile.full_name || 'Coordinator');
     setText('crd-role-profile', `Coordinator ID: ${coordinatorId}`);
 
     renderCoordinatorProfile(currentProfile);
-
+    
     document.getElementById('btn-logout')?.addEventListener('click', signOut);
-
+    
     setupCoordinatorAvatarUpload();
     setupSubTabs();
     setupForms();
+    
+    // 4. Load Data
     await loadCoordinatorDashboard();
+    
   } catch (err) {
     console.error('Coordinator init failed:', err);
-    showFatalError('Dashboard failed to load: ' + err.message);
+    // This will now show the error directly on the UI if dashboard fails
+    showFatalError('Init Error: ' + err.message); 
   }
 }
+
 
 // -------------------------------------------------------------
 // PROFILE PHOTO UPLOAD
