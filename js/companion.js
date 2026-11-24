@@ -26,32 +26,39 @@ function hide(id) { document.getElementById(id)?.classList.add('hidden'); }
 // -------------------------------------------------------------
 async function init() {
   try {
-    currentProfile = await requireAuth('companion');
-    if (!currentProfile) return;
+    // 1. Ensure role matches the file (Coordinator)
+    currentProfile = await requireAuth('coordinator');
+    if (!currentProfile) {
+      console.log("No profile found, redirecting...");
+      return;
+    }
 
-    const companionId = currentProfile.companion_id || currentProfile.userId || 'COM-XXXX';
+    console.log("Profile Loaded:", currentProfile); 
 
-    setText('comp-name-display', currentProfile.full_name || 'Companion');
-    setText('comp-id-display', companionId);
-    setText('comp-name-profile', currentProfile.full_name || 'Companion');
-    setText('comp-role-profile', `ID: ${companionId}`);
+    // 2. Safely get IDs
+    const coordinatorId = currentProfile.coordinator_id || currentProfile.userId || 'CRD-XXXX';
 
-    renderCompanionProfile(currentProfile);
+    // 3. UI Updates
+    setText('crd-name-display', currentProfile.full_name || 'Coordinator');
+    setText('crd-id-display', coordinatorId);
+    setText('crd-name-profile', currentProfile.full_name || 'Coordinator');
+    setText('crd-role-profile', `Coordinator ID: ${coordinatorId}`);
+
+    renderCoordinatorProfile(currentProfile);
     
     document.getElementById('btn-logout')?.addEventListener('click', signOut);
     
-    setupCompanionAvatarUpload();   
-    setupRouteTabs();
-    setupSosHandlers();
-    setupModalCloseButtons();
-    setupStartVisitFlow();
-    setupCockpitActions();
-    setupEndVisitFlow();
-
-    await loadCompanionWorkOrders();
+    setupCoordinatorAvatarUpload();
+    setupSubTabs();
+    setupForms();
+    
+    // 4. Load Data
+    await loadCoordinatorDashboard();
+    
   } catch (err) {
-    console.error('Companion Portal Init Error:', err);
-    setHTML('route-list-container', `<p style="color:#dc2626; text-align:center;">Failed to load: ${err.message}</p>`);
+    console.error('Coordinator init failed:', err);
+    // This will now show the error directly on the UI if dashboard fails
+    showFatalError('Init Error: ' + err.message); 
   }
 }
 
