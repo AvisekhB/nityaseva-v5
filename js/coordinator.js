@@ -8,6 +8,85 @@ function setText(id, text) {
   const el = document.getElementById(id);
   if (el) el.textContent = text ?? '';
 }
+// -------------------------------------------------------------
+// PROFILE CARD RENDER (Age/Exp/Role/Phone + Photo)
+// -------------------------------------------------------------
+function renderCoordinatorProfile(profile) {
+  setText('crd-age', profile.age || '--');
+  setText('crd-exp', profile.experience || '--');
+  setText('crd-role', profile.role || 'Care Coordinator');
+  setText('crd-phone', profile.phone || '--');
+
+  if (profile.photo_url && String(profile.photo_url).length > 20) {
+    renderCoordinatorAvatar(profile.photo_url);
+  }
+}
+
+function renderCoordinatorAvatar(base64) {
+  if (!base64) return;
+  const el = document.getElementById('btn-crd-avatar');
+  if (el) {
+    el.innerHTML = `<img src="${base64}" alt="Photo" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;">`;
+  }
+}
+
+// -------------------------------------------------------------
+// PROFILE PHOTO UPLOAD
+// -------------------------------------------------------------
+function setupCoordinatorAvatarUpload() {
+  const input = document.getElementById('crd-photo-input');
+  if (!input) return;
+
+  const trigger = document.getElementById('btn-crd-avatar');
+  if (trigger) {
+    trigger.style.cursor = 'pointer';
+    trigger.title = 'Click to upload your photo';
+    trigger.onclick = () => input.click();
+  }
+
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = async () => {
+        const canvas = document.createElement('canvas');
+        const MAX = 150;
+        let w = img.width, h = img.height;
+        if (w > h) { if (w > MAX) { h = Math.round(h * (MAX / w)); w = MAX; } }
+        else { if (h > MAX) { w = Math.round(w * (MAX / h)); h = MAX; } }
+        canvas.width = w; canvas.height = h;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const base64 = canvas.toDataURL('image/jpeg', 0.7);
+
+        renderCoordinatorAvatar(base64);
+
+        const coordinatorId = currentProfile.coordinator_id;
+        if (!coordinatorId) {
+          alert('Coordinator ID not found. Could not save photo.');
+          return;
+        }
+
+        try {
+          const res = await callApi('updateCoordinatorPhoto', { coordinatorId, photoData: base64 });
+          if (res && res.success) {
+            currentProfile.photo_url = base64;
+            alert('✓ Profile photo saved successfully!');
+          }
+        } catch (err) {
+          console.error('Photo sync error:', err);
+          alert('Photo save failed: ' + err.message);
+        }
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+}
 
 async function init() {
   try {
