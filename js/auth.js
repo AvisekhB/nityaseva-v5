@@ -1,5 +1,21 @@
 import { callApi } from './dataService.js';
 
+// Safe storage wrapper to prevent crashes in restricted WebViews
+const storage = {
+  setItem: (key, val) => {
+    try { if (window.localStorage) localStorage.setItem(key, val); } 
+    catch (e) { console.warn('localStorage setItem blocked:', e); }
+  },
+  getItem: (key) => {
+    try { return window.localStorage ? localStorage.getItem(key) : null; } 
+    catch (e) { return null; }
+  },
+  removeItem: (key) => {
+    try { if (window.localStorage) localStorage.removeItem(key); } 
+    catch (e) { }
+  }
+};
+
 export async function sendOtp(email) {
   return await callApi('sendOtpEmail', { email: email });
 }
@@ -8,25 +24,29 @@ export async function verifyOtp(email, code) {
   const result = await callApi('verifyOtpEmail', { email: email, code: code });
   
   if (result.success && result.token) {
-    localStorage.setItem('nityaseva_token', result.token);
-    localStorage.setItem('nityaseva_role', result.role);
-    localStorage.setItem('nityaseva_user', JSON.stringify(result.profile || {}));
+    storage.setItem('nityaseva_token', result.token);
+    storage.setItem('nityaseva_role', result.role);
+    storage.setItem('nityaseva_user', JSON.stringify(result.profile || {}));
   }
   
   return result;
 }
 
 export function getCurrentUserProfile() {
-  const userStr = localStorage.getItem('nityaseva_user');
+  const userStr = storage.getItem('nityaseva_user');
   if (!userStr) return null;
-  const user = JSON.parse(userStr);
-  user.role = localStorage.getItem('nityaseva_role') || 'family';
-  return user;
+  try {
+    const user = JSON.parse(userStr);
+    user.role = storage.getItem('nityaseva_role') || 'family';
+    return user;
+  } catch (e) {
+    return null;
+  }
 }
 
 export async function requireAuth(expectedRole = null) {
-  const token = localStorage.getItem('nityaseva_token');
-  const role = localStorage.getItem('nityaseva_role');
+  const token = storage.getItem('nityaseva_token');
+  const role = storage.getItem('nityaseva_role');
 
   if (!token) {
     window.location.href = 'index.html';
@@ -45,8 +65,8 @@ export async function requireAuth(expectedRole = null) {
 }
 
 export function signOut() {
-  localStorage.removeItem('nityaseva_token');
-  localStorage.removeItem('nityaseva_role');
-  localStorage.removeItem('nityaseva_user');
+  storage.removeItem('nityaseva_token');
+  storage.removeItem('nityaseva_role');
+  storage.removeItem('nityaseva_user');
   window.location.href = 'index.html';
 }
