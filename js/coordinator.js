@@ -47,7 +47,7 @@ async function init() {
 }
 
 // -------------------------------------------------------------
-// PROFILE & AVATAR LOGIC
+// PROFILE LOGIC
 // -------------------------------------------------------------
 function renderCoordinatorProfile(profile) {
   setText('crd-age', profile.age || '--');
@@ -97,7 +97,7 @@ function setupCoordinatorAvatarUpload() {
 }
 
 // -------------------------------------------------------------
-// DASHBOARD LOADING & RENDERING
+// THE ONE AND ONLY DASHBOARD LOADER
 // -------------------------------------------------------------
 async function loadCoordinatorDashboard() {
   try {
@@ -109,7 +109,6 @@ async function loadCoordinatorDashboard() {
     setText('stat-pending', counts.pending || 0);
     setText('stat-incidents', counts.incidents || 0);
     
-    // Only update these if the IDs exist in your HTML
     setText('morning-visits-count', (dashboardData.todaysVisits || []).length);
     setText('morning-pending-count', (dashboardData.pendingRequests || []).length);
     setText('morning-incidents-count', (dashboardData.incidents || []).length);
@@ -134,8 +133,9 @@ async function loadCoordinatorDashboard() {
   }
 }
 
-
-
+// -------------------------------------------------------------
+// RENDER FUNCTIONS (Appointment Queue)
+// -------------------------------------------------------------
 function renderAppointmentQueue(apts) {
   const container = document.getElementById('morning-pending-list');
   if (!container) return;
@@ -157,66 +157,27 @@ function renderAppointmentQueue(apts) {
       try {
         await callApi('sendAppointmentReminder', { appointmentId: btn.dataset.id });
         alert('Reminder sent!');
-      } catch (err) { alert('Error: ' + err.message); }
+      } catch (err) { alert('Error sending reminder: ' + err.message); }
     };
   });
 }
 
 function showFatalError(msg) {
-  const containers = ['morning-visits-list', 'morning-pending-list', 'morning-incidents-list'];
-  containers.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = '<p style="color:#dc2626; font-weight:700; padding:12px; background:#fef2f2; border-radius:8px;">⚠️ ' + msg + '</p>';
-  });
-  setText('crd-name-display', 'Error Loading');
+  const el = document.getElementById('morning-visits-list');
+  if (el) el.innerHTML = `<p style="color:#dc2626; padding:12px;">⚠️ ${msg}</p>`;
 }
 
 function setupSubTabs() {
   document.querySelectorAll('.sub-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.workflow-card').forEach(card => card.classList.add('hidden'));
+      document.querySelectorAll('.workflow-card').forEach(c => c.classList.add('hidden'));
       btn.classList.add('active');
       const targetId = 'section-' + btn.getAttribute('data-section');
       const target = document.getElementById(targetId);
       if (target) target.classList.remove('hidden');
     });
   });
-}
-
-function getSeniorLabel(v) { return v.senior_name || v.senior_id || 'Unknown Senior'; }
-function getAssignedLabel(v) { return v.assigned_staff_id || v.assigned_doctor_id || v.assigned_coordinator_id || 'Unassigned'; }
-function formatDateTime(val) { try { return new Date(val).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }); } catch(e) { return String(val); } }
-
-// Include your existing render functions (renderMorningVisits, renderPendingRequests, etc.) here
-function renderMorningVisits(v) { /* ... existing ... */ }
-function renderPendingRequests(r) { /* ... existing ... */ }
-function renderIncidents(i) { /* ... existing ... */ }
-function renderMissedVisits(m) { /* ... existing ... */ }
-function renderStaffAvailability(s) { /* ... existing ... */ }
-function renderComplaints(c) { /* ... existing ... */ }
-function renderInsurance(cl) { /* ... existing ... */ }
-function renderCompanionJobs(j) { /* ... existing ... */ }
-function renderHospitalJobs(j) { /* ... existing ... */ }
-function setupForms() { /* ... existing ... */ }
-
-
-
-function getSeniorLabel(v) {
-  return v.senior_name || v.senior_id || 'Unknown Senior';
-}
-
-function getAssignedLabel(v) {
-  return v.assigned_staff_id || v.assigned_doctor_id || v.assigned_coordinator_id || 'Unassigned';
-}
-
-function formatDateTime(val) {
-  if (!val) return 'Not set';
-  try {
-    return new Date(val).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
-  } catch (e) {
-    return String(val);
-  }
 }
 
 function renderMorningVisits(visits) {
