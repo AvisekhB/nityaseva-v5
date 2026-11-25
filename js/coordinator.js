@@ -184,6 +184,23 @@ function setupSubTabs() {
   });
 }
 
+function getSeniorLabel(v) { return v.senior_name || v.senior_id || 'Unknown Senior'; }
+function getAssignedLabel(v) { return v.assigned_staff_id || v.assigned_doctor_id || v.assigned_coordinator_id || 'Unassigned'; }
+function formatDateTime(val) { try { return new Date(val).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }); } catch(e) { return String(val); } }
+
+// Include your existing render functions (renderMorningVisits, renderPendingRequests, etc.) here
+function renderMorningVisits(v) { /* ... existing ... */ }
+function renderPendingRequests(r) { /* ... existing ... */ }
+function renderIncidents(i) { /* ... existing ... */ }
+function renderMissedVisits(m) { /* ... existing ... */ }
+function renderStaffAvailability(s) { /* ... existing ... */ }
+function renderComplaints(c) { /* ... existing ... */ }
+function renderInsurance(cl) { /* ... existing ... */ }
+function renderCompanionJobs(j) { /* ... existing ... */ }
+function renderHospitalJobs(j) { /* ... existing ... */ }
+function setupForms() { /* ... existing ... */ }
+
+
 
 function getSeniorLabel(v) {
   return v.senior_name || v.senior_id || 'Unknown Senior';
