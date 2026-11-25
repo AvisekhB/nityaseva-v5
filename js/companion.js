@@ -163,11 +163,12 @@ function renderRouteList() {
   const container = document.getElementById('route-list-container');
   if (!container) return;
 
-  let filtered = allWorkOrders.filter(w => {
+let filtered = allWorkOrders.filter(w => {
     const st = String(w.status || '').toUpperCase();
+    // Simply check status, don't filter by type here if you want them to see all assigned jobs
     if (compActiveTab === 'PENDING') return ['SCHEDULED', 'UNSCHEDULED', 'IN_PROGRESS'].includes(st);
     return ['COMPLETE', 'CLOSE'].includes(st);
-  });
+});
 
   setText('route-count-badge', `${filtered.length} ${compActiveTab === 'PENDING' ? 'Active' : 'Completed'}`);
 
