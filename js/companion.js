@@ -143,14 +143,15 @@ function renderCompanionProfile(profile) {
 // -------------------------------------------------------------
 async function loadCompanionWorkOrders() {
   try {
-    const companionId = currentProfile.companion_id || currentProfile.userId;
-    const data = await callApi('getCompanionDashboard', { staffId: companionId });
-    allWorkOrders = data || [];
+    const data = await callApi('getCompanionDashboard', {}); 
+    // Now we combine both sources into one list
+    allWorkOrders = [...(data.workOrders || []), ...(data.companionJobs || [])];
     renderRouteList();
   } catch (err) {
     setHTML('route-list-container', `<p style="color:#dc2626;">Error: ${err.message}</p>`);
   }
 }
+
 
 function setupRouteTabs() {
   const btnPending = document.getElementById('comp-tab-pending');
