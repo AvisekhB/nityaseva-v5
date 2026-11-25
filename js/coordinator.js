@@ -108,15 +108,41 @@ async function loadCoordinatorDashboard() {
     setText('stat-visits', counts.todaysVisits || 0);
     setText('stat-pending', counts.pending || 0);
     setText('stat-incidents', counts.incidents || 0);
+    
+    // Only update these if the IDs exist in your HTML
+    setText('morning-visits-count', (dashboardData.todaysVisits || []).length);
+    setText('morning-pending-count', (dashboardData.pendingRequests || []).length);
+    setText('morning-incidents-count', (dashboardData.incidents || []).length);
+    setText('missed-count', (dashboardData.missedVisits || []).length);
+    setText('complaints-count', (dashboardData.openComplaints || []).length);
+    setText('companion-jobs-count', (dashboardData.myCompanionJobs || []).length);
+    setText('hospital-count', (dashboardData.myHospitalJobs || []).length);
+
     renderMorningVisits(dashboardData.todaysVisits || []);
     renderPendingRequests(dashboardData.pendingRequests || []);
     renderAppointmentQueue(appointments); 
     renderIncidents(dashboardData.incidents || []);
-    // ... (rest of your render functions)
+    renderMissedVisits(dashboardData.missedVisits || []);
+    renderStaffAvailability(dashboardData.staffWithLoad || []);
+    renderComplaints(dashboardData.openComplaints || []);
+    renderInsurance(dashboardData.insuranceFollowUps || []);
+    renderCompanionJobs(dashboardData.myCompanionJobs || []);
+    renderHospitalJobs(dashboardData.myHospitalJobs || []);
   } catch (err) {
+    console.error('Error loading dashboard:', err);
     showFatalError('Could not reach server: ' + err.message);
   }
 }
+
+// Keep these helper functions below it once
+function getSeniorLabel(v) {
+  return v.senior_name || v.senior_id || 'Unknown Senior';
+}
+
+function getAssignedLabel(v) {
+  return v.assigned_staff_id || v.assigned_doctor_id || v.assigned_coordinator_id || 'Unassigned';
+}
+
 
 function renderAppointmentQueue(apts) {
   const container = document.getElementById('morning-pending-list');
