@@ -134,14 +134,6 @@ async function loadCoordinatorDashboard() {
   }
 }
 
-// Keep these helper functions below it once
-function getSeniorLabel(v) {
-  return v.senior_name || v.senior_id || 'Unknown Senior';
-}
-
-function getAssignedLabel(v) {
-  return v.assigned_staff_id || v.assigned_doctor_id || v.assigned_coordinator_id || 'Unassigned';
-}
 
 
 function renderAppointmentQueue(apts) {
@@ -192,42 +184,6 @@ function setupSubTabs() {
   });
 }
 
-async function loadCoordinatorDashboard() {
-  try {
-    dashboardData = await callApi('getCoordinatorDashboard');
-    
-    // --- ADD THIS LINE ---
-    const appointments = await callApi('getAppointments', {}); 
-
-    const counts = dashboardData.counts || {};
-    setText('stat-visits', counts.todaysVisits || 0);
-    setText('stat-pending', counts.pending || 0);
-    setText('stat-incidents', counts.incidents || 0);
-    setText('morning-visits-count', (dashboardData.todaysVisits || []).length);
-    setText('morning-pending-count', (dashboardData.pendingRequests || []).length);
-    setText('morning-incidents-count', (dashboardData.incidents || []).length);
-    setText('missed-count', (dashboardData.missedVisits || []).length);
-    setText('complaints-count', (dashboardData.openComplaints || []).length);
-    setText('companion-jobs-count', (dashboardData.myCompanionJobs || []).length);
-    setText('hospital-count', (dashboardData.myHospitalJobs || []).length);
-
-    renderMorningVisits(dashboardData.todaysVisits || []);
-    renderPendingRequests(dashboardData.pendingRequests || []);
-    // --- ADD THIS LINE ---
-    renderAppointmentQueue(appointments); 
-
-    renderIncidents(dashboardData.incidents || []);
-    renderMissedVisits(dashboardData.missedVisits || []);
-    renderStaffAvailability(dashboardData.staffWithLoad || []);
-    renderComplaints(dashboardData.openComplaints || []);
-    renderInsurance(dashboardData.insuranceFollowUps || []);
-    renderCompanionJobs(dashboardData.myCompanionJobs || []);
-    renderHospitalJobs(dashboardData.myHospitalJobs || []);
-  } catch (err) {
-    console.error('Error loading dashboard:', err);
-    showFatalError('Could not reach server: ' + err.message);
-  }
-}
 
 function getSeniorLabel(v) {
   return v.senior_name || v.senior_id || 'Unknown Senior';
