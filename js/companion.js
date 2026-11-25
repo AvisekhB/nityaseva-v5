@@ -343,18 +343,22 @@ window.handleCancelBooking = async function () {
 // SOS HANDLERS
 // -------------------------------------------------------------
 function setupSosHandlers() {
+  // Keep these listeners:
   document.getElementById('btn-sos-trigger')?.addEventListener('click', () => show('sos-modal'));
   document.getElementById('btn-cancel-sos')?.addEventListener('click', () => hide('sos-modal'));
+  
+  // Replace only the confirm button listener:
   document.getElementById('btn-confirm-sos')?.addEventListener('click', async () => {
     const geo = await getDeviceLocation();
     try {
+      // Escalate to Doctor Review System using Service ID or Work Order ID
       await callApi('createDoctorReviewRequest', {
         seniorId: activeWO?.senior_id || 'UNKNOWN',
-        workOrderId: activeWO?.work_order_id || '',
-        reason: `🚨 COMPANION SOS. GPS: ${geo ? geo.lat + ',' + geo.lng : 'Unknown'}`,
+        workOrderId: activeWO?.service_id || activeWO?.work_order_id || '',
+        reason: `🚨 ESCORT EMERGENCY. Location: ${geo ? geo.lat + ',' + geo.lng : 'Unknown'}`,
         priority: 'EMERGENCY'
       });
-      alert('🚨 Emergency Alert Sent to Control Room!');
+      alert('🚨 Emergency Alert Sent! Doctor & Admin notified.');
     } catch (err) {
       alert('SOS error: ' + err.message);
     } finally {
