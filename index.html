@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nityaseva — Login</title>
   <link rel="stylesheet" href="css/style.css">
+  <!-- Load Supabase first -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -52,6 +53,8 @@
     // 1. Trigger Supabase OTP
     document.getElementById('btn-send-otp').addEventListener('click', async () => {
       const email = emailInput.value.trim();
+      if (!email) return showMsg('Please enter an email', true);
+      
       const { error } = await supabase.auth.signInWithOtp({ email });
       if (error) return showMsg(error.message, true);
       
@@ -71,14 +74,14 @@
 
       if (error) return showMsg(error.message, true);
 
-      // Now verify role via your Apps Script API
       try {
         showMsg('Authorizing profile...');
-        // We call any API action to trigger the backend role resolution logic
-        const profile = await callApi('getAdminDashboard'); // Or a dedicated 'getProfile' action
+        // We use a small helper action in your backend that just returns the role
+        // 'getAdminDashboard' works if the user has a record in your sheet
+        const profile = await callApi('getAdminDashboard'); 
         window.location.href = profile.role + '.html';
       } catch (err) {
-        showMsg('Role verification failed: ' + err.message, true);
+        showMsg('Access denied: ' + err.message, true);
       }
     });
   </script>
