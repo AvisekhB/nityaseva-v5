@@ -54,18 +54,24 @@
       msg.classList.remove('hidden');
     }
 
-    // Auto-redirect on successful sign-in
-    supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN') {
-        showMsg('Login successful! Authorizing profile...');
-        try {
-          const profile = await callApi('getAdminDashboard');
-          window.location.href = profile.role + '.html';
-        } catch (err) {
-          showMsg('Authorization failed: ' + err.message, true);
-        }
-      }
-    });
+   supabase.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'SIGNED_IN') {
+    showMsg('Login successful! Authorizing profile...');
+    try {
+      const profile = await callApi('getAdminDashboard');
+      if (!profile || !profile.role) throw new Error('No role assigned.');
+
+      // 🔴 THESE TWO LINES ARE REQUIRED:
+      localStorage.setItem('nityaseva_role', profile.role);
+      localStorage.setItem('nityaseva_user', JSON.stringify(profile));
+
+      window.location.href = profile.role + '.html';
+    } catch (err) {
+      showMsg('Authorization failed: ' + err.message, true);
+    }
+  }
+});
+
 
     // Unified Login Handler
     document.getElementById('btn-login').addEventListener('click', async () => {
