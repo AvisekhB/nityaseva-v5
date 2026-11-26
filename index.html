@@ -1,18 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script>
-    // Force a mock localStorage if it doesn't exist to stop the crashing
-    if (!window.localStorage) {
-      window.localStorage = {
-        data: {},
-        getItem: function(key) { return this.data.hasOwnProperty(key) ? this.data[key] : null; },
-        setItem: function(key, val) { this.data[key] = String(val); },
-        removeItem: function(key) { delete this.data[key]; }
-      };
-    }
-  </script>
-
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nityaseva — Login</title>
@@ -23,23 +11,22 @@
   <div class="auth-container">
     <div class="auth-card">
       <h2>Nityaseva Care</h2>
-      <p style="font-size: 13px; color: #718096; margin-bottom: 20px;">Senior Care Coordination Platform</p>
+      <p style="font-size: 13px; color: #718096; margin-bottom: 20px;">Secure Access Portal</p>
 
       <div id="step-email">
         <div class="form-group">
-          <label for="email">Registered Email Address</label>
+          <label for="email">Registered Email</label>
           <input type="email" id="email" placeholder="name@example.com" required>
         </div>
-        <button id="btn-send-otp" style="width: 100%;">Send Login Code</button>
+        <button id="btn-send-otp" style="width: 100%;">Send Magic Link / OTP</button>
       </div>
 
       <div id="step-otp" class="hidden">
         <div class="form-group">
           <label for="otp">Enter 6-Digit OTP</label>
-          <input type="text" id="otp" placeholder="123456" maxlength="8">
+          <input type="text" id="otp" placeholder="123456" maxlength="6">
         </div>
-        <button id="btn-verify-otp" style="width: 100%;">Verify & Sign In</button>
-        <button id="btn-back" class="secondary" style="width: 100%; margin-top: 8px;">Back</button>
+        <button id="btn-verify-otp" style="width: 100%;">Verify Code</button>
       </div>
 
       <div id="msg" class="message hidden"></div>
@@ -47,7 +34,8 @@
   </div>
 
   <script type="module">
-    import { sendOtp, verifyOtp, getCurrentUserProfile } from './js/auth.js';
+    import { supabase } from './js/supabaseClient.js';
+    import { callApi } from './js/dataService.js';
 
     const stepEmail = document.getElementById('step-email');
     const stepOtp = document.getElementById('step-otp');
@@ -61,41 +49,37 @@
       msg.classList.remove('hidden');
     }
 
+    // 1. Trigger Supabase OTP
     document.getElementById('btn-send-otp').addEventListener('click', async () => {
       const email = emailInput.value.trim();
-      if (!email) return showMsg('Please enter an email address', true);
-
-      try {
-        showMsg('Sending login code...');
-        await sendOtp(email);
-        stepEmail.classList.add('hidden');
-        stepOtp.classList.remove('hidden');
-        showMsg('Login code sent to ' + email);
-      } catch (err) {
-        showMsg(err.message, true);
-      }
+      const { error } = await supabase.auth.signInWithOtp({ email });
+      if (error) return showMsg(error.message, true);
+      
+      stepEmail.classList.add('hidden');
+      stepOtp.classList.remove('hidden');
+      showMsg('Check your email for the login code.');
     });
 
+    // 2. Verify OTP & Redirect based on Role
     document.getElementById('btn-verify-otp').addEventListener('click', async () => {
       const email = emailInput.value.trim();
-      const code = otpInput.value.trim();
-      if (!code) return showMsg('Please enter your 6-digit code', true);
+      const token = otpInput.value.trim();
+      
+      const { data, error } = await supabase.auth.verifyOtp({
+        email, token, type: 'email'
+      });
 
+      if (error) return showMsg(error.message, true);
+
+      // Now verify role via your Apps Script API
       try {
-        showMsg('Verifying code...');
-        await verifyOtp(email, code);
-        const profile = await getCurrentUserProfile();
-        const role = profile && profile.role ? profile.role : 'family';
-        window.location.href = role + '.html';
+        showMsg('Authorizing profile...');
+        // We call any API action to trigger the backend role resolution logic
+        const profile = await callApi('getAdminDashboard'); // Or a dedicated 'getProfile' action
+        window.location.href = profile.role + '.html';
       } catch (err) {
-        showMsg(err.message, true);
+        showMsg('Role verification failed: ' + err.message, true);
       }
-    });
-
-    document.getElementById('btn-back').addEventListener('click', () => {
-      stepOtp.classList.add('hidden');
-      stepEmail.classList.remove('hidden');
-      msg.classList.add('hidden');
     });
   </script>
 </body>
