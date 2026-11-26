@@ -1,4 +1,6 @@
 import { callApi } from './dataService.js';
+import { supabase } from './supabaseClient.js';
+
 
 // Safe storage wrapper to prevent crashes in restricted WebViews
 const storage = {
@@ -45,26 +47,28 @@ export function getCurrentUserProfile() {
 }
 
 export async function requireAuth(expectedRole = null) {
-  const token = storage.getItem('nityaseva_token');
-  const role = storage.getItem('nityaseva_role');
+  // Check the REAL Supabase session (source of truth)
+  const { data: { session } } = await supabase.auth.getSession();
 
-  if (!token) {
+  if (!session) {
     window.location.href = 'index.html';
     return null;
   }
 
+  const role = storage.getItem('nityaseva_role');
   const profile = getCurrentUserProfile();
 
   if (expectedRole && role !== expectedRole && role !== 'admin') {
     alert('Access restricted to ' + expectedRole + ' role.');
-    window.location.href = role + '.html';
+    window.location.href = (role || 'index') + '.html';
     return null;
   }
 
   return profile;
 }
 
-export function signOut() {
+export async function signOut() {
+  await supabase.auth.signOut();
   storage.removeItem('nityaseva_token');
   storage.removeItem('nityaseva_role');
   storage.removeItem('nityaseva_user');
