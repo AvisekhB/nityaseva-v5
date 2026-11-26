@@ -1,19 +1,26 @@
 import { CONFIG } from './config.js';
+import { supabase } from './supabaseClient.js';
 
+/**
+ * Robust API Adapter for Nityaseva V5
+ * Handles JWT retrieval from Supabase and forwards to Google Apps Script
+ */
 export async function callApi(action, params = {}) {
-  let token = localStorage.getItem('nityaseva_token');
+  // 1. Get the latest session from Supabase
+  // This automatically handles token refreshes
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session ? session.access_token : null;
 
-  if (!token && window.supabase) {
-    try {
-      const { data: { session } } = await window.supabase.auth.getSession();
-      if (session && session.access_token) token = session.access_token;
-    } catch (e) {}
+  if (!token) {
+    // If no token exists, redirect to login
+    window.location.href = 'index.html';
+    throw new Error('UNAUTHENTICATED');
   }
 
   const payload = {
     action: action,
     params: params || {},
-    token: token || ''
+    token: token
   };
 
   try {
@@ -32,14 +39,14 @@ export async function callApi(action, params = {}) {
       resJson = JSON.parse(rawText);
     } catch (e) {
       console.error('Non-JSON response from Apps Script:', rawText);
-      throw new Error('Server returned unexpected output: ' + rawText.substring(0, 100));
+      throw new Error('Server returned unexpected output.');
     }
 
+    // 2. Handle Unauthorized errors from the backend
     if (!resJson.success) {
       if (resJson.error && resJson.error.includes('UNAUTHENTICATED')) {
-        localStorage.removeItem('nityaseva_token');
-        localStorage.removeItem('nityaseva_role');
-        alert('Session expired. Please log in again.');
+        await supabase.auth.signOut();
+        alert('Your session has expired. Please log in again.');
         window.location.href = 'index.html';
       }
       throw new Error(resJson.error || 'Server error occurred');
@@ -47,7 +54,7 @@ export async function callApi(action, params = {}) {
 
     return resJson.data;
   } catch (err) {
-    console.error(`callApi failure for [${action}]:`, err);
+    console.error(`callApi failure [${action}]:`, err);
     throw err;
   }
 }
