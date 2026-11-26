@@ -13,16 +13,18 @@
       <h2>Nityaseva Care</h2>
       <p style="font-size: 13px; color: #718096; margin-bottom: 20px;">Secure Access Portal</p>
 
-      <!-- Email Input Step -->
       <div id="step-email">
         <div class="form-group">
           <label for="email">Registered Email</label>
           <input type="email" id="email" placeholder="name@example.com" required>
         </div>
-        <button id="btn-send-otp" style="width: 100%;">Send Magic Link</button>
+        <div class="form-group">
+          <label for="password">Password (Optional for Dev Test)</label>
+          <input type="password" id="password" placeholder="Leave empty for OTP login">
+        </div>
+        <button id="btn-login" style="width: 100%;">Sign In</button>
       </div>
 
-      <!-- OTP/Verification Step -->
       <div id="step-otp" class="hidden">
         <div class="form-group">
           <label for="otp">Enter 6-Digit OTP</label>
@@ -42,6 +44,7 @@
     const stepEmail = document.getElementById('step-email');
     const stepOtp = document.getElementById('step-otp');
     const emailInput = document.getElementById('email');
+    const passInput = document.getElementById('password');
     const otpInput = document.getElementById('otp');
     const msg = document.getElementById('msg');
 
@@ -51,7 +54,7 @@
       msg.classList.remove('hidden');
     }
 
-    // 1. Handle Automatic Login Redirects (Magic Links)
+    // Auto-redirect on successful sign-in
     supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN') {
         showMsg('Login successful! Authorizing profile...');
@@ -64,30 +67,33 @@
       }
     });
 
-    // 2. Trigger Supabase OTP
-    document.getElementById('btn-send-otp').addEventListener('click', async () => {
+    // Unified Login Handler
+    document.getElementById('btn-login').addEventListener('click', async () => {
       const email = emailInput.value.trim();
+      const password = passInput.value.trim();
+
       if (!email) return showMsg('Please enter your email', true);
-      
-      const { error } = await supabase.auth.signInWithOtp({ email });
-      if (error) return showMsg(error.message, true);
-      
-      stepEmail.classList.add('hidden');
-      stepOtp.classList.remove('hidden');
-      showMsg('Check your email for the login code.');
+
+      // If user typed a password, use standard login (bypasses email quota)
+      if (password) {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) showMsg(error.message, true);
+      } else {
+        // Otherwise, trigger OTP/Magic Link
+        const { error } = await supabase.auth.signInWithOtp({ email });
+        if (error) return showMsg(error.message, true);
+        stepEmail.classList.add('hidden');
+        stepOtp.classList.remove('hidden');
+        showMsg('OTP sent to your email.');
+      }
     });
 
-    // 3. Verify OTP Manually
+    // Verify OTP manually
     document.getElementById('btn-verify-otp').addEventListener('click', async () => {
       const email = emailInput.value.trim();
       const token = otpInput.value.trim();
-      
-      const { data, error } = await supabase.auth.verifyOtp({
-        email, token, type: 'email'
-      });
-
-      if (error) return showMsg(error.message, true);
-      // AuthStateChange will handle the redirect automatically
+      const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
+      if (error) showMsg(error.message, true);
     });
   </script>
 </body>
