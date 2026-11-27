@@ -54,23 +54,28 @@
       msg.classList.remove('hidden');
     }
 
-   supabase.auth.onAuthStateChange(async (event, session) => {
-  if (event === 'SIGNED_IN') {
+supabase.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
     showMsg('Login successful! Authorizing profile...');
     try {
-      const profile = await callApi('getAdminDashboard');
-      if (!profile || !profile.role) throw new Error('No role assigned.');
+      // 1. Call whoAmI instead of getAdminDashboard to get the user's role safely
+      const authData = await callApi('whoAmI'); 
+      
+      if (!authData || !authData.role) throw new Error('No role assigned.');
 
-      // 🔴 THESE TWO LINES ARE REQUIRED:
-      localStorage.setItem('nityaseva_role', profile.role);
-      localStorage.setItem('nityaseva_user', JSON.stringify(profile));
+      // 2. Save role and profile
+      localStorage.setItem('nityaseva_role', authData.role);
+      localStorage.setItem('nityaseva_user', JSON.stringify(authData.profile || {}));
 
-      window.location.href = profile.role + '.html';
+      // 3. Redirect to the correct page based on role
+      window.location.href = authData.role + '.html';
     } catch (err) {
       showMsg('Authorization failed: ' + err.message, true);
+      console.error(err);
     }
   }
 });
+
 
 
     // Unified Login Handler
