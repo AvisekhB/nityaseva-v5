@@ -1,11 +1,16 @@
+
 import { CONFIG } from './config.js';
 
-// Double check that these exist before passing to Supabase
-if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY) {
-  console.error("Supabase config is missing!", CONFIG);
+// Ensure the window has the library
+if (!window.supabase) {
+  console.error("Supabase SDK not loaded! Check your script tag in HTML.");
 }
 
-export const supabase = window.supabase.createClient(
+// Revised initialization
+const { createClient } = window.supabase;
+
+export const supabase = createClient(
   CONFIG.SUPABASE_URL,
   CONFIG.SUPABASE_ANON_KEY
 );
+
