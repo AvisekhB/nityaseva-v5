@@ -8,7 +8,7 @@ let timerInterval = null;
 let visitStartTime = null;
 let compActiveTab = 'PENDING';
 
-const OFFICE_NUMBER = "+919239258921"; // Update with actual office number
+const OFFICE_NUMBER = "+919239258921"; 
 
 function setText(id, text) { const el = document.getElementById(id); if (el) el.textContent = text ?? ''; }
 function setHTML(id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html ?? ''; }
@@ -18,11 +18,15 @@ function hide(id) { document.getElementById(id)?.classList.add('hidden'); }
 // -------------------------------------------------------------
 // INIT (single, correct version — uses companion_id, not staff_id)
 // -------------------------------------------------------------
+// -------------------------------------------------------------
+// INIT (Line 15 - 42)
+// -------------------------------------------------------------
 async function init() {
   try {
     currentProfile = await requireAuth('companion');
     if (!currentProfile) return;
 
+    // Use specific property priority: companion_id first
     const companionId = currentProfile.companion_id || currentProfile.userId || 'COM-XXXX';
 
     setText('comp-name-display', currentProfile.full_name || 'Companion');
@@ -42,7 +46,8 @@ async function init() {
     setupCockpitActions();
     setupEndVisitFlow();
 
-    await loadCompanionWorkOrders();
+    // Pass the ID to the loader
+    await loadCompanionWorkOrders(companionId);
   } catch (err) {
     console.error('Companion Portal Init Error:', err);
     setHTML('route-list-container', `<p style="color:#dc2626; text-align:center;">Failed to load: ${err.message}</p>`);
@@ -141,16 +146,28 @@ function renderCompanionProfile(profile) {
 // -------------------------------------------------------------
 // LOAD & RENDER
 // -------------------------------------------------------------
-async function loadCompanionWorkOrders() {
+// -------------------------------------------------------------
+// LOAD & RENDER (Line 121 - 130)
+// -------------------------------------------------------------
+async function loadCompanionWorkOrders(companionId) {
   try {
-    const companionId = currentProfile.companion_id || currentProfile.userId;
     const data = await callApi('getCompanionDashboard', { staffId: companionId });
-    allWorkOrders = data || [];
+    
+    // Fix: Handles both {workOrders: []} object or plain array
+    if (data && data.workOrders) {
+      allWorkOrders = data.workOrders;
+    } else if (Array.isArray(data)) {
+      allWorkOrders = data;
+    } else {
+      allWorkOrders = [];
+    }
+    
     renderRouteList();
   } catch (err) {
     setHTML('route-list-container', `<p style="color:#dc2626;">Error: ${err.message}</p>`);
   }
 }
+
 
 function setupRouteTabs() {
   const btnPending = document.getElementById('comp-tab-pending');
